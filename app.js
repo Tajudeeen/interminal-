@@ -20,8 +20,51 @@ const ARC = {
 };
 
 function shortAddr(addr) {
-  if (!addr) return "—";
+  if (!isAddress(addr)) return "—";
   return addr.slice(0, 6) + "…" + addr.slice(-4);
+}
+
+const ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
+const HEX_QTY_RE = /^0x[0-9a-fA-F]{1,64}$/;
+const RPC_ALLOW = new Set(["eth_chainId", "eth_blockNumber", "eth_getBalance", "eth_call"]);
+const TF_ALLOW = new Set(["1m", "5m", "15m", "1h", "4h", "1D"]);
+const SIDE_ALLOW = new Set(["buy", "sell"]);
+const VIEW_ALLOW = new Set(["landing", "terminal", "markets", "portfolio", "ai", "activity"]);
+const TOKEN_ALLOW = new Set([
+  ARC.usdcErc20.toLowerCase(),
+  ...Object.values(ARC.tokens).map((t) => t.address.toLowerCase()),
+]);
+
+function isAddress(value) {
+  return typeof value === "string" && ADDR_RE.test(value);
+}
+
+function normalizeAddress(value) {
+  if (!isAddress(value)) throw new Error("Invalid address");
+  return ("0x" + value.slice(2).toLowerCase());
+}
+
+function checksumWarn(value) {
+  return normalizeAddress(value);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function assertPair(key) {
+  if (!PAIRS[key]) throw new Error("Unknown market");
+  return key;
+}
+
+function clampAmount(n) {
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(n, 1_000_000_000);
 }
 
 const PAIRS = {
@@ -68,11 +111,13 @@ const shortHash = () =>
 const now = () => Date.now();
 
 function toast(title, body, kind = "info") {
+  const stack = $("#toast-stack");
+  if (!stack) return;
   const el = document.createElement("div");
   const accent = kind === "ok" ? "border-mint text-mint" : kind === "err" ? "border-danger text-danger" : "border-cyan text-cyan";
   el.className = `pointer-events-auto w-80 bg-t2 border ${accent.split(" ")[0]} border-l-2 p-3 rounded shadow-xl`;
-  el.innerHTML = `<div class="font-display text-[12px] uppercase tracking-wider ${accent.split(" ").slice(1).join(" ")}">${title}</div><div class="text-[12px] text-mute mt-1">${body}</div>`;
-  $("#toast-stack").appendChild(el);
+  el.innerHTML = `<div class="font-display text-[12px] uppercase tracking-wider ${accent.split(" ").slice(1).join(" ")}">${escapeHtml(title)}</div><div class="text-[12px] text-mute mt-1">${escapeHtml(body)}</div>`;
+  stack.appendChild(el);
   setTimeout(() => el.remove(), 4200);
 }
 
@@ -97,14 +142,34 @@ function providerName(eth) {
 }
 
 async function publicRpc(method, params = []) {
-  const res = await fetch(ARC.rpc, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
-  });
-  const json = await res.json();
-  if (json.error) throw new Error(json.error.message || "RPC error");
-  return json.result;
+  if (!RPC_ALLOW.has(method)) throw new Error("RPC method blocked");
+  if (method === "eth_getBalance") {
+    if (!isAddress(params[0])) throw new Error("Invalid balance address");
+  }
+  if (method === "eth_call") {
+    const to = params[0]?.to;
+    if (!isAddress(to) || !TOKEN_ALLOW.has(to.toLowerCase())) throw new Error("eth_call target blocked");
+    const data = params[0]?.data;
+    if (typeof data !== "string" || !data.startsWith("0x70a08231") || data.length !== 74) {
+      throw new Error("eth_call data blocked");
+    }
+  }
+  const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), 12000) : null;
+  try {
+    const res = await fetch(ARC.rpc, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: Date.now(), method, params }),
+      signal: ctrl?.signal,
+    });
+    if (!res.ok) throw new Error("RPC HTTP " + res.status);
+    const json = await res.json();
+    if (json.error) throw new Error(json.error.message || "RPC error");
+    return json.result;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 async function walletRpc(method, params = []) {
@@ -118,12 +183,19 @@ function padAddr(addr) {
 }
 
 function formatUnits(hex, decimals) {
-  const n = BigInt(hex || "0x0");
-  const base = 10n ** BigInt(decimals);
-  const whole = n / base;
-  const frac = n % base;
-  const fracStr = frac.toString().padStart(decimals, "0").slice(0, 8);
-  return Number(whole) + Number("0." + (fracStr.replace(/0+$/, "") || "0"));
+  if (hex == null || hex === "0x") hex = "0x0";
+  if (typeof hex !== "string" || !HEX_QTY_RE.test(hex) || hex.length > 66) return 0;
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 36) return 0;
+  try {
+    const n = BigInt(hex);
+    const base = 10n ** BigInt(decimals);
+    const whole = n / base;
+    const frac = n % base;
+    const fracStr = frac.toString().padStart(decimals, "0").slice(0, 8);
+    return Number(whole) + Number("0." + (fracStr.replace(/0+$/, "") || "0"));
+  } catch {
+    return 0;
+  }
 }
 
 async function readChainId() {
@@ -165,11 +237,12 @@ async function erc20Balance(token, owner) {
 }
 
 async function loadOnchainPortfolio(address) {
-  const nativeHex = await publicRpc("eth_getBalance", [address, "latest"]);
+  const safe = normalizeAddress(address);
+  const nativeHex = await publicRpc("eth_getBalance", [safe, "latest"]);
   const usdc = formatUnits(nativeHex, ARC.nativeDecimals);
   const next = { USDC: usdc, ETH: 0, WETH: 0, EURC: 0, USYC: 0, cirBTC: 0, ARC: 0, BTC: 0, SOL: 0, AVAX: 0, LINK: 0 };
   await Promise.all(Object.entries(ARC.tokens).map(async ([sym, meta]) => {
-    next[sym] = await erc20Balance(meta, address);
+    next[sym] = await erc20Balance(meta, safe);
   }));
   return next;
 }
@@ -191,7 +264,13 @@ function attachWalletListeners() {
       toast("Wallet disconnected", "No account authorized.", "err");
       return;
     }
-    state.address = accounts[0];
+    try {
+      state.address = normalizeAddress(accounts[0]);
+    } catch {
+      disconnectWallet(false);
+      toast("Wallet rejected", "Provider returned a non-address account.", "err");
+      return;
+    }
     try {
       const { id } = await readChainId();
       state.chainId = id;
@@ -229,7 +308,7 @@ async function connectInjected() {
     attachWalletListeners();
     const accounts = await walletRpc("eth_requestAccounts");
     if (!accounts?.length) throw new Error("No account returned");
-    state.address = accounts[0];
+    state.address = normalizeAddress(accounts[0]);
     state.providerLabel = providerName(eth);
     try {
       await ensureArcNetwork();
@@ -286,7 +365,7 @@ async function resumeWallet() {
   try {
     const accounts = await eth.request({ method: "eth_accounts" });
     if (!accounts?.length) return;
-    state.address = accounts[0];
+    state.address = normalizeAddress(accounts[0]);
     state.providerLabel = providerName(eth);
     const { id } = await readChainId();
     state.chainId = id;
@@ -305,9 +384,10 @@ async function resumeWallet() {
 
 /* ---------- market engine ---------- */
 function generateCandles(pairKey, timeframe, count = 120) {
-  const p = PAIRS[pairKey];
-  const r = rnd(p.seed + timeframe.length * 17);
-  const tfMs = { "1m": 6e4, "5m": 3e5, "15m": 9e5, "1h": 36e5, "4h": 144e5, "1D": 864e5 }[timeframe] || 144e5;
+  const p = PAIRS[assertPair(pairKey)];
+  const tf = TF_ALLOW.has(timeframe) ? timeframe : "4h";
+  const r = rnd(p.seed + tf.length * 17);
+  const tfMs = { "1m": 6e4, "5m": 3e5, "15m": 9e5, "1h": 36e5, "4h": 144e5, "1D": 864e5 }[tf];
   const candles = [];
   let price = p.price * (0.92 + r() * 0.04);
   const t0 = now() - tfMs * count;
@@ -321,9 +401,10 @@ function generateCandles(pairKey, timeframe, count = 120) {
     candles.push({ time: t0 + i * tfMs, open, high, low, close, volume });
     price = close;
   }
-  candles[candles.length - 1].close = p.price;
-  candles[candles.length - 1].high = Math.max(candles[candles.length - 1].high, p.price);
-  candles[candles.length - 1].low = Math.min(candles[candles.length - 1].low, p.price);
+  const last = candles[candles.length - 1];
+  last.close = p.price;
+  last.high = Math.max(last.open, last.close) * 1.0004;
+  last.low = Math.min(last.open, last.close) * 0.9996;
   return candles;
 }
 
@@ -389,10 +470,14 @@ function computeIndicators(candles) {
 }
 
 function quoteTrade({ side, amountUsd, price, slippageBps = 50 }) {
+  if (!SIDE_ALLOW.has(side)) throw new Error("Invalid side");
+  if (!Number.isFinite(amountUsd) || amountUsd <= 0 || amountUsd > 1_000_000_000) throw new Error("Invalid amount");
+  if (!Number.isFinite(price) || price <= 0) throw new Error("Invalid price");
+  if (!Number.isFinite(slippageBps) || slippageBps < 1 || slippageBps > 500) throw new Error("Invalid slippage");
   const slip = slippageBps / 10000;
   const impact = clamp(amountUsd / 2_500_000, 0.0004, 0.018);
   const effective = side === "buy" ? price * (1 + slip * 0.4 + impact) : price * (1 - slip * 0.4 - impact);
-  const received = side === "buy" ? amountUsd / effective : amountUsd * effective;
+  const received = side === "buy" ? amountUsd / effective : amountUsd / price;
   const minReceived = received * (1 - slip);
   return {
     price,
@@ -436,6 +521,7 @@ const state = {
   reviewOpen: false,
   pendingQuote: null,
   executing: false,
+  ticketNonce: 1,
   lastTx: null,
   block: 4892104,
   latency: 12,
@@ -497,6 +583,7 @@ function riskMetrics() {
 function analyzeMarket() {
   const pair = PAIRS[state.pair];
   const ind = state.indicators;
+  if (!pair || !ind) return null;
   const px = pair.price;
   const trend = px > ind.ema20 && ind.ema20 > ind.ema50 ? "Bullish" : px < ind.ema20 && ind.ema20 < ind.ema50 ? "Bearish" : "Range";
   const momentum = ind.rsi >= 60 && ind.macdHist > 0 ? "Positive" : ind.rsi <= 40 && ind.macdHist < 0 ? "Negative" : "Neutral";
@@ -530,13 +617,14 @@ function analyzeTrade(quote) {
     : Math.max(0, ((state.balances[base] || 0) - state.amount / pair.price)) * pair.price;
   const afterTotal = state.side === "buy" ? p.total : p.total; // value approx conserved minus impact
   const exposure = (afterEth / (p.total + (state.side === "buy" ? 0 : 0))) * 100;
-  const sizePct = (state.amount / p.total) * 100;
+  const sizePct = p.total > 0 ? (state.amount / p.total) * 100 : 0;
+  const exposureSafe = p.total > 0 ? exposure : 0;
   return {
     kind: "trade",
     tradeValue: state.amount,
     portfolio: p.total,
     sizePct,
-    exposureAfter: exposure,
+    exposureAfter: exposureSafe,
     slippage: quote.slippageBps / 100,
     impact: quote.impact * 100,
     rr: ((pair.price * 1.03 - quote.effective) / (quote.effective - pair.price * 0.97)) || 1.1,
@@ -779,7 +867,7 @@ function landing() {
         ${state.connecting ? "Requesting signature…" : eth ? "Connect " + detected : "Install a wallet"}
       </button>
       ${!eth ? `<a class="mt-3 text-[12px] text-[#00F0FF]" href="https://metamask.io/download/" target="_blank" rel="noreferrer">Get MetaMask</a>` : ""}
-      ${state.walletError ? `<div class="mt-4 max-w-sm text-[12px] text-[#ffb4ab]">${state.walletError}</div>` : ""}
+      ${state.walletError ? `<div class="mt-4 max-w-sm text-[12px] text-[#ffb4ab]">${escapeHtml(state.walletError)}</div>` : ""}
       <div class="mt-6 text-[11px] text-[#64748B] tnum">Arc · Chain ID ${ARC.chainId} (0x13b2) · Native gas USDC · ${ARC.rpc}</div>
     </div>
   </div>`;
@@ -1346,11 +1434,49 @@ async function switchToArc() {
   }
 }
 
+function buildTradeTicket(address, pair, side, amount, quote) {
+  return {
+    types: {
+      EIP712Domain: [
+        { name: "name", type: "string" },
+        { name: "version", type: "string" },
+        { name: "chainId", type: "uint256" },
+        { name: "verifyingContract", type: "address" },
+      ],
+      TradeTicket: [
+        { name: "trader", type: "address" },
+        { name: "pair", type: "string" },
+        { name: "side", type: "string" },
+        { name: "amountUsdc", type: "string" },
+        { name: "minReceived", type: "string" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ],
+    },
+    domain: {
+      name: "Interminal",
+      version: "1",
+      chainId: ARC.chainId,
+      verifyingContract: ARC.usdcErc20,
+    },
+    primaryType: "TradeTicket",
+    message: {
+      trader: address,
+      pair,
+      side,
+      amountUsdc: String(amount),
+      minReceived: String(quote.minReceived),
+      nonce: state.ticketNonce,
+      deadline: Math.floor(quote.expiresAt / 1000),
+    },
+  };
+}
+
 async function executeTrade() {
   const pair = PAIRS[state.pair];
   const q = state.pendingQuote;
-  if (!q) return;
-  if (!state.address) {
+  if (!q || state.executing) return;
+  if (!isAddress(state.address)) {
     toast("Wallet required", "Connect an Arc mainnet wallet first.", "err");
     return;
   }
@@ -1360,7 +1486,12 @@ async function executeTrade() {
     render();
     return;
   }
+  if (state.side === "buy" && state.amount > (state.balances.USDC || 0)) {
+    toast("Insufficient USDC", "Reduce size to the live native balance.", "err");
+    return;
+  }
   try {
+    state.executing = true;
     const { id } = await readChainId();
     if (id !== ARC.chainId) {
       state.wrongNetwork = true;
@@ -1368,35 +1499,13 @@ async function executeTrade() {
       render();
       return;
     }
-    const ticket = {
-      types: {
-        EIP712Domain: [
-          { name: "name", type: "string" },
-          { name: "version", type: "string" },
-          { name: "chainId", type: "uint256" },
-          { name: "verifyingContract", type: "address" },
-        ],
-        TradeTicket: [
-          { name: "trader", type: "address" },
-          { name: "pair", type: "string" },
-          { name: "side", type: "string" },
-          { name: "amountUsdc", type: "string" },
-          { name: "minReceived", type: "string" },
-          { name: "deadline", type: "uint256" },
-        ],
-      },
-      domain: { name: "Interminal", version: "1", chainId: ARC.chainId, verifyingContract: "0x0000000000000000000000000000000000000000" },
-      primaryType: "TradeTicket",
-      message: {
-        trader: state.address,
-        pair: state.pair,
-        side: state.side,
-        amountUsdc: String(state.amount),
-        minReceived: String(q.minReceived),
-        deadline: Math.floor(q.expiresAt / 1000),
-      },
-    };
-    const sig = await walletRpc("eth_signTypedData_v4", [state.address, JSON.stringify(ticket)]);
+    const trader = normalizeAddress(state.address);
+    const ticket = buildTradeTicket(trader, state.pair, state.side, state.amount, q);
+    const sig = await walletRpc("eth_signTypedData_v4", [trader, JSON.stringify(ticket)]);
+    if (typeof sig !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(sig)) {
+      throw new Error("Wallet returned a malformed signature");
+    }
+    state.ticketNonce += 1;
     const hash = sig.slice(0, 10) + "…" + sig.slice(-6);
     const label = state.side === "buy"
       ? `Signed buy ${fmt(q.received, 5)} ${pair.base} for ${fmt(state.amount)} USDC`
@@ -1413,11 +1522,14 @@ async function executeTrade() {
   } catch (e) {
     const msg = e?.code === 4001 ? "Signature rejected." : (e.message || String(e));
     toast("Sign failed", msg, "err");
+  } finally {
+    state.executing = false;
   }
 }
 
 function bind() {
   document.querySelectorAll("[data-nav]").forEach((el) => el.addEventListener("click", () => {
+    if (!VIEW_ALLOW.has(el.dataset.nav)) return;
     state.view = el.dataset.nav;
     state.alertsOpen = false;
     render();
@@ -1432,7 +1544,9 @@ function bind() {
     if (a === "alerts") { state.alertsOpen = !state.alertsOpen; render(); }
     if (a === "pair-menu") { $("#pair-dd")?.classList.toggle("hidden"); }
     if (a === "ai-analyze") {
+      if (!state.indicators) loadMarket();
       state.analysis = analyzeMarket();
+      if (!state.analysis) { toast("Analyze failed", "No market data bound.", "err"); return; }
       state.analyses.unshift(state.analysis);
       state.showLevels = true;
       if (state.view !== "terminal" && state.view !== "ai") state.view = "terminal";
@@ -1444,36 +1558,52 @@ function bind() {
     if (a === "ai-wallet") { state.aiCore = "wallet"; state.view = "ai"; render(); }
     if (a === "apply-levels") { state.showLevels = true; state.view = "terminal"; render(); }
     if (a === "review") {
-      const pair = PAIRS[state.pair];
-      state.pendingQuote = quoteTrade({ side: state.side, amountUsd: Number(state.amount), price: pair.price, slippageBps: state.slippage * 100 });
-      state.reviewOpen = true;
-      render();
+      try {
+        const pair = PAIRS[assertPair(state.pair)];
+        const amt = clampAmount(Number(state.amount));
+        if (!amt) throw new Error("Enter a positive amount");
+        if (state.side === "buy" && amt > (state.balances.USDC || 0) && state.livePortfolio) {
+          throw new Error("Amount exceeds live USDC");
+        }
+        state.amount = amt;
+        state.pendingQuote = quoteTrade({ side: state.side, amountUsd: amt, price: pair.price, slippageBps: state.slippage * 100 });
+        state.reviewOpen = true;
+        render();
+      } catch (e) {
+        toast("Quote rejected", e.message || String(e), "err");
+      }
     }
     if (a === "close-review") { state.reviewOpen = false; render(); }
     if (a === "sign") executeTrade();
     if (a === "close-tx") { if (state.lastTx) state.lastTx.show = false; state.view = "portfolio"; render(); }
   }));
   document.querySelectorAll("[data-tf]").forEach((el) => el.addEventListener("click", () => {
+    if (!TF_ALLOW.has(el.dataset.tf)) return;
     state.timeframe = el.dataset.tf; loadMarket(); state.analysis = null; render();
   }));
   document.querySelectorAll("[data-mode]").forEach((el) => el.addEventListener("click", () => {
     state.chartMode = el.dataset.mode; render();
   }));
   document.querySelectorAll("[data-side]").forEach((el) => el.addEventListener("click", () => {
+    if (!SIDE_ALLOW.has(el.dataset.side)) return;
     state.side = el.dataset.side; render();
   }));
   document.querySelectorAll("[data-amt]").forEach((el) => el.addEventListener("click", () => {
-    state.amount = el.dataset.amt === "max" ? Math.floor(state.balances.USDC) : Number(el.dataset.amt);
+    const raw = el.dataset.amt === "max" ? Math.floor(state.balances.USDC || 0) : Number(el.dataset.amt);
+    state.amount = clampAmount(raw);
     render();
   }));
   document.querySelectorAll("[data-pair]").forEach((el) => el.addEventListener("click", () => {
+    if (!PAIRS[el.dataset.pair]) return;
     state.pair = el.dataset.pair; loadMarket(); state.analysis = null; render();
   }));
   document.querySelectorAll("[data-trade]").forEach((el) => el.addEventListener("click", () => {
+    if (!PAIRS[el.dataset.trade]) return;
     state.pair = el.dataset.trade; state.view = "terminal"; state.searchOpen = false; loadMarket(); render();
   }));
   document.querySelectorAll("[data-watch]").forEach((el) => el.addEventListener("click", () => {
     const k = el.dataset.watch;
+    if (!PAIRS[k]) return;
     state.watchlist = state.watchlist.includes(k) ? state.watchlist.filter((x) => x !== k) : [...state.watchlist, k];
     render();
   }));
@@ -1486,49 +1616,50 @@ function bind() {
     state.portfolioRange = el.dataset.range; render();
   }));
   const amt = $("#amt");
-  if (amt) amt.addEventListener("change", () => { state.amount = Math.max(1, Number(amt.value) || 0); render(); });
+  if (amt) amt.addEventListener("change", () => { state.amount = clampAmount(Number(amt.value)); render(); });
   const slip = $("#slip");
   if (slip) slip.addEventListener("input", () => { state.slippage = Number(slip.value); });
   if (slip) slip.addEventListener("change", () => render());
 }
 
-document.addEventListener("keydown", (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-    e.preventDefault();
-    if (state.connected) { state.searchOpen = true; render(); }
-  }
-  if (e.key === "Escape") {
-    state.searchOpen = false; state.alertsOpen = false; state.reviewOpen = false;
-    if (state.lastTx) state.lastTx.show = false;
-    render();
-  }
-});
-
-setInterval(() => {
-  if (!state.connected) return;
-  loadChainHead();
-  state.latency = 9 + Math.floor(Math.random() * 8);
-  Object.values(PAIRS).forEach((p) => {
-    const tick = p.price * (Math.random() - 0.5) * 0.0008;
-    p.price = Math.max(0.0001, p.price + tick);
+if (typeof document !== "undefined") {
+  document.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      if (state.connected) { state.searchOpen = true; render(); }
+    }
+    if (e.key === "Escape") {
+      state.searchOpen = false; state.alertsOpen = false; state.reviewOpen = false;
+      if (state.lastTx) state.lastTx.show = false;
+      render();
+    }
   });
-  const el = document.querySelector("header .tnum");
-  if (state.view === "terminal" && $("#main-chart") && state.candles.length) {
-    const last = state.candles[state.candles.length - 1];
-    last.close = PAIRS[state.pair].price;
-    last.high = Math.max(last.high, last.close);
-    last.low = Math.min(last.low, last.close);
-    drawChart($("#main-chart"), state.candles, state.indicators);
-  }
-}, 2500);
 
-loadMarket();
-render();
-resumeWallet();
+  setInterval(() => {
+    if (!state.connected) return;
+    loadChainHead();
+    state.latency = 9 + Math.floor(Math.random() * 8);
+    Object.values(PAIRS).forEach((p) => {
+      const tick = p.price * (Math.random() - 0.5) * 0.0008;
+      p.price = Math.max(0.0001, p.price + tick);
+    });
+    if (state.view === "terminal" && $("#main-chart") && state.candles.length && PAIRS[state.pair]) {
+      const last = state.candles[state.candles.length - 1];
+      last.close = PAIRS[state.pair].price;
+      last.high = Math.max(last.open, last.close);
+      last.low = Math.min(last.open, last.close);
+      drawChart($("#main-chart"), state.candles, state.indicators);
+    }
+  }, 2500);
 
-setInterval(async () => {
-  if (!state.connected || state.wrongNetwork || !state.address) return;
-  try {
-    state.balances = await loadOnchainPortfolio(state.address);
-  } catch { /* keep last book */ }
-}, 20000);
+  loadMarket();
+  render();
+  resumeWallet();
+
+  setInterval(async () => {
+    if (!state.connected || state.wrongNetwork || !isAddress(state.address)) return;
+    try {
+      state.balances = await loadOnchainPortfolio(state.address);
+    } catch { /* keep last book */ }
+  }, 20000);
+}
