@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>INTERMINAL — Arc Trading Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            void: "#08090C",
+            "t1": "#0D0F14",
+            "t2": "#12151D",
+            "t3": "#181C26",
+            "line": "#1F2430",
+            "line-active": "#2B3447",
+            cyan: "#00F0FF",
+            "cyan-dim": "#00DBE9",
+            mint: "#00E599",
+            danger: "#FF3B57",
+            warn: "#F59E0B",
+            mute: "#94A3B8",
+            ink: "#F8FAFC",
+            "surface-container-low": "#1b1b1f",
+            background: "#121316",
+            "on-error": "#690005",
+            error: "#ffb4ab",
+            "surface-tint": "#00dbe9",
+            "on-surface-variant": "#b9cacb",
+            "surface-variant": "#343538",
+            surface: "#121316",
+            "primary-container": "#00f0ff",
+            "on-primary": "#00363a",
+            "surface-container-lowest": "#0d0e11",
+            "surface-container": "#1f1f23",
+            primary: "#dbfcff",
+            "surface-container-high": "#292a2d",
+            outline: "#849495",
+            "outline-variant": "#3b494b",
+            "error-container": "#93000a",
+            "on-error-container": "#ffdad6",
+            "on-surface": "#e3e2e6",
+            "surface-container-highest": "#343538",
+            secondary: "#70ffba",
+            "secondary-container": "#01e599",
+            "on-secondary": "#003822",
+            "primary-fixed-dim": "#00dbe9",
+            "surface-bright": "#38393d"
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+            body: ["IBM Plex Sans", "sans-serif"]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; background: #08090C; }
+    body { font-family: "IBM Plex Sans", sans-serif; overscroll-behavior: none; }
+    .font-display { font-family: Manrope, sans-serif; }
+    .tnum { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "zero" 1; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: #2B3447; border-radius: 2px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    .glow-cyan { box-shadow: 0 0 8px 1px rgba(0, 240, 255, 0.15); }
+    .keyline { border-left: 2px solid #00F0FF; }
+    kbd { font-family: "IBM Plex Sans", monospace; }
+    .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20; vertical-align: middle; }
+    canvas { display: block; }
+    .view { display: none; }
+    .view.active { display: block; }
+    #toast-stack { pointer-events: none; }
+    #toast-stack > * { pointer-events: auto; }
+  </style>
+</head>
+<body class="bg-void text-ink antialiased min-h-screen">
+  <div id="app"></div>
+  <div id="modal-root"></div>
+  <div id="toast-stack" class="fixed bottom-4 right-4 z-[80] flex flex-col gap-2"></div>
+  <script src="./app.js"></script>
+</body>
+</html>
