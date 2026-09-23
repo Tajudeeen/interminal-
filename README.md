@@ -81,8 +81,20 @@ Views: Terminal, Markets, Portfolio, AI Analyst, Activity.
 
 ## Security
 
-- Never store keys or seeds
-- Never let the AI sign
-- Never display an AI-invented amount as the thing you sign
-- Validate chain ID before any wallet prompt
-- Fees are labeled in USDC, not ETH
+Trust model: the page is untrusted UI. The wallet is the signer. The public Arc RPC is an untrusted data source. The AI layer cannot sign or broadcast.
+
+Gates in this build:
+
+- Chain ID must be `5042` before the desk or a signature prompt
+- Addresses must match `0x` + 40 hex before RPC or EIP-712
+- Public RPC allowlist: `eth_chainId`, `eth_blockNumber`, `eth_getBalance`, `eth_call`
+- `eth_call` only to the official token set, selector `balanceOf` only
+- Quote rejects non-finite, negative, or oversized amounts
+- Review refuses a buy larger than live native USDC
+- Ticket domain is Arc + USDC precompile, includes nonce and deadline
+- Sign lock prevents double prompts
+- Toasts and wallet errors are HTML-escaped
+- Content-Security-Policy on `index.html`
+- Router broadcast remains gated
+
+Residual risk: Tailwind CDN still needs `'unsafe-inline'` for the config tag. An injected wallet extension is trusted for account lists. Off-chain EIP-712 is not an on-chain fill.
