@@ -917,7 +917,7 @@ function header() {
           <span class="text-[#3b494b]">•</span>
           <span class="tnum text-[11px] text-[#94A3B8]">${state.latency}ms</span>
           <span class="text-[#3b494b]">•</span>
-          <span class="tnum text-[11px] text-[#94A3B8]">0.001 USDC</span>
+          <span class="tnum text-[11px] text-[#94A3B8]">gas USDC</span>
         </div>
       </div>
       <nav class="flex items-center gap-1">

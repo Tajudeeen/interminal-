@@ -22,7 +22,15 @@ python3 -m http.server 8765
 
 Open `http://localhost:8765`. File-open also works; a local server avoids some browser wallet quirks.
 
+```bash
+node test.mjs
+```
+
+That re-queries Arc (`eth_chainId` must be `5042`) and runs the fail-closed checks. If a check cannot be reproduced, it is not claimed.
+
 Connect MetaMask, Rabby, or another injected EIP-1193 wallet. Interminal will request Arc mainnet and refuse the desk on any other chain.
+
+The Proof view hits the same RPC from the browser. It does not treat a banner or a screenshot as verification.
 
 ## Network
 
