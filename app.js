@@ -26,10 +26,30 @@ function shortAddr(addr) {
 
 const ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
 const HEX_QTY_RE = /^0x[0-9a-fA-F]{1,64}$/;
-const RPC_ALLOW = new Set(["eth_chainId", "eth_blockNumber", "eth_getBalance", "eth_call"]);
+const RPC_ALLOW = new Set(["eth_chainId", "eth_blockNumber", "eth_getBalance", "eth_call", "eth_getCode"]);
 const TF_ALLOW = new Set(["1m", "5m", "15m", "1h", "4h", "1D"]);
 const SIDE_ALLOW = new Set(["buy", "sell"]);
-const VIEW_ALLOW = new Set(["landing", "terminal", "markets", "portfolio", "ai", "activity"]);
+const VIEW_ALLOW = new Set(["landing", "terminal", "markets", "portfolio", "ai", "activity", "proof"]);
+
+const POLICY = [
+  { id: "ai-no-sign", title: "AI is advisory", rule: "The model may propose. It never holds a key and never calls eth_sendTransaction." },
+  { id: "chain-gate", title: "Chain gate", rule: "Desk and EIP-712 only proceed when eth_chainId is 5042." },
+  { id: "addr-gate", title: "Address gate", rule: "RPC and tickets require 0x + 40 hex. Display-truncated strings are rejected." },
+  { id: "rpc-allow", title: "RPC allowlist", rule: "Public client may call eth_chainId, eth_blockNumber, eth_getBalance, eth_call, eth_getCode only." },
+  { id: "call-allow", title: "eth_call gate", rule: "Calls only hit official Arc tokens with balanceOf calldata." },
+  { id: "quote-gate", title: "Quote gate", rule: "Amount must be finite and in (0, 1e9]. Slippage 1–500 bps. Buy size ≤ live native USDC." },
+  { id: "ticket-domain", title: "Ticket domain", rule: "EIP-712 domain is Interminal v1 on chain 5042 bound to the USDC precompile, with nonce and deadline." },
+  { id: "no-broadcast", title: "Broadcast gated", rule: "A signature is not a fill. Router calldata is not sent." },
+];
+
+const LIMITATIONS = [
+  "Candles, EMAs, RSI, MACD, quotes, and AI copy are computed in the browser. They are not an Arc oracle.",
+  "Wallet USDC/WETH/EURC/USYC/cirBTC reads are live RPC. Pair prices in the tape are local seeds.",
+  "EIP-712 TradeTicket is an authorization preview. It does not move funds.",
+  "Contracts have not had an independent audit.",
+  "There is no replicated indexer. Block height is a single public RPC.",
+  "ARC/USDC in the tape is a local market card. There is no ARC ERC-20 in this build.",
+];
 const TOKEN_ALLOW = new Set([
   ARC.usdcErc20.toLowerCase(),
   ...Object.values(ARC.tokens).map((t) => t.address.toLowerCase()),
@@ -146,6 +166,9 @@ async function publicRpc(method, params = []) {
   if (method === "eth_getBalance") {
     if (!isAddress(params[0])) throw new Error("Invalid balance address");
   }
+  if (method === "eth_getCode") {
+    if (!isAddress(params[0]) || !TOKEN_ALLOW.has(params[0].toLowerCase())) throw new Error("eth_getCode target blocked");
+  }
   if (method === "eth_call") {
     const to = params[0]?.to;
     if (!isAddress(to) || !TOKEN_ALLOW.has(to.toLowerCase())) throw new Error("eth_call target blocked");
@@ -252,6 +275,83 @@ async function loadChainHead() {
     const hex = await publicRpc("eth_blockNumber");
     state.block = parseInt(hex, 16);
   } catch { /* keep last */ }
+}
+
+function failClosedLocalProofs() {
+  const rows = [];
+  const push = (id, ok, detail) => rows.push({ id, ok, detail });
+  try {
+    quoteTrade({ side: "buy", amountUsd: -1, price: 100, slippageBps: 50 });
+    push("neg-amount", false, "quoteTrade accepted a negative amount");
+  } catch {
+    push("neg-amount", true, "quoteTrade rejected a negative amount");
+  }
+  try {
+    assertPair("SCAM/USDC");
+    push("unknown-pair", false, "assertPair accepted an unknown market");
+  } catch {
+    push("unknown-pair", true, "assertPair rejected SCAM/USDC");
+  }
+  push("demo-addr", !isAddress("0x7A...91F2"), "Truncated demo address is not treated as live");
+  push("no-key", !Object.prototype.hasOwnProperty.call(state, "privateKey"), "No privateKey field on application state");
+  return rows;
+}
+
+async function verifyArcLive() {
+  const rows = [];
+  const chainHex = await publicRpc("eth_chainId");
+  const chainId = parseInt(chainHex, 16);
+  rows.push({
+    id: "chain",
+    ok: chainId === ARC.chainId,
+    detail: `eth_chainId → ${chainHex} (${chainId}). Required ${ARC.chainId}.`,
+  });
+  const blockHex = await publicRpc("eth_blockNumber");
+  const block = parseInt(blockHex, 16);
+  rows.push({
+    id: "head",
+    ok: Number.isFinite(block) && block > 0,
+    detail: `eth_blockNumber → ${block.toLocaleString()}`,
+    block,
+  });
+  const tokens = [
+    ["USDC", ARC.usdcErc20],
+    ...Object.entries(ARC.tokens).map(([sym, meta]) => [sym, meta.address]),
+  ];
+  for (const [sym, addr] of tokens) {
+    const code = await publicRpc("eth_getCode", [addr, "latest"]);
+    const hasCode = typeof code === "string" && code !== "0x" && code.length > 2;
+    rows.push({
+      id: "code-" + sym,
+      ok: true,
+      detail: hasCode
+        ? `${sym} ${addr} has bytecode (${code.length} chars)`
+        : `${sym} ${addr} returned empty code (precompile or EOA-shaped). Recorded, not invented.`,
+      empty: !hasCode,
+    });
+  }
+  return { chainId, chainOk: chainId === ARC.chainId, rows };
+}
+
+async function runProof() {
+  state.proof.running = true;
+  state.proof.local = failClosedLocalProofs();
+  render();
+  try {
+    state.proof.live = await verifyArcLive();
+    const head = state.proof.live.rows.find((r) => r.block);
+    if (head?.block) state.block = head.block;
+    state.proof.checkedAt = Date.now();
+  } catch (e) {
+    state.proof.live = {
+      chainId: null,
+      chainOk: false,
+      rows: [{ id: "rpc", ok: false, detail: e.message || String(e) }],
+    };
+  } finally {
+    state.proof.running = false;
+    render();
+  }
 }
 
 function attachWalletListeners() {
@@ -523,6 +623,7 @@ const state = {
   executing: false,
   ticketNonce: 1,
   lastTx: null,
+  proof: { running: false, live: null, local: null, checkedAt: null },
   block: 4892104,
   latency: 12,
   balances: { ETH: 0, WETH: 0, USDC: 0, EURC: 0, USYC: 0, cirBTC: 0 },
@@ -802,8 +903,8 @@ function logoSvg(h = 32) {
 
 function header() {
   const p = portfolioSnapshot();
-  const nav = ["terminal", "markets", "portfolio", "ai", "activity"];
-  const labels = { terminal: "Terminal", markets: "Markets", portfolio: "Portfolio", ai: "AI Analyst", activity: "Activity" };
+  const nav = ["terminal", "markets", "portfolio", "ai", "activity", "proof"];
+  const labels = { terminal: "Terminal", markets: "Markets", portfolio: "Portfolio", ai: "AI Analyst", activity: "Activity", proof: "Proof" };
   return `
   <header class="fixed top-0 left-0 right-0 z-50 bg-[#0d0e11]/95 backdrop-blur-md border-b border-[#1F2430]">
     <div class="h-14 w-full px-4 flex items-center justify-between gap-3">
@@ -811,7 +912,7 @@ function header() {
         ${logoSvg(28)}
         <div class="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#1b1b1f]">
           <span class="w-1.5 h-1.5 rounded-full bg-[#01e599] animate-pulse"></span>
-          <span class="text-[10px] tracking-wider text-[#70ffba] font-semibold">${state.livePortfolio ? "ARC MAINNET · LIVE" : "ARC MAINNET"}</span>
+          <span class="text-[10px] tracking-wider text-[#70ffba] font-semibold">${state.proof?.live?.chainOk && state.livePortfolio ? "ARC · WALLET + RPC" : state.livePortfolio ? "ARC · WALLET" : state.proof?.live?.chainOk ? "ARC · RPC CHECKED" : "ARC · UNVERIFIED"}</span>
           <span class="tnum text-[11px] text-[#94A3B8]">#${state.block.toLocaleString()}</span>
           <span class="text-[#3b494b]">•</span>
           <span class="tnum text-[11px] text-[#94A3B8]">${state.latency}ms</span>
@@ -868,6 +969,7 @@ function landing() {
       </button>
       ${!eth ? `<a class="mt-3 text-[12px] text-[#00F0FF]" href="https://metamask.io/download/" target="_blank" rel="noreferrer">Get MetaMask</a>` : ""}
       ${state.walletError ? `<div class="mt-4 max-w-sm text-[12px] text-[#ffb4ab]">${escapeHtml(state.walletError)}</div>` : ""}
+      <button data-act="proof" class="mt-4 text-[12px] text-[#00F0FF] underline underline-offset-4">Re-query Arc RPC — do not take the banner as proof</button>
       <div class="mt-6 text-[11px] text-[#64748B] tnum">Arc · Chain ID ${ARC.chainId} (0x13b2) · Native gas USDC · ${ARC.rpc}</div>
     </div>
   </div>`;
@@ -1247,31 +1349,75 @@ function renderTradeAnalysis() {
 }
 
 function activityView() {
-  const rows = state.activity.length ? state.activity : [
-    { ts: now() - 3600e3, type: "transfer", label: "Inbound USDC", detail: "+1,200 USDC", hash: "0xa91c…12f0", status: "Confirmed" },
-    { ts: now() - 86400e3, type: "trade", label: "Bought ARC", detail: "400 USDC → 217.3 ARC", hash: "0x33ab…90c1", status: "Confirmed" },
-  ];
+  const rows = state.activity;
   return `
   <main class="pt-14 min-h-screen px-4 py-4">
-    <div class="font-display text-[16px] mb-3">Activity · Orders · Transactions</div>
+    <div class="font-display text-[16px] mb-3">Activity · this session</div>
+    <p class="text-[12px] text-mute mb-3">Only signatures produced in this browser session. No invented inbound transfers.</p>
     <div class="bg-[#0d0e11] rounded overflow-hidden">
-      <table class="w-full text-left tnum text-[12px]">
+      ${rows.length ? `<table class="w-full text-left tnum text-[12px]">
         <thead class="text-[10px] uppercase text-mute"><tr class="border-b border-[#1F2430]">
-          <th class="px-3 py-2">Time</th><th>Type</th><th>Detail</th><th>Network</th><th>Status</th><th>Tx</th>
+          <th class="px-3 py-2">Time</th><th>Type</th><th>Detail</th><th>Status</th><th>Signature</th>
         </tr></thead>
         <tbody>
           ${rows.map((r) => `
             <tr class="border-b border-[#1F2430]/50">
               <td class="px-3 py-2 text-mute">${new Date(r.ts).toLocaleString()}</td>
-              <td class="uppercase text-[10px] text-[#00f0ff]">${r.type}</td>
-              <td>${r.label}<div class="text-mute">${r.detail}</div></td>
-              <td>Arc</td>
-              <td class="text-[#70ffba]">${r.status}</td>
-              <td><a class="text-[#00f0ff]" href="${ARC.explorer}/tx/${r.hash}" target="_blank" rel="noreferrer">${r.hash}</a></td>
+              <td class="uppercase text-[10px] text-[#00f0ff]">${escapeHtml(r.type)}</td>
+              <td>${escapeHtml(r.label)}<div class="text-mute">${escapeHtml(r.detail)}</div></td>
+              <td class="text-[#70ffba]">${escapeHtml(r.status)}</td>
+              <td class="text-[#00f0ff] break-all">${escapeHtml(typeof r.hash === "string" ? r.hash.slice(0, 18) + "…" : "—")}</td>
             </tr>`).join("")}
         </tbody>
-      </table>
+      </table>` : `<div class="px-3 py-8 text-[13px] text-mute">No signed tickets this session.</div>`}
     </div>
+  </main>`;
+}
+
+function proofView() {
+  const local = state.proof.local || [];
+  const live = state.proof.live?.rows || [];
+  const chainOk = !!state.proof.live?.chainOk;
+  const when = state.proof.checkedAt ? new Date(state.proof.checkedAt).toLocaleString() : "not run this session";
+  const row = (r) => `
+    <div class="flex gap-3 items-start border-b border-[#1F2430]/60 py-2">
+      <span class="tnum text-[11px] ${r.ok ? "text-[#70ffba]" : "text-[#ffb4ab]"}">${r.ok ? "PASS" : "FAIL"}</span>
+      <span class="text-[12px] text-[#e3e2e6]">${escapeHtml(r.detail)}</span>
+    </div>`;
+  return `
+  <main class="pt-14 min-h-screen px-4 py-4 max-w-5xl">
+    <div class="flex items-end justify-between gap-3">
+      <div>
+        <div class="font-display text-[16px]">Proof · re-query, do not screenshot</div>
+        <p class="text-[12px] text-mute mt-1">Live rows hit ${escapeHtml(ARC.rpc)}. Local rows are fail-closed unit checks in this process. Last run ${escapeHtml(when)}.</p>
+      </div>
+      <button data-act="proof" class="px-3 py-1.5 rounded bg-[#00F0FF] text-[#08090C] font-display text-[12px] font-bold">${state.proof.running ? "Querying…" : "Run proof"}</button>
+    </div>
+    <div class="mt-4 grid md:grid-cols-2 gap-3">
+      <section class="bg-[#0d0e11] rounded p-4">
+        <div class="font-display text-[12px] uppercase text-[#00f0ff]">Live Arc RPC</div>
+        <div class="mt-1 text-[12px] ${chainOk ? "text-[#70ffba]" : "text-[#F59E0B]"}">${chainOk ? "Chain ID matches 5042." : "Chain not confirmed this session."}</div>
+        <div class="mt-2">${live.length ? live.map(row).join("") : `<div class="text-[12px] text-mute py-3">Not queried yet.</div>`}</div>
+      </section>
+      <section class="bg-[#0d0e11] rounded p-4">
+        <div class="font-display text-[12px] uppercase text-[#00f0ff]">Negative proofs</div>
+        <div class="mt-1 text-[12px] text-mute">The desk must refuse garbage, not only accept the happy path.</div>
+        <div class="mt-2">${local.length ? local.map(row).join("") : `<div class="text-[12px] text-mute py-3">Not run yet.</div>`}</div>
+      </section>
+    </div>
+    <section class="mt-3 bg-[#0d0e11] rounded p-4">
+      <div class="font-display text-[12px] uppercase text-[#00f0ff]">Policy rubric</div>
+      <p class="text-[12px] text-mute mt-1">These gates are the same functions the Review button uses. They are not a hidden README claim.</p>
+      <div class="mt-3 grid md:grid-cols-2 gap-2">
+        ${POLICY.map((p) => `<div class="border border-[#1F2430] rounded p-3"><div class="text-[12px] text-white">${escapeHtml(p.title)}</div><div class="text-[12px] text-mute mt-1">${escapeHtml(p.rule)}</div></div>`).join("")}
+      </div>
+    </section>
+    <section class="mt-3 bg-[#0d0e11] rounded p-4">
+      <div class="font-display text-[12px] uppercase text-[#F59E0B]">Known limitations</div>
+      <ul class="mt-2 space-y-1 text-[12px] text-[#b9cacb] list-disc pl-4">
+        ${LIMITATIONS.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}
+      </ul>
+    </section>
   </main>`;
 }
 
@@ -1294,7 +1440,7 @@ function reviewModal() {
         <div class="flex items-start justify-between">
           <div>
             <div class="flex items-center gap-1 text-[#00f0ff]"><span class="material-symbols-outlined text-[18px]">verified_user</span><span class="font-display text-[18px] uppercase">Review & Confirm Trade</span></div>
-            <div class="text-[10px] uppercase tracking-wider text-mute mt-1">Verifiable Arc Network On-Chain Execution</div>
+            <div class="text-[10px] uppercase tracking-wider text-mute mt-1">EIP-712 ticket · no router broadcast</div>
           </div>
           <div class="text-[11px] px-2 py-0.5 rounded bg-[#292a2d]"><span class="w-2 h-2 inline-block rounded-full bg-[#01e599] animate-pulse mr-1"></span>Arc Mainnet · Chain ${ARC.chainId}</div>
         </div>
@@ -1310,7 +1456,7 @@ function reviewModal() {
         </div>
         <div class="mt-3 bg-[#1b1b1f] p-3 rounded text-[12px] grid grid-cols-2 gap-2">
           <div><div class="text-mute text-[11px]">Price impact</div><div class="tnum text-[#70ffba]">${fmt(q.impact*100,2)}%</div></div>
-          <div><div class="text-mute text-[11px]">Route</div><div>Arc AMM Core Router v1</div></div>
+          <div><div class="text-mute text-[11px]">Route</div><div>Ungated AMM not wired</div></div>
           <div><div class="text-mute text-[11px]">Contract</div><div class="text-[#00f0ff] font-mono">${ARC.router}</div></div>
           <div><div class="text-mute text-[11px]">Network gas</div><div class="tnum">${q.gasUsd} USDC</div></div>
         </div>
@@ -1381,6 +1527,11 @@ function alertsPanel() {
 function render() {
   const root = $("#app");
   if (!state.connected || state.wrongNetwork) {
+    if (state.view === "proof" && !state.wrongNetwork) {
+      root.innerHTML = `<div class="px-4 py-4"><button data-act="home" class="text-[12px] text-[#00F0FF]">← Back</button></div>` + proofView();
+      bind();
+      return;
+    }
     root.innerHTML = state.connected && state.wrongNetwork ? wrongNet() : landing();
     bind();
     return;
@@ -1391,6 +1542,7 @@ function render() {
     portfolio: portfolioView,
     ai: aiView,
     activity: activityView,
+    proof: proofView,
   }[state.view] || terminalView;
   root.innerHTML = header() + body();
   $("#modal-root").innerHTML = reviewModal() + executedModal() + searchModal() + alertsPanel();
@@ -1537,6 +1689,8 @@ function bind() {
   document.querySelectorAll("[data-act]").forEach((el) => el.addEventListener("click", () => {
     const a = el.dataset.act;
     if (a === "connect") connectInjected();
+    if (a === "proof") { state.view = "proof"; runProof(); }
+    if (a === "home") { state.view = "landing"; render(); }
     if (a === "switch-net") switchToArc();
     if (a === "disconnect") disconnectWallet(true);
     if (a === "search") { state.searchOpen = true; render(); }
