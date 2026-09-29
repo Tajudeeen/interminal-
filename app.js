@@ -162,9 +162,7 @@ const rnd = (seed) => {
   let s = seed % 2147483647;
   return () => (s = (s * 48271) % 2147483647) / 2147483647;
 };
-const shortHash = () =>
-  "0x" + Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join("") +
-  "…" + Array.from({ length: 4 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+// Pure deterministic utilities
 const now = () => Date.now();
 
 function toast(title, body, kind = "info") {
@@ -4239,18 +4237,18 @@ if (typeof document !== "undefined") {
   });
 
   setInterval(() => {
-    if (!state.connected || document.hidden) return;
-    loadChainHead();
-    state.latency = 9 + Math.floor(Math.random() * 8);
-    Object.values(PAIRS).forEach((p) => {
-      const tick = p.price * (Math.random() - 0.5) * 0.0008;
-      p.price = Math.max(0.0001, p.price + tick);
-    });
-    if (state.view === "terminal" && $("#main-chart") && state.candles.length && PAIRS[state.pair]) {
+    if (document.hidden) return;
+    if (state.connected) loadChainHead();
+    // Synchronize active candle with verified live pair price — no artificial random jitter
+    if (state.view === "terminal" && $("#main-chart") && state.candles?.length && PAIRS[state.pair]) {
+      const livePrice = PAIRS[state.pair].price;
       const last = state.candles[state.candles.length - 1];
-      last.close = PAIRS[state.pair].price;
-      last.high = Math.max(last.open, last.close);
-      last.low = Math.min(last.open, last.close);
+      if (last && Number.isFinite(livePrice) && livePrice > 0) {
+        last.close = livePrice;
+        last.high = Math.max(last.high, livePrice);
+        last.low = Math.min(last.low, livePrice);
+      }
+      state.indicators = computeIndicators(state.candles);
       drawChart($("#main-chart"), state.candles, state.indicators);
       updateOrderPreview();
     }

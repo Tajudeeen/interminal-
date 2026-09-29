@@ -556,6 +556,78 @@ test("decodeAbiString: correctly decodes ABI-encoded name() and raw symbol hex",
   assert.equal(parsed, 6, "decimals hex should parse to 6");
 });
 
+// --- SUITE 16: Mathematical Indicator Engine Integrity ---
+test("Indicator Engine: EMAs, RSI, MACD, and Swing Levels compute deterministically from price series", () => {
+  const computeIndicators = get("computeIndicators");
+  const generateCandles = get("generateCandles");
+  const analyzeMarket = get("analyzeMarket");
+
+  const candles = generateCandles("ETH/USDC", "4h", 120);
+  assert.equal(candles.length, 120, "Must produce 120 candles");
+
+  const lastCandle = candles[candles.length - 1];
+  assert.ok(Number.isFinite(lastCandle.close) && lastCandle.close > 0, "Last close must be positive finite");
+
+  const ind = computeIndicators(candles);
+  assert.ok(Number.isFinite(ind.ema20), "EMA 20 must be finite");
+  assert.ok(Number.isFinite(ind.ema50), "EMA 50 must be finite");
+  assert.ok(Number.isFinite(ind.ema200), "EMA 200 must be finite");
+  assert.ok(ind.rsi >= 0 && ind.rsi <= 100, `RSI must be bounded [0, 100], got ${ind.rsi}`);
+  assert.ok(Number.isFinite(ind.macdHist), "MACD Histogram must be finite");
+  assert.ok(ind.resistance >= ind.support, "Resistance must be >= Support");
+
+  // Verify support and resistance match rolling 30-bar extrema exactly
+  const last30 = candles.slice(-30);
+  const expectedHigh = Math.max(...last30.map((c) => c.high));
+  const expectedLow = Math.min(...last30.map((c) => c.low));
+  assert.equal(ind.resistance, expectedHigh, "Resistance must equal exact 30-bar swing high");
+  assert.equal(ind.support, expectedLow, "Support must equal exact 30-bar swing low");
+
+  // Verify AI analysis strictly reflects these calculated indicators without inventing numbers
+  const analysis = analyzeMarket();
+  if (analysis) {
+    assert.equal(analysis.support, ind.support, "AI analysis support must match computed indicator support");
+    assert.equal(analysis.resistance, ind.resistance, "AI analysis resistance must match computed indicator resistance");
+    const expectedTrend = PAIRS["ETH/USDC"].price > ind.ema20 && ind.ema20 > ind.ema50 ? "Bullish"
+      : PAIRS["ETH/USDC"].price < ind.ema20 && ind.ema20 < ind.ema50 ? "Bearish" : "Range";
+    assert.equal(analysis.trend, expectedTrend, "AI analysis trend must strictly follow deterministic rule");
+  }
+});
+
+// --- SUITE 17: Deterministic Risk & Portfolio Formulas ---
+test("Risk Engine: Concentration, Stable Buffer, and Size vs NAV are formulaic mathematical derivations", () => {
+  const riskMetrics = get("riskMetrics");
+  const portfolioSnapshot = get("portfolioSnapshot");
+  const analyzeTrade = get("analyzeTrade");
+  const quoteTrade = get("quoteTrade");
+
+  const snap = portfolioSnapshot();
+  const risk = riskMetrics();
+
+  assert.ok(Number.isFinite(risk.concentrationPct), "Concentration percentage must be finite");
+  assert.ok(Number.isFinite(risk.stablePct), "Stable buffer percentage must be finite");
+
+  // If there are holdings, concentration must equal largest position percentage
+  if (snap.largest) {
+    assert.equal(risk.concentrationPct, snap.largest.alloc, "Concentration must match largest asset allocation exactly");
+  }
+
+  // Stable buffer must equal sum of stablecoin allocations
+  const manualStables = snap.rows.filter(r => r.sym === "USDC" || r.sym === "EURC" || r.sym === "USYC").reduce((s, r) => s + r.alloc, 0);
+  assert.equal(risk.stablePct, manualStables, "Stable buffer must match exact sum of stablecoin weights");
+
+  // Trade analysis size vs NAV formula validation
+  const testQuote = quoteTrade({ side: "buy", amountUsd: 500, price: 2500, slippageBps: 50 });
+  const tradeAnalysis = analyzeTrade(testQuote);
+
+  assert.equal(tradeAnalysis.kind, "trade");
+  assert.equal(tradeAnalysis.tradeValue, 500);
+  assert.ok(Number.isFinite(tradeAnalysis.sizePct), "Size vs NAV must be finite");
+  assert.ok(Number.isFinite(tradeAnalysis.exposureAfter), "Post-trade exposure must be finite");
+  assert.ok(tradeAnalysis.impact > 0, "Price impact must be positive");
+  assert.ok(tradeAnalysis.note.length > 0, "AI trade note must narrate calculated metrics");
+});
+
 if (failed) {
   console.error("\n" + failed + " failed");
   process.exit(1);
