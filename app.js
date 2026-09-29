@@ -1424,6 +1424,8 @@ function applyTheme(t) {
   state.theme = t;
   if (typeof document !== "undefined") {
     document.documentElement.classList.toggle("dark", t === "dark");
+    document.body.style.background = t === "dark" ? "#0A0A0A" : "#FFFFFF";
+    document.body.style.color = t === "dark" ? "#F0F0F0" : "#0A0A0A";
     try { localStorage.setItem("interminal_theme", t); } catch {}
   }
 }
@@ -3722,6 +3724,44 @@ function bind() {
     if (a === "search") { state.searchOpen = true; render(); }
     if (a === "close-search") { state.searchOpen = false; render(); }
     if (a === "alerts") { state.alertsOpen = !state.alertsOpen; render(); }
+    if (a === "toggle-theme") { applyTheme(state.theme === "dark" ? "light" : "dark"); render(); return; }
+    if (a === "import-token" || a === "import-token-btn") { state.importTokenOpen = true; state.importTokenError = ""; render(); return; }
+    if (a === "close-import") { state.importTokenOpen = false; state.importTokenError = ""; render(); return; }
+    if (a === "import-token-inline") {
+      const inp = document.getElementById("import-addr-inline");
+      if (inp && inp.value.trim()) {
+        state.importTokenOpen = true;
+        state.importTokenError = "";
+        render();
+        setTimeout(() => {
+          const modal = document.getElementById("import-token-addr");
+          if (modal) modal.value = inp.value.trim();
+        }, 50);
+      }
+      return;
+    }
+    if (a === "do-import-token") {
+      const inp = document.getElementById("import-token-addr");
+      const addr = inp ? inp.value.trim() : "";
+      if (!isAddress(addr)) { state.importTokenError = "Enter a valid 0x address"; render(); return; }
+      state.importingToken = true;
+      state.importTokenError = "";
+      render();
+      importCustomArcToken(addr).then(({ pairKey, symbol, name }) => {
+        state.importingToken = false;
+        state.importTokenOpen = false;
+        toast("Token Imported", symbol + " (" + name + ") added to Arc markets", "ok");
+        state.pair = pairKey;
+        state.view = "terminal";
+        loadMarket();
+        render();
+      }).catch((err) => {
+        state.importingToken = false;
+        state.importTokenError = err.message || String(err);
+        render();
+      });
+      return;
+    }
     if (a === "pair-menu") { $("#pair-dd")?.classList.toggle("hidden"); }
     if (a === "ai-analyze") {
       if (!state.indicators) loadMarket();
