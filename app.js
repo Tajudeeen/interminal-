@@ -173,7 +173,7 @@ function toast(title, body, kind = "info") {
   const el = document.createElement("div");
   const accent = kind === "ok" ? "border-green-500 text-pos" : kind === "err" ? "border-red-500 text-neg" : "border-gray-400 text-sub";
   el.className = `pointer-events-auto w-full sm:w-80 max-w-sm card-themed border-themed ${accent.split(" ")[0]} border-l-2 p-3 rounded-card` + (state.theme === "dark" ? " shadow-invoice" : " shadow-invoice-lm");
-  el.innerHTML = `<div class="font-display text-[12px] uppercase tracking-wider ${accent.split(" ").slice(1).join(" ")}">${escapeHtml(title)}</div><div class="text-[12px] text-mute mt-1">${escapeHtml(body)}</div>`;
+  el.innerHTML = `<div class="font-display text-[12px] uppercase tracking-wider ${accent.split(" ").slice(1).join(" ")}">${escapeHtml(title)}</div><div class="text-[12px] text-muted mt-1">${escapeHtml(body)}</div>`;
   stack.appendChild(el);
   setTimeout(() => el.remove(), 4200);
 }
@@ -1919,37 +1919,35 @@ function logoSvg(h = 32) {
 }
 
 function footer() {
-  if (state.view === "landing") return "";
   const year = new Date().getFullYear();
   return `
-  <footer class="hidden md:block border-t" style="border-color:var(--border);background:var(--surface)">
-    <div class="max-w-[1080px] mx-auto px-5 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        ${logoSvg(20)}
+  <footer class="w-full border-t border-themed card-themed mt-10 mb-16 md:mb-0 transition-colors">
+    <div class="max-w-[1080px] mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+      <div class="flex items-center gap-3">
+        ${logoSvg(22)}
         <div>
-          <div class="font-mono text-[11px] font-semibold" style="color:var(--text)">INTERMINAL</div>
-          <div class="font-mono text-[10px]" style="color:var(--muted)">Arc-native trading terminal · Chain 5042</div>
+          <div class="font-mono text-[12px] font-bold text-themed">INTERMINAL</div>
+          <div class="font-mono text-[10px] text-mutedd">Arc-native trading terminal · Chain 5042</div>
         </div>
       </div>
-      <div class="flex flex-wrap items-center gap-6 font-mono text-[11px]" style="color:var(--muted)">
-        <a href="${ARC.explorer}/address/${ARC.settlement}" target="_blank" rel="noreferrer" class="hover:underline hover:opacity-80 transition">Settlement ↗</a>
-        <a href="https://github.com/Tajudeeen/interminal-" target="_blank" rel="noreferrer" class="hover:underline hover:opacity-80 transition">GitHub ↗</a>
-        <a href="${ARC.explorer}" target="_blank" rel="noreferrer" class="hover:underline hover:opacity-80 transition">Arc Explorer ↗</a>
-        <button data-nav="proof" class="hover:underline hover:opacity-80 transition text-left">Proof</button>
+      <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 font-mono text-[11px] text-mutedd">
+        <a href="${ARC.explorer}/address/${ARC.settlement}" target="_blank" rel="noreferrer" class="hover:text-themed hover:underline transition">Settlement ↗</a>
+        <a href="https://github.com/Tajudeeen/interminal-" target="_blank" rel="noreferrer" class="hover:text-themed hover:underline transition">GitHub ↗</a>
+        <a href="${ARC.explorer}" target="_blank" rel="noreferrer" class="hover:text-themed hover:underline transition">Arc Explorer ↗</a>
+        <button data-nav="proof" class="hover:text-themed hover:underline transition">Proof</button>
       </div>
-      <div class="text-right">
-        <div class="font-mono text-[10px]" style="color:var(--muted)">© ${year} Interminal</div>
-        <div class="font-mono text-[10px] flex items-center gap-1 justify-end mt-0.5" style="color:var(--muted)">
+      <div class="text-center sm:text-right">
+        <div class="font-mono text-[10px] text-mutedd">© ${year} Interminal Protocol</div>
+        <div class="font-mono text-[10px] flex items-center justify-center sm:justify-end gap-1.5 mt-0.5 text-mutedd">
           <span class="w-1.5 h-1.5 rounded-full ${state.marketFeedStatus?.live ? 'bg-green-500 animate-pulse' : 'bg-gray-500'} inline-block"></span>
-          ${state.marketFeedStatus?.live ? 'DEX feed live' : 'DEX feed offline'}
-          <span class="opacity-40 mx-1">·</span>
-          14 security gates · Zero key custody
+          <span>${state.marketFeedStatus?.live ? 'DEX Feed Live' : 'DEX Feed Offline'}</span>
+          <span class="opacity-40">·</span>
+          <span>14 Security Gates · Zero Key Custody</span>
         </div>
       </div>
     </div>
   </footer>`;
 }
-
 function bottomNav() {
   const nav = [
     { id: "terminal",  icon: "candlestick_chart",    label: "Terminal"  },
@@ -1959,22 +1957,21 @@ function bottomNav() {
     { id: "activity",  icon: "history",               label: "Activity"  },
   ];
   return `
-  <nav class="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-bottom" style="background:var(--surface);border-top:1px solid var(--border);backdrop-filter:blur(12px)">
-    <div class="flex items-center justify-around px-1 py-2">
+  <nav class="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-bottom pill-bar shadow-xl transition-colors">
+    <div class="flex items-center justify-around px-1 py-1.5">
       ${nav.map(({ id, icon, label }) => `
-        <button data-nav="${id}" class="flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-card transition-colors ${state.view === id ? '' : 'opacity-50 hover:opacity-75'}" style="${state.view === id ? 'color:var(--text)' : 'color:var(--muted)'}">
+        <button data-nav="${id}" class="flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 rounded-card transition-colors ${state.view === id ? 'text-themed font-bold' : 'text-mutedd hover:text-themed'}">
           <span class="material-symbols-outlined text-[20px]">${icon}</span>
-          <span class="text-[9px] font-display font-semibold tracking-tight">${label}</span>
+          <span class="text-[9px] font-display tracking-tight">${label}</span>
         </button>
       `).join("")}
-      <button data-act="toggle-theme" class="flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-card opacity-50 hover:opacity-75 transition-colors" style="color:var(--muted)">
+      <button data-act="toggle-theme" class="flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 rounded-card text-mutedd hover:text-themed transition-colors">
         <span class="material-symbols-outlined text-[20px]">${state.theme === "dark" ? "light_mode" : "dark_mode"}</span>
-        <span class="text-[9px] font-display font-semibold tracking-tight">${state.theme === "dark" ? "Light" : "Dark"}</span>
+        <span class="text-[9px] font-display tracking-tight">${state.theme === "dark" ? "Light" : "Dark"}</span>
       </button>
     </div>
   </nav>`;
 }
-
 function header() {
   const p = portfolioSnapshot();
   const navItems = [
@@ -2001,14 +1998,14 @@ function header() {
           <div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-pill card-themed border border-themed">
             <span class="w-1.5 h-1.5 rounded-full ${state.livePortfolio ? 'bg-green-500' : 'bg-gray-500'} ${state.livePortfolio ? 'animate-pulse' : ''}"></span>
             <span class="font-mono text-[10px] ${statusColor} tracking-wider font-semibold">${statusLabel}</span>
-            <span class="font-mono text-[10px] text-muted tnum">#${state.block.toLocaleString()}</span>
+            <span class="font-mono text-[10px] text-mutedd tnum">#${state.block.toLocaleString()}</span>
           </div>
         </div>
 
         <!-- Pill navigation -->
         <nav class="hidden md:flex items-center gap-0.5 card-themed rounded-pill px-1 py-1 border border-themed">
           ${navItems.map(({ id, label }) => `
-            <button data-nav="${id}" class="px-3 py-1 text-[12px] font-display font-semibold rounded-pill transition-all ${state.view === id ? 'pill-nav-active shadow-sm' : 'text-muted hover:text-themed hover:bg-themed/50'}">${label}</button>
+            <button data-nav="${id}" class="px-3 py-1 text-[12px] font-display font-semibold rounded-pill transition-all ${state.view === id ? 'pill-nav-active shadow-sm' : 'text-mutedd hover:text-themed hover:bg-themed/50'}">${label}</button>
           `).join("")}
         </nav>
 
@@ -2016,11 +2013,11 @@ function header() {
         <div class="flex items-center gap-1.5 shrink-0">
           <!-- Live ticker -->
           <div class="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-pill card-themed border border-themed tnum text-[11px]">
-            <span class="text-muted">ETH</span>
+            <span class="text-mutedd">ETH</span>
             <span class="font-mono font-semibold">${fmtUsd(PAIRS["ETH/USDC"].price)}</span>
             <span class="${PAIRS["ETH/USDC"].change >= 0 ? 'text-pos' : 'text-neg'}">${fmtPct(PAIRS["ETH/USDC"].change)}</span>
-            <span class="text-muted opacity-40">|</span>
-            <span class="text-muted">ARC</span>
+            <span class="text-mutedd opacity-40">|</span>
+            <span class="text-mutedd">ARC</span>
             <span class="font-mono font-semibold">${fmtUsd(PAIRS["ARC/USDC"].price)}</span>
             <span class="${PAIRS["ARC/USDC"].change >= 0 ? 'text-pos' : 'text-neg'}">${fmtPct(PAIRS["ARC/USDC"].change)}</span>
           </div>
@@ -2039,7 +2036,7 @@ function header() {
           <!-- Alerts -->
           <button data-act="alerts" class="relative p-1.5 rounded-pill card-themed border border-themed text-sub hover:text-themed transition-colors">
             <span class="material-symbols-outlined text-[17px]">notifications</span>
-            ${state.alerts.length ? `<span class="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-red-600 text-[8px] flex items-center justify-center text-white font-bold">${state.alerts.length}</span>` : ""}
+            ${state.alerts.length ? `<span class="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-red-600 text-[8px] flex items-center justify-center text-themed font-bold">${state.alerts.length}</span>` : ""}
           </button>
 
           <!-- Theme toggle -->
@@ -2052,7 +2049,7 @@ function header() {
             <span class="w-1.5 h-1.5 rounded-full ${state.livePortfolio ? 'bg-green-500 animate-pulse' : 'bg-gray-500'} shrink-0"></span>
             <span class="hidden sm:inline font-mono text-[10px] text-sub uppercase">${state.livePortfolio ? "Live" : "Demo"}</span>
             <a class="font-mono text-[10px] hover:underline truncate max-w-[72px]" href="${ARC.explorer}/address/${state.address}" target="_blank" rel="noreferrer">${shortAddr(state.address)}</a>
-            ${state.livePortfolio ? `<span class="hidden sm:inline font-mono text-muted text-[10px] tnum">${fmtUsd(p.total)}</span>` : ""}
+            ${state.livePortfolio ? `<span class="hidden sm:inline font-mono text-mutedd text-[10px] tnum">${fmtUsd(p.total)}</span>` : ""}
           </div>
 
           ${!state.livePortfolio ? `
@@ -2155,8 +2152,92 @@ function landing() {
         }).join("")}
       </div>
     </div>
-  </div>
-  ${footer()}`;
+  </div>`;
+}
+
+function wrongNet() {
+  return `
+  <div class="min-h-screen flex items-center justify-center px-4 surface-themed text-themed">
+    <div class="card-themed border border-themed p-8 rounded-panel max-w-sm text-center shadow-lg">
+      <div class="font-display font-bold text-lg">Wrong network</div>
+      <p class="text-sub text-sm mt-2">Interminal requires Arc mainnet. Connected account ${shortAddr(state.address)} is on chain ${state.chainId ?? "unknown"}.</p>
+      <button data-act="switch-net" class="mt-6 px-6 py-2 rounded-pill font-display font-bold text-sm" style="background:var(--text);color:var(--bg)">Switch to Arc</button>
+      <button data-act="disconnect" class="mt-3 block mx-auto text-[12px] text-mutedd hover:underline">Disconnect</button>
+    </div>
+  </div>`;
+}
+
+function renderOrderPreviewContent() {
+  const pair = PAIRS[state.pair] || PAIRS["ETH/USDC"];
+  let quote;
+  try {
+    quote = quoteTrade({ side: state.side, amountUsd: state.amount, price: pair.price, slippageBps: state.slippage * 100 });
+  } catch {
+    quote = { received: 0, effective: pair.price, impact: 0, minReceived: 0, gasUsd: 0.0012 };
+  }
+  const isBuy = state.side === "buy";
+  const receivedLabel = isBuy ? pair.base : "USDC";
+  const receivedAmt = quote.received;
+
+  let balanceCheckHtml = "";
+  if (isBuy) {
+    const jit = calculateJitUnwind({
+      tradeAmountUsd: state.amount,
+      liquidUsdc: state.balances.USDC || 0,
+      usycBalance: state.balances.USYC || 0,
+      slippageBps: state.slippage * 100,
+    });
+    if (jit.needed && jit.canCover) {
+      balanceCheckHtml = `
+        <div class="flex justify-between items-center bg-blue-500/10 border border-blue-500/30 px-2.5 py-1.5 rounded-card text-[11px] text-blue-400">
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">swap_calls</span>JIT USYC Bridge</span>
+          <span class="font-mono font-semibold">Redeem ${fmt(jit.usycToRedeem, 2)} USYC</span>
+        </div>`;
+    } else if (jit.needed && !jit.canCover) {
+      balanceCheckHtml = `
+        <div class="flex justify-between items-center bg-red-500/10 border border-red-500/30 px-2.5 py-1.5 rounded-card text-[11px] text-neg">
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">warning</span>Insufficient Total Liquid</span>
+          <span class="font-mono font-semibold">Deficit ${fmt(jit.deficit - (state.balances.USYC || 0), 2)}</span>
+        </div>`;
+    }
+  } else {
+    const baseBal = state.balances[pair.base] || 0;
+    const reqBase = state.amount / (pair.price || 1);
+    if (baseBal < reqBase * 0.999) {
+      balanceCheckHtml = `
+        <div class="flex justify-between items-center bg-red-500/10 border border-red-500/30 px-2.5 py-1.5 rounded-card text-[11px] text-neg">
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">warning</span>Insufficient ${pair.base}</span>
+          <span class="font-mono font-semibold">Have ${fmt(baseBal, 3)} / Need ${fmt(reqBase, 3)}</span>
+        </div>`;
+    }
+  }
+
+  let fxHtml = "";
+  if (state.pair === "EURC/USDC") {
+    const fx = calculateFxParity(pair.price);
+    fxHtml = `
+      <div class="flex justify-between text-[11px] card-themed border border-themed px-2.5 py-1.5 rounded-card">
+        <span class="text-mutedd">FX Rate</span>
+        <span class="font-mono font-semibold text-themed">${pair.price.toFixed(4)} EUR/USD (${fx.pipsFromParity >= 0 ? "+" : ""}${fx.pipsFromParity} pips)</span>
+      </div>`;
+  }
+
+  return `
+    ${fxHtml}
+    <div class="flex justify-between text-[12px]"><span class="text-mutedd">Est. received</span><span class="font-mono font-bold text-themed">${fmt(receivedAmt, isBuy ? 5 : 2)} ${receivedLabel}</span></div>
+    <div class="flex justify-between text-[12px]"><span class="text-mutedd">Rate</span><span class="font-mono text-themed">1 ${pair.base} = ${fmtUsd(quote.effective)}</span></div>
+    <div class="flex justify-between text-[12px]"><span class="text-mutedd">Price impact</span><span class="font-mono ${quote.impact < 0.005 ? "text-pos" : "text-warn"}">${fmt(quote.impact * 100, 2)}%</span></div>
+    <div class="flex justify-between text-[12px]"><span class="text-mutedd">Min received</span><span class="font-mono text-themed">${fmt(quote.minReceived, isBuy ? 5 : 2)} ${receivedLabel}</span></div>
+    <div class="flex justify-between text-[12px]"><span class="text-mutedd">Native gas</span><span class="font-mono text-sub">${quote.gasUsd} USDC</span></div>
+    ${balanceCheckHtml}
+  `;
+}
+
+function updateOrderPreview() {
+  const el = $("#order-preview");
+  if (el) el.innerHTML = renderOrderPreviewContent();
+  const slipVal = $("#slip-val");
+  if (slipVal) slipVal.textContent = state.slippage + "%";
 }
 
 function terminalView() {
@@ -2168,42 +2249,42 @@ function terminalView() {
   const receivedAmt = state.side === "buy" ? quote.received : state.amount * (1 - quote.impact);
   const a = state.analysis;
   return `
-  <main class="pt-14 pb-20 md:pb-4 min-h-screen">
-    <section class="px-2 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 sm:gap-3 border-b border-[#1F2430] bg-[#0d0e11]">
+  <main class="pt-20 sm:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4">
+    <section class="px-2 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 sm:gap-3 border-b border-themed surface-themed border border-themed">
       <div class="flex items-center gap-2 sm:gap-6 flex-wrap">
         <div class="relative">
-          <button data-act="pair-menu" class="flex items-center gap-2 bg-[#1b1b1f] hover:bg-[#1f1f23] px-2.5 sm:px-3 py-1.5 rounded">
-            <span class="w-6 h-6 rounded-full bg-[#00f0ff]/15 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[15px] text-[#00f0ff]">currency_exchange</span></span>
+          <button data-act="pair-menu" class="flex items-center gap-2 card-themed border border-themed hover:card-themed border border-themed px-2.5 sm:px-3 py-1.5 rounded">
+            <span class="w-6 h-6 rounded-full bg-[#00f0ff]/15 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[15px] text-themed font-semibold">currency_exchange</span></span>
             <div class="text-left">
               <div class="flex items-center gap-1.5">
                 <span class="font-display font-semibold text-[13px] sm:text-[14px]">${state.pair}</span>
-                <span class="text-[10px] px-1 bg-[#00f0ff]/15 text-[#00f0ff] rounded">${state.pair==="EURC/USDC"?"FX SPOT":"ARC SPOT"}</span>
-                <span class="material-symbols-outlined text-[14px] text-mute">expand_more</span>
+                <span class="text-[10px] px-1 bg-[#00f0ff]/15 text-themed font-semibold rounded">${state.pair==="EURC/USDC"?"FX SPOT":"ARC SPOT"}</span>
+                <span class="material-symbols-outlined text-[14px] text-muted">expand_more</span>
               </div>
-              <div class="text-[10px] uppercase tracking-wider text-mute">Arc Native Liquidity Hub</div>
+              <div class="text-[10px] uppercase tracking-wider text-muted">Arc Native Liquidity Hub</div>
             </div>
           </button>
-          <div id="pair-dd" class="hidden absolute left-0 top-full mt-1 w-72 bg-[#292a2d] rounded shadow-xl py-1 z-50">
-            <div class="px-3 py-1 text-[10px] uppercase text-mute">Switch Arc Market</div>
+          <div id="pair-dd" class="hidden absolute left-0 top-full mt-1 w-72 card-themed border border-themed rounded shadow-xl py-1 z-50">
+            <div class="px-3 py-1 text-[10px] uppercase text-muted">Switch Arc Market</div>
             ${Object.entries(PAIRS).map(([k, v]) => `
-              <button data-pair="${k}" class="w-full flex items-center justify-between px-3 py-1.5 tnum text-[12px] hover:bg-[#1f1f23] ${k===state.pair?"text-[#00f0ff] bg-[#1f1f23]":""}">
+              <button data-pair="${k}" class="w-full flex items-center justify-between px-3 py-1.5 tnum text-[12px] hover:card-themed border border-themed ${k===state.pair?"text-themed font-semibold card-themed border border-themed":""}">
                 <span>${k}</span><span class="${v.change>=0?"text-pos":"text-neg"}">${fmtUsd(v.price)} (${fmtPct(v.change)})</span>
               </button>`).join("")}
           </div>
         </div>
         <div class="flex items-baseline gap-2">
-          <span class="tnum text-[18px] sm:text-[22px] font-bold text-[#00f0ff]">${state.pair==="EURC/USDC" ? pair.price.toFixed(4) : fmtUsd(pair.price)}</span>
-          <span class="tnum text-[11px] sm:text-[12px] ${pair.change>=0?"text-pos":"text-neg"}">${fmtPct(pair.change)} <span class="text-mute hidden sm:inline">(${pair.change>=0?"+":""}${fmtUsd(pair.price*pair.change/100)})</span></span>
+          <span class="tnum text-[18px] sm:text-[22px] font-bold text-themed font-semibold">${state.pair==="EURC/USDC" ? pair.price.toFixed(4) : fmtUsd(pair.price)}</span>
+          <span class="tnum text-[11px] sm:text-[12px] ${pair.change>=0?"text-pos":"text-neg"}">${fmtPct(pair.change)} <span class="text-muted hidden sm:inline">(${pair.change>=0?"+":""}${fmtUsd(pair.price*pair.change/100)})</span></span>
         </div>
         <div class="hidden xl:flex items-center gap-6 tnum text-[12px]">
-          <div><div class="text-[10px] uppercase text-mute">24h High</div><div>${state.pair==="EURC/USDC"?pair.high.toFixed(4):fmtUsd(pair.high)}</div></div>
-          <div><div class="text-[10px] uppercase text-mute">24h Low</div><div>${state.pair==="EURC/USDC"?pair.low.toFixed(4):fmtUsd(pair.low)}</div></div>
-          <div><div class="text-[10px] uppercase text-mute">24h Volume</div><div>${fmtUsd(pair.vol/1e6)}M USDC</div></div>
-          <div><div class="text-[10px] uppercase text-mute">Arc Liquidity</div><div class="text-themed">${fmtUsd(pair.tvl/1e6)}M</div></div>
+          <div><div class="text-[10px] uppercase text-muted">24h High</div><div>${state.pair==="EURC/USDC"?pair.high.toFixed(4):fmtUsd(pair.high)}</div></div>
+          <div><div class="text-[10px] uppercase text-muted">24h Low</div><div>${state.pair==="EURC/USDC"?pair.low.toFixed(4):fmtUsd(pair.low)}</div></div>
+          <div><div class="text-[10px] uppercase text-muted">24h Volume</div><div>${fmtUsd(pair.vol/1e6)}M USDC</div></div>
+          <div><div class="text-[10px] uppercase text-muted">Arc Liquidity</div><div class="text-themed">${fmtUsd(pair.tvl/1e6)}M</div></div>
         </div>
       </div>
-      <div class="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-mute">
-        <span class="w-1.5 h-1.5 rounded-full bg-[#01e599]"></span> Oracle: <span class="text-[#00f0ff] font-mono">${state.pair==="EURC/USDC"?"ECB Implied · Pyth V2":"Pyth V2 · Sub-sec"}</span>
+      <div class="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-muted">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#01e599]"></span> Oracle: <span class="text-themed font-semibold font-mono">${state.pair==="EURC/USDC"?"ECB Implied · Pyth V2":"Pyth V2 · Sub-sec"}</span>
       </div>
     </section>
 
@@ -2212,88 +2293,88 @@ function terminalView() {
       return `
       <div class="px-2 sm:px-4 py-2 bg-[#00f0ff]/5 border-b border-[#00f0ff]/20 flex flex-wrap items-center justify-between gap-2 text-[11px]">
         <div class="flex items-center gap-2">
-          <span class="px-1.5 py-0.5 rounded bg-[#00f0ff]/20 text-[#00f0ff] font-bold text-[10px]">INSTITUTIONAL FX CORRIDOR</span>
-          <span class="text-white font-mono font-semibold">${pair.price.toFixed(4)} EUR/USD</span>
-          <span class="text-mute">Spread: <span class="text-pos">${fx.pipSpread} pips</span></span>
-          <span class="text-mute">Parity delta: <span class="${fx.pipsFromParity>=0?"text-pos":"text-neg"}">${fx.pipsFromParity>=0?"+":""}${fx.pipsFromParity} pips</span></span>
+          <span class="px-1.5 py-0.5 rounded bg-[#00f0ff]/20 text-themed font-semibold font-bold text-[10px]">INSTITUTIONAL FX CORRIDOR</span>
+          <span class="text-themed font-mono font-semibold">${pair.price.toFixed(4)} EUR/USD</span>
+          <span class="text-muted">Spread: <span class="text-pos">${fx.pipSpread} pips</span></span>
+          <span class="text-muted">Parity delta: <span class="${fx.pipsFromParity>=0?"text-pos":"text-neg"}">${fx.pipsFromParity>=0?"+":""}${fx.pipsFromParity} pips</span></span>
         </div>
-        <div class="flex items-center gap-4 text-mute">
-          <span>ECB: <strong class="text-white">3.50%</strong> vs Fed: <strong class="text-white">5.25%</strong></span>
+        <div class="flex items-center gap-4 text-muted">
+          <span>ECB: <strong class="text-themed">3.50%</strong> vs Fed: <strong class="text-themed">5.25%</strong></span>
           <span class="text-pos font-semibold">+175 bps USD Carry Advantage</span>
         </div>
       </div>`;
     })() : ""}
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-1 p-1">
-      <section class="lg:col-span-8 bg-[#0d0e11] rounded overflow-hidden flex flex-col">
-        <div class="px-2 sm:px-3 py-1.5 bg-[#1b1b1f] flex flex-wrap items-center justify-between gap-2 border-b border-[#343538]/40">
+      <section class="lg:col-span-8 surface-themed border border-themed rounded overflow-hidden flex flex-col">
+        <div class="px-2 sm:px-3 py-1.5 card-themed border border-themed flex flex-wrap items-center justify-between gap-2 border-b border-themed/40">
           <div class="flex items-center gap-1 overflow-x-auto max-w-full pb-0.5 sm:pb-0">
-            ${["1m","5m","15m","1h","4h","1D"].map((tf) => `<button data-tf="${tf}" class="px-2 py-0.5 text-[11px] rounded ${state.timeframe===tf?"bg-[#00f0ff] text-[#00363a] font-bold":"text-mute hover:text-white"}">${tf}</button>`).join("")}
+            ${["1m","5m","15m","1h","4h","1D"].map((tf) => `<button data-tf="${tf}" class="px-2 py-0.5 text-[11px] rounded ${state.timeframe===tf?"bg-[#00f0ff] text-[#00363a] font-bold":"text-muted hover:text-themed"}">${tf}</button>`).join("")}
             <span class="w-px h-4 bg-[#343538] mx-1"></span>
-            ${[["candles","candlestick_chart","Candles"],["line","show_chart","Line"]].map(([id,ic,lb]) => `<button data-mode="${id}" class="flex items-center gap-1 px-2 py-0.5 text-[11px] rounded ${state.chartMode===id?"bg-[#1f1f23] text-[#00f0ff]":"text-mute"}"><span class="material-symbols-outlined text-[14px]">${ic}</span><span class="hidden sm:inline">${lb}</span></button>`).join("")}
+            ${[["candles","candlestick_chart","Candles"],["line","show_chart","Line"]].map(([id,ic,lb]) => `<button data-mode="${id}" class="flex items-center gap-1 px-2 py-0.5 text-[11px] rounded ${state.chartMode===id?"card-themed border border-themed text-themed font-semibold":"text-muted"}"><span class="material-symbols-outlined text-[14px]">${ic}</span><span class="hidden sm:inline">${lb}</span></button>`).join("")}
           </div>
-          <button data-act="ai-analyze" class="flex items-center gap-1.5 px-2.5 py-1 bg-[#292a2d] hover:bg-[#38393d] rounded text-[#00f0ff] text-[12px] sm:text-[13px] font-display font-semibold">
+          <button data-act="ai-analyze" class="flex items-center gap-1.5 px-2.5 py-1 card-themed border border-themed hover:bg-[#38393d] rounded text-themed font-semibold text-[12px] sm:text-[13px] font-display font-semibold">
             <span class="material-symbols-outlined text-[16px]">auto_awesome</span> AI Analyze
             <span class="text-[9px] uppercase tracking-widest px-1 bg-[#00f0ff]/20 rounded hidden sm:inline">Sync: Fresh</span>
           </button>
         </div>
-        <div class="px-2 sm:px-3 py-1 flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 tnum text-[10px] sm:text-[11px] border-b border-[#343538]/20">
-          <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-[#00f0ff]"></span><span class="text-mute">EMA 20:</span><span class="text-[#00f0ff]">${fmtUsd(ind.ema20)}</span></span>
-          <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-purple-400"></span><span class="text-mute">EMA 50:</span><span class="text-purple-300">${fmtUsd(ind.ema50)}</span></span>
-          <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-[#64748B]"></span><span class="text-mute">EMA 200:</span><span class="text-mute">${fmtUsd(ind.ema200)}</span></span>
-          <span class="text-mute">RSI (14): <span class="text-pos font-semibold">${fmt(ind.rsi,2)}</span></span>
-          <span class="text-mute">MACD hist: <span class="${ind.macdHist>=0?"text-pos":"text-neg"}">${fmt(ind.macdHist,2)}</span></span>
+        <div class="px-2 sm:px-3 py-1 flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 tnum text-[10px] sm:text-[11px] border-b border-themed/20">
+          <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-[#00f0ff]"></span><span class="text-muted">EMA 20:</span><span class="text-themed font-semibold">${fmtUsd(ind.ema20)}</span></span>
+          <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-purple-400"></span><span class="text-muted">EMA 50:</span><span class="text-purple-300">${fmtUsd(ind.ema50)}</span></span>
+          <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-[#64748B]"></span><span class="text-muted">EMA 200:</span><span class="text-muted">${fmtUsd(ind.ema200)}</span></span>
+          <span class="text-muted">RSI (14): <span class="text-pos font-semibold">${fmt(ind.rsi,2)}</span></span>
+          <span class="text-muted">MACD hist: <span class="${ind.macdHist>=0?"text-pos":"text-neg"}">${fmt(ind.macdHist,2)}</span></span>
         </div>
         <div class="relative h-[280px] sm:h-[350px] lg:h-[420px]">
           <canvas id="main-chart" class="absolute inset-0 w-full h-full"></canvas>
         </div>
-        <div class="px-3 py-2 border-t border-[#1F2430] bg-[#0d0e11]">
+        <div class="px-3 py-2 border-t border-themed surface-themed border border-themed">
           ${a ? `
           <div class="keyline pl-3">
             <div class="flex items-center justify-between">
               <div class="font-display text-[11px] tracking-wider text-[#00F0FF]">AI ANALYSIS · ${a.pair} ${a.timeframe.toUpperCase()}</div>
-              <button data-act="apply-levels" class="text-[11px] text-[#00f0ff] hover:underline">Apply levels to chart</button>
+              <button data-act="apply-levels" class="text-[11px] text-themed font-semibold hover:underline">Apply levels to chart</button>
             </div>
             <p class="text-[13px] mt-1 text-themed">${a.setup}</p>
             <div class="mt-2 grid grid-cols-2 md:grid-cols-6 gap-2 tnum text-[11px]">
-              <div><div class="text-mute uppercase text-[10px]">Trend</div><div class="text-pos">${a.trend}</div></div>
-              <div><div class="text-mute uppercase text-[10px]">Momentum</div><div>${a.momentum}</div></div>
-              <div><div class="text-mute uppercase text-[10px]">Support</div><div>${fmtUsd(a.support)}</div></div>
-              <div><div class="text-mute uppercase text-[10px]">Resistance</div><div>${fmtUsd(a.resistance)}</div></div>
-              <div><div class="text-mute uppercase text-[10px]">Invalidation</div><div class="text-[#F59E0B]">${fmtUsd(a.invalidation)}</div></div>
-              <div><div class="text-mute uppercase text-[10px]">Risk</div><div>${a.risk}</div></div>
+              <div><div class="text-muted uppercase text-[10px]">Trend</div><div class="text-pos">${a.trend}</div></div>
+              <div><div class="text-muted uppercase text-[10px]">Momentum</div><div>${a.momentum}</div></div>
+              <div><div class="text-muted uppercase text-[10px]">Support</div><div>${fmtUsd(a.support)}</div></div>
+              <div><div class="text-muted uppercase text-[10px]">Resistance</div><div>${fmtUsd(a.resistance)}</div></div>
+              <div><div class="text-muted uppercase text-[10px]">Invalidation</div><div class="text-[#F59E0B]">${fmtUsd(a.invalidation)}</div></div>
+              <div><div class="text-muted uppercase text-[10px]">Risk</div><div>${a.risk}</div></div>
             </div>
-          </div>` : `<div class="text-[12px] text-mute">Click <span class="text-[#00f0ff]">AI Analyze</span> to bind structure, support and invalidation to the live candle set. Numbers come from the market engine — the model only interprets them.</div>`}
+          </div>` : `<div class="text-[12px] text-muted">Click <span class="text-themed font-semibold">AI Analyze</span> to bind structure, support and invalidation to the live candle set. Numbers come from the market engine — the model only interprets them.</div>`}
         </div>
       </section>
 
-      <aside class="lg:col-span-4 bg-[#0d0e11] rounded p-3 flex flex-col gap-3">
+      <aside class="lg:col-span-4 surface-themed border border-themed rounded p-3 flex flex-col gap-3">
         <div class="flex items-center justify-between">
           <span class="font-display text-[13px] uppercase tracking-wide">Order panel</span>
-          <span class="tnum text-[11px] text-mute">NAV ${fmtUsd(p.total)}</span>
+          <span class="tnum text-[11px] text-muted">NAV ${fmtUsd(p.total)}</span>
         </div>
-        <div class="grid grid-cols-2 p-0.5 bg-[#121316] rounded">
-          <button data-side="buy" class="py-1.5 text-[13px] font-display font-semibold rounded ${state.side==="buy"?"bg-[#00E599] text-[#08090C]":"text-mute"}">Buy</button>
-          <button data-side="sell" class="py-1.5 text-[13px] font-display font-semibold rounded ${state.side==="sell"?"bg-[#FF3B57] text-white":"text-mute"}">Sell</button>
+        <div class="grid grid-cols-2 p-0.5 card-themed rounded">
+          <button data-side="buy" class="py-1.5 text-[13px] font-display font-semibold rounded ${state.side==="buy"?"bg-[#00E599] text-[#08090C]":"text-muted"}">Buy</button>
+          <button data-side="sell" class="py-1.5 text-[13px] font-display font-semibold rounded ${state.side==="sell"?"bg-[#FF3B57] text-themed":"text-muted"}">Sell</button>
         </div>
-        <div class="text-[11px] text-mute uppercase">Market</div>
+        <div class="text-[11px] text-muted uppercase">Market</div>
         <div>
-          <div class="flex items-center justify-between text-[11px] text-mute mb-1">
+          <div class="flex items-center justify-between text-[11px] text-muted mb-1">
             <span>${state.side === "buy" ? "Spend (USDC)" : "Sell (" + pair.base + " in USD)"}</span>
             <span>${state.side === "buy" ? "Bal " + fmt(state.balances.USDC) + " USDC" : "Bal " + fmt(state.balances[pair.base] || 0, 4) + " " + pair.base + " (" + fmtUsd((state.balances[pair.base] || 0) * pair.price) + ")"}</span>
           </div>
-          <input id="amt" type="number" value="${state.amount}" class="w-full bg-[#0D0F14] border border-[#1F2430] focus:border-[#00F0FF] outline-none rounded px-2 py-1.5 tnum text-right text-[14px]" />
-          <div class="flex gap-1 mt-1">${[100,250,500,1000].map((n)=>`<button data-amt="${n}" class="flex-1 text-[11px] py-0.5 rounded bg-[#1b1b1f] hover:bg-[#292a2d] tnum">${n}</button>`).join("")}<button data-amt="max" class="flex-1 text-[11px] py-0.5 rounded bg-[#1b1b1f]">MAX</button></div>
+          <input id="amt" type="number" value="${state.amount}" class="w-full bg-[#0D0F14] border border-themed focus:border-[#00F0FF] outline-none rounded px-2 py-1.5 tnum text-right text-[14px]" />
+          <div class="flex gap-1 mt-1">${[100,250,500,1000].map((n)=>`<button data-amt="${n}" class="flex-1 text-[11px] py-0.5 rounded card-themed border border-themed hover:card-themed border border-themed tnum">${n}</button>`).join("")}<button data-amt="max" class="flex-1 text-[11px] py-0.5 rounded card-themed border border-themed">MAX</button></div>
         </div>
         <div>
-          <div class="flex items-center justify-between text-[11px] text-mute mb-1"><span>Slippage</span><span id="slip-val" class="tnum">${state.slippage}%</span></div>
+          <div class="flex items-center justify-between text-[11px] text-muted mb-1"><span>Slippage</span><span id="slip-val" class="tnum">${state.slippage}%</span></div>
           <input id="slip" type="range" min="0.1" max="2" step="0.1" value="${state.slippage}" class="w-full accent-[#00F0FF]" />
         </div>
-        <div id="order-preview" class="bg-[#121316] rounded p-2 tnum text-[12px] space-y-1">
+        <div id="order-preview" class="card-themed rounded p-2 tnum text-[12px] space-y-1">
           ${renderOrderPreviewContent()}
         </div>
-        <button data-act="review" class="w-full py-2.5 rounded ${state.side==="buy"?"bg-[#00E599] text-[#08090C]":"bg-[#FF3B57] text-white"} font-display font-bold text-[13px]">Review trade</button>
-        <div class="text-[10px] text-mute leading-relaxed">AI recommends. Trading engine validates. Wallet authorizes. Arc executes. No private keys leave the wallet.</div>
+        <button data-act="review" class="w-full py-2.5 rounded ${state.side==="buy"?"bg-[#00E599] text-[#08090C]":"bg-[#FF3B57] text-themed"} font-display font-bold text-[13px]">Review trade</button>
+        <div class="text-[10px] text-muted leading-relaxed">AI recommends. Trading engine validates. Wallet authorizes. Arc executes. No private keys leave the wallet.</div>
       </aside>
     </div>
   </main>`;
@@ -2320,10 +2401,10 @@ function marketsView() {
         ["24h Aggregate Vol",  "$142.80M", "+12.4%",  "text-paid"],
         ["AMM Median Gas",    "0.0008 USDC","0.8s",  "text-electric"],
         ["Market Regime",     "68/100",   "Expansion","text-paid"],
-        ["Cross-Pool Depth",  "$84.20M",  "Native L1","text-fog"],
+        ["Cross-Pool Depth",  "$84.20M",  "Native L1","text-muted"],
       ].map(([l,v,s,sc], idx) => `
-        <div class="bg-snow border border-mist rounded-card p-3 card-hover ${idx===4?"col-span-2 sm:col-span-1":""}">
-          <div class="text-fog font-mono text-[10px] uppercase tracking-wider">${l}</div>
+        <div class="card-themed border border-themed rounded-card p-3 card-hover ${idx===4?"col-span-2 sm:col-span-1":""}">
+          <div class="text-muted font-mono text-[10px] uppercase tracking-wider">${l}</div>
           <div class="font-display font-bold text-[20px] mt-1">${v}</div>
           <div class="font-mono text-[10px] ${sc} mt-0.5">${s}</div>
         </div>
@@ -2333,7 +2414,7 @@ function marketsView() {
     <!-- Category filter tabs -->
     <div class="px-3 sm:px-5 mt-4 flex items-center gap-2 overflow-x-auto pb-1">
       ${cats.map(({ id, label }) => `
-        <button data-cat="${id}" class="shrink-0 px-3 py-1.5 rounded-pill text-[12px] font-display font-semibold transition-colors ${cat === id ? 'bg-electric/20 border border-electric/40 text-electric' : 'bg-snow border border-mist text-smoke hover:text-ink hover:border-smoke'}">${label}</button>
+        <button data-cat="${id}" class="shrink-0 px-3 py-1.5 rounded-pill text-[12px] font-display font-semibold transition-colors ${cat === id ? 'bg-electric/20 border border-electric/40 text-electric' : 'card-themed border border-themed text-sub hover:text-ink hover:border-smoke'}">${label}</button>
       `).join("")}
       <button data-act="import-token" class="ml-auto shrink-0 px-3 py-1.5 rounded-pill text-[12px] font-display font-semibold bg-mist border border-line-active text-ink hover:bg-line-active flex items-center gap-1.5 transition-colors">
         <span class="material-symbols-outlined text-[15px]">add_circle</span> Import Arc Token
@@ -2342,15 +2423,15 @@ function marketsView() {
 
     <div class="px-3 sm:px-5 mt-4 pb-6 grid grid-cols-1 xl:grid-cols-12 gap-3">
       <!-- Pairs table -->
-      <div class="xl:col-span-8 bg-snow border border-mist rounded-panel overflow-hidden">
-        <div class="px-4 py-3 flex items-center justify-between border-b border-mist">
+      <div class="xl:col-span-8 card-themed border border-themed rounded-panel overflow-hidden">
+        <div class="px-4 py-3 flex items-center justify-between border-b border-themed">
           <span class="font-display font-semibold text-[13px]">Arc Verified Markets</span>
-          <span class="font-mono text-[11px] text-fog">${filtered.length} pairs</span>
+          <span class="font-mono text-[11px] text-muted">${filtered.length} pairs</span>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left tnum text-[12px] min-w-[560px]">
             <thead>
-              <tr class="border-b border-mist text-[10px] uppercase font-mono text-fog">
+              <tr class="border-b border-themed text-[10px] uppercase font-mono text-muted">
                 <th class="px-4 py-2 font-medium">Pair</th>
                 <th>Last</th><th>24h Chg</th><th>Volume</th><th>TVL</th>
                 <th>Category</th><th class="pr-4"></th>
@@ -2362,24 +2443,24 @@ function marketsView() {
                 const catLabel = { rwa_fx:"RWA/FX", bluechip:"Bluechip", defi:"DeFi", arc:"Arc", imported:"Custom" }[v.cat] || v.cat;
                 const catColor = { rwa_fx:"badge-anchored", bluechip:"badge-settled", defi:"badge-held", arc:"badge-pending", imported:"badge-refused" }[v.cat] || "badge-pending";
                 return `
-                <tr class="border-b border-mist/60 hover:bg-mist/30 transition-colors">
+                <tr class="border-b border-themed/60 hover:bg-mist/30 transition-colors">
                   <td class="px-4 py-2.5">
                     <div class="flex items-center gap-2">
-                      <span class="w-7 h-7 rounded-full bg-mist/60 border border-mist flex items-center justify-center font-mono text-[10px] text-smoke">${v.base.slice(0,2)}</span>
+                      <span class="w-7 h-7 rounded-full bg-mist/60 border border-themed flex items-center justify-center font-mono text-[10px] text-sub">${v.base.slice(0,2)}</span>
                       <div>
                         <div class="font-display font-semibold text-[13px]">${k}</div>
-                        <div class="font-mono text-[10px] text-fog">${TOKEN_META[v.base]?.name || v.base}</div>
+                        <div class="font-mono text-[10px] text-muted">${TOKEN_META[v.base]?.name || v.base}</div>
                       </div>
                     </div>
                   </td>
                   <td class="font-mono font-semibold">${k==="EURC/USDC"?v.price.toFixed(4):fmtUsd(v.price)}</td>
                   <td class="font-mono ${isUp?"text-paid":"text-refused"}">${fmtPct(v.change)}</td>
-                  <td class="font-mono text-smoke">${fmtUsd(v.vol/1e6)}M</td>
-                  <td class="font-mono text-smoke">${fmtUsd(v.tvl/1e6)}M</td>
+                  <td class="font-mono text-sub">${fmtUsd(v.vol/1e6)}M</td>
+                  <td class="font-mono text-sub">${fmtUsd(v.tvl/1e6)}M</td>
                   <td><span class="px-2 py-0.5 rounded-pill text-[10px] font-mono ${catColor}">${catLabel}</span></td>
                   <td class="pr-4">
                     <div class="flex items-center gap-1.5">
-                      <button data-watch="${k}" class="text-[14px] ${state.watchlist.includes(k)?"text-electric":"text-fog hover:text-smoke"}">${state.watchlist.includes(k)?"★":"☆"}</button>
+                      <button data-watch="${k}" class="text-[14px] ${state.watchlist.includes(k)?"text-electric":"text-muted hover:text-sub"}">${state.watchlist.includes(k)?"★":"☆"}</button>
                       <button data-trade="${k}" class="px-2.5 py-0.5 rounded-pill bg-electric/15 border border-electric/35 text-electric text-[11px] font-display font-semibold hover:bg-electric/25 transition">Trade</button>
                     </div>
                   </td>
@@ -2392,11 +2473,11 @@ function marketsView() {
 
       <!-- Right column: watchlist + custom import card -->
       <div class="xl:col-span-4 flex flex-col gap-3">
-        <div class="bg-snow border border-mist rounded-panel p-4">
+        <div class="card-themed border border-themed rounded-panel p-4">
           <div class="font-display font-semibold text-[13px] mb-3">Watchlist</div>
           ${state.watchlist.map((k) => {
             const v = PAIRS[k]; if (!v) return "";
-            return `<button data-trade="${k}" class="w-full flex justify-between items-center py-2 tnum text-[12px] border-b border-mist/50 last:border-0 hover:text-electric transition-colors">
+            return `<button data-trade="${k}" class="w-full flex justify-between items-center py-2 tnum text-[12px] border-b border-themed/50 last:border-0 hover:text-electric transition-colors">
               <span class="font-display font-semibold">${k}</span>
               <div class="text-right">
                 <div class="font-mono font-semibold">${k==="EURC/USDC"?v.price.toFixed(4):fmtUsd(v.price)}</div>
@@ -2407,20 +2488,20 @@ function marketsView() {
         </div>
 
         <!-- Custom Arc token import card -->
-        <div class="bg-snow border border-electric/25 rounded-panel p-4">
+        <div class="card-themed border border-electric/25 rounded-panel p-4">
           <div class="flex items-center gap-2 mb-2">
             <span class="material-symbols-outlined text-electric text-[18px]">add_circle</span>
             <span class="font-display font-semibold text-[13px]">Import Any Arc Token</span>
           </div>
-          <p class="font-mono text-fog text-[11px] mb-3">Paste any ERC-20 contract address on Arc mainnet to add it to your trading desk.</p>
+          <p class="font-mono text-muted text-[11px] mb-3">Paste any ERC-20 contract address on Arc mainnet to add it to your trading desk.</p>
           <div class="flex gap-2">
-            <input id="import-addr-inline" class="flex-1 bg-paper border border-mist rounded-card px-3 py-1.5 font-mono text-[11px] text-ink placeholder-fog outline-none focus:border-electric/60" placeholder="0x… token address" />
+            <input id="import-addr-inline" class="flex-1 surface-themed border border-themed rounded-card px-3 py-1.5 font-mono text-[11px] text-ink placeholder-fog outline-none focus:border-electric/60" placeholder="0x… token address" />
             <button data-act="import-token-inline" class="px-3 py-1.5 rounded-card bg-electric/20 border border-electric/40 text-electric font-display font-semibold text-[11px] hover:bg-electric/30 transition whitespace-nowrap">
               Import
             </button>
           </div>
           ${Object.keys(CUSTOM_PAIRS).length ? `
-            <div class="mt-3 font-mono text-[10px] text-fog">${Object.keys(CUSTOM_PAIRS).length} custom token(s) loaded</div>
+            <div class="mt-3 font-mono text-[10px] text-muted">${Object.keys(CUSTOM_PAIRS).length} custom token(s) loaded</div>
           ` : ""}
         </div>
       </div>
@@ -2434,31 +2515,31 @@ function portfolioView() {
   const curve = Array.from({ length: 36 }, (_, i) => 11000 + i * 40 + Math.sin(i / 3) * 180);
   curve[curve.length - 1] = p.total;
   return `
-  <main class="pt-14 pb-20 md:pb-4 min-h-screen px-2 sm:px-4 py-4">
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#1b1b1f] p-3 sm:p-4 rounded">
+  <main class="pt-20 sm:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4 py-4">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 card-themed border border-themed p-3 sm:p-4 rounded">
       <div>
-        <div class="text-[10px] uppercase tracking-wider text-mute">Total Portfolio Valuation <span class="ml-1 px-1 bg-[#121316] rounded">LIVE</span></div>
+        <div class="text-[10px] uppercase tracking-wider text-muted">Total Portfolio Valuation <span class="ml-1 px-1 card-themed rounded">LIVE</span></div>
         <div class="flex items-baseline gap-3 mt-1">
           <span class="font-display text-[26px] sm:text-[32px] text-themed">${fmtUsd(p.total)}</span>
-          <span class="tnum text-[12px] px-2 py-0.5 rounded bg-[#292a2d] text-pos">+${fmtUsd(p.pnlDay)} (${fmtPct(p.pnlDayPct)})</span>
+          <span class="tnum text-[12px] px-2 py-0.5 rounded card-themed border border-themed text-pos">+${fmtUsd(p.pnlDay)} (${fmtPct(p.pnlDayPct)})</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-6 mt-3 tnum text-[12px] sm:text-[13px]">
-          <div><div class="text-[10px] uppercase text-mute">Source</div><div class="${state.livePortfolio?"text-[#00f0ff]":"text-mute"}">${state.livePortfolio ? "Arc RPC · live" : "Desk preview"}</div></div>
-          <div><div class="text-[10px] uppercase text-mute">Unrealized P&L</div><div class="text-pos">${state.livePortfolio ? "—" : "+$840.50"}</div></div>
-          <div><div class="text-[10px] uppercase text-mute">Session signed</div><div class="text-[#00dbe9]">${state.activity.filter((a)=>a.type==="trade").length}</div></div>
+          <div><div class="text-[10px] uppercase text-muted">Source</div><div class="${state.livePortfolio?"text-themed font-semibold":"text-muted"}">${state.livePortfolio ? "Arc RPC · live" : "Desk preview"}</div></div>
+          <div><div class="text-[10px] uppercase text-muted">Unrealized P&L</div><div class="text-pos">${state.livePortfolio ? "—" : "+$840.50"}</div></div>
+          <div><div class="text-[10px] uppercase text-muted">Session signed</div><div class="text-[#00dbe9]">${state.activity.filter((a)=>a.type==="trade").length}</div></div>
         </div>
       </div>
       <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
-        ${["1D","1W","1M","1Y","ALL"].map((x)=>`<button data-range="${x}" class="px-2.5 py-1 text-[11px] rounded ${state.portfolioRange===x?"bg-[#292a2d] text-[#00f0ff]":"text-mute"}">${x}</button>`).join("")}
+        ${["1D","1W","1M","1Y","ALL"].map((x)=>`<button data-range="${x}" class="px-2.5 py-1 text-[11px] rounded ${state.portfolioRange===x?"card-themed border border-themed text-themed font-semibold":"text-muted"}">${x}</button>`).join("")}
       </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 mt-3">
-      <div class="lg:col-span-7 bg-[#1b1b1f] rounded p-3">
-        <div class="flex justify-between mb-2"><span class="font-display text-[15px]">Equity Performance Curve</span><span class="text-[11px] text-mute">Arc-AMM Fed</span></div>
+      <div class="lg:col-span-7 card-themed border border-themed rounded p-3">
+        <div class="flex justify-between mb-2"><span class="font-display text-[15px]">Equity Performance Curve</span><span class="text-[11px] text-muted">Arc-AMM Fed</span></div>
         <canvas id="nav-chart" class="w-full h-56"></canvas>
       </div>
-      <div class="lg:col-span-5 bg-[#1b1b1f] rounded p-3">
+      <div class="lg:col-span-5 card-themed border border-themed rounded p-3">
         <div class="font-display text-[15px] mb-2">Deterministic Risk Matrix</div>
         <div class="space-y-2 text-[12px]">
           ${[
@@ -2469,8 +2550,8 @@ function portfolioView() {
             ["Recent volatility", r.volatility, r.volScore*20],
           ].map(([l,v,w]) => `
             <div>
-              <div class="flex justify-between"><span class="text-mute">${l}</span><span class="tnum">${v}</span></div>
-              <div class="h-1 bg-[#121316] mt-1 rounded overflow-hidden"><div class="h-full ${Number(w)>50?"bg-[#F59E0B]":"bg-[#00f0ff]"}" style="width:${clamp(Number(w),4,100)}%"></div></div>
+              <div class="flex justify-between"><span class="text-muted">${l}</span><span class="tnum">${v}</span></div>
+              <div class="h-1 card-themed mt-1 rounded overflow-hidden"><div class="h-full ${Number(w)>50?"bg-[#F59E0B]":"bg-[#00f0ff]"}" style="width:${clamp(Number(w),4,100)}%"></div></div>
             </div>`).join("")}
         </div>
         <div class="mt-3 keyline pl-3 text-[12px] text-sub">
@@ -2485,69 +2566,69 @@ function portfolioView() {
       const opp = calculateOpportunityCost(idleUsdc);
       const sweep = calculateYieldSweep({ liquidUsdc: idleUsdc, reserveBufferUsd: 100 });
       return `
-      <div class="mt-3 bg-[#1b1b1f] border border-[#1F2430] rounded p-3 sm:p-4 relative overflow-hidden">
+      <div class="mt-3 card-themed border border-themed border border-themed rounded p-3 sm:p-4 relative overflow-hidden">
         <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#00f0ff] via-[#70ffba] to-[#01e599]"></div>
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1F2430]/60">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-themed/60">
           <div>
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-[#70ffba] shadow-[0_0_8px_rgba(112,255,186,0.6)]"></span>
-              <span class="font-display text-[14px] sm:text-[15px] uppercase tracking-wide text-white">Smart Idle Treasury Engine</span>
+              <span class="font-display text-[14px] sm:text-[15px] uppercase tracking-wide text-themed">Smart Idle Treasury Engine</span>
               <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#70ffba]/15 text-pos font-bold">4.95% T-BILL APY</span>
             </div>
-            <div class="text-[11px] text-mute mt-0.5">Circle & Hashnote USYC · Tokenized US Short-Term Treasury Bills on Arc</div>
+            <div class="text-[11px] text-muted mt-0.5">Circle & Hashnote USYC · Tokenized US Short-Term Treasury Bills on Arc</div>
           </div>
           <div class="flex items-center gap-2">
             ${sweep.recommended ? `
               <button data-act="sweep-yield" class="px-3 py-1.5 rounded bg-[#70ffba] hover:bg-[#85ffc7] text-[#003822] font-display font-bold text-[12px] flex items-center gap-1 transition">
                 <span class="material-symbols-outlined text-[15px]">savings</span> Sweep $${fmt(sweep.sweepAmount, 0)} to Yield
               </button>` : `
-              <span class="text-[11px] text-mute px-2.5 py-1 bg-[#121316] rounded border border-[#1F2430]">Capital Optimized (Buffer Maintained)</span>`}
+              <span class="text-[11px] text-muted px-2.5 py-1 card-themed rounded border border-themed">Capital Optimized (Buffer Maintained)</span>`}
           </div>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-3 tnum text-[12px]">
-          <div class="bg-[#121316] p-2.5 rounded">
-            <div class="text-[10px] uppercase text-mute">Idle Liquid USDC</div>
-            <div class="text-[16px] text-white font-semibold mt-0.5">${fmtUsd(idleUsdc)}</div>
-            <div class="text-[10px] text-mute mt-0.5">Zero Yield Drag</div>
+          <div class="card-themed p-2.5 rounded">
+            <div class="text-[10px] uppercase text-muted">Idle Liquid USDC</div>
+            <div class="text-[16px] text-themed font-semibold mt-0.5">${fmtUsd(idleUsdc)}</div>
+            <div class="text-[10px] text-muted mt-0.5">Zero Yield Drag</div>
           </div>
-          <div class="bg-[#121316] p-2.5 rounded">
-            <div class="text-[10px] uppercase text-mute">USYC Treasury Holdings</div>
+          <div class="card-themed p-2.5 rounded">
+            <div class="text-[10px] uppercase text-muted">USYC Treasury Holdings</div>
             <div class="text-[16px] text-pos font-semibold mt-0.5">${fmtUsd(usycBal)}</div>
             <div class="text-[10px] text-pos mt-0.5">+4.95% Annualized</div>
           </div>
-          <div class="bg-[#121316] p-2.5 rounded">
-            <div class="text-[10px] uppercase text-mute">Daily Forfeited Yield</div>
-            <div class="text-[16px] ${opp.dailyForfeited > 0.05 ? "text-[#F59E0B]" : "text-mute"} font-semibold mt-0.5">-${fmtUsd(opp.dailyForfeited)}/day</div>
-            <div class="text-[10px] text-mute mt-0.5">-$${fmt(opp.annualForfeited, 2)}/year</div>
+          <div class="card-themed p-2.5 rounded">
+            <div class="text-[10px] uppercase text-muted">Daily Forfeited Yield</div>
+            <div class="text-[16px] ${opp.dailyForfeited > 0.05 ? "text-[#F59E0B]" : "text-muted"} font-semibold mt-0.5">-${fmtUsd(opp.dailyForfeited)}/day</div>
+            <div class="text-[10px] text-muted mt-0.5">-$${fmt(opp.annualForfeited, 2)}/year</div>
           </div>
-          <div class="bg-[#121316] p-2.5 rounded">
-            <div class="text-[10px] uppercase text-mute">JIT Unwind Reserve</div>
-            <div class="text-[16px] text-[#00f0ff] font-semibold mt-0.5">${fmtUsd(usycBal)}</div>
-            <div class="text-[10px] text-mute mt-0.5">Instant Trade Liquidity</div>
+          <div class="card-themed p-2.5 rounded">
+            <div class="text-[10px] uppercase text-muted">JIT Unwind Reserve</div>
+            <div class="text-[16px] text-themed font-semibold font-semibold mt-0.5">${fmtUsd(usycBal)}</div>
+            <div class="text-[10px] text-muted mt-0.5">Instant Trade Liquidity</div>
           </div>
         </div>
       </div>`;
     })()}
 
-    <div class="mt-3 bg-[#0d0e11] rounded overflow-hidden">
-      <div class="px-3 py-2 font-display text-[13px] border-b border-[#1F2430]">Asset Holdings & Exposure</div>
+    <div class="mt-3 surface-themed border border-themed rounded overflow-hidden">
+      <div class="px-3 py-2 font-display text-[13px] border-b border-themed">Asset Holdings & Exposure</div>
       <div class="overflow-x-auto">
         <table class="w-full text-left tnum text-[12px] min-w-[560px]">
-          <thead class="text-[10px] uppercase text-mute"><tr class="border-b border-[#1F2430]">
+          <thead class="text-[10px] uppercase text-muted"><tr class="border-b border-themed">
             <th class="px-3 py-2">Asset</th><th>Price</th><th>Qty</th><th>Value</th><th>24h</th><th>Allocation</th><th></th>
           </tr></thead>
           <tbody>
             ${p.rows.map((r) => `
-              <tr class="border-b border-[#1F2430]/50">
-                <td class="px-3 py-2"><div class="font-display">${TOKEN_META[r.sym]?.name || r.sym}</div><div class="text-mute text-[10px]">${r.sym}</div></td>
+              <tr class="border-b border-themed/50">
+                <td class="px-3 py-2"><div class="font-display">${TOKEN_META[r.sym]?.name || r.sym}</div><div class="text-muted text-[10px]">${r.sym}</div></td>
                 <td>${fmtUsd(r.px)}</td>
                 <td>${fmt(r.qty,4)}</td>
                 <td>${fmtUsd(r.value)}</td>
                 <td class="${r.chg>=0?"text-pos":"text-neg"}">${fmtPct(r.chg)}</td>
                 <td>
-                  <div class="flex items-center gap-2"><div class="w-20 h-1 bg-[#1b1b1f] rounded overflow-hidden"><div class="h-full bg-[#00f0ff]" style="width:${r.alloc}%"></div></div>${fmt(r.alloc,1)}%</div>
+                  <div class="flex items-center gap-2"><div class="w-20 h-1 card-themed border border-themed rounded overflow-hidden"><div class="h-full bg-[#00f0ff]" style="width:${r.alloc}%"></div></div>${fmt(r.alloc,1)}%</div>
                 </td>
-                <td>${r.sym==="WETH"?`<button data-trade="ETH/USDC" class="px-2 py-0.5 rounded bg-[#292a2d] text-[11px]">Trade</button>`:r.sym==="cirBTC"?`<button data-trade="BTC/USDC" class="px-2 py-0.5 rounded bg-[#292a2d] text-[11px]">Trade</button>`:PAIRS[r.sym+"/USDC"]?`<button data-trade="${r.sym}/USDC" class="px-2 py-0.5 rounded bg-[#292a2d] text-[11px]">Trade</button>`:""}</td>
+                <td>${r.sym==="WETH"?`<button data-trade="ETH/USDC" class="px-2 py-0.5 rounded card-themed border border-themed text-[11px]">Trade</button>`:r.sym==="cirBTC"?`<button data-trade="BTC/USDC" class="px-2 py-0.5 rounded card-themed border border-themed text-[11px]">Trade</button>`:PAIRS[r.sym+"/USDC"]?`<button data-trade="${r.sym}/USDC" class="px-2 py-0.5 rounded card-themed border border-themed text-[11px]">Trade</button>`:""}</td>
               </tr>`).join("")}
           </tbody>
         </table>
@@ -2569,29 +2650,29 @@ function aiView() {
   const p = analyzePortfolio();
   const w = analyzeWallet();
   return `
-  <main class="pt-14 pb-20 md:pb-4 min-h-screen">
-    <div class="px-3 sm:px-4 py-2 bg-[#0d0e11] flex flex-wrap items-center justify-between gap-2 border-b border-[#1F2430]">
+  <main class="pt-20 sm:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4">
+    <div class="px-3 sm:px-4 py-2 surface-themed border border-themed flex flex-wrap items-center justify-between gap-2 border-b border-themed">
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-[#00f0ff] shadow-[0_0_8px_rgba(0,240,255,0.6)]"></span>
         <span class="font-display text-[12px] sm:text-[13px] uppercase tracking-tight text-themed">Arc AI Market & Portfolio Analyst</span>
-        <span class="text-[10px] sm:text-[11px] px-1 bg-[#1f1f23] rounded text-mute">TELEMETRY_v4.2</span>
+        <span class="text-[10px] sm:text-[11px] px-1 card-themed border border-themed rounded text-muted">TELEMETRY_v4.2</span>
       </div>
-      <div class="text-[10px] sm:text-[11px] text-mute">ARC DUAL-KERNEL: DETERMINISTIC DATA ENGINE → VERIFIABLE AI SYNTHESIS</div>
+      <div class="text-[10px] sm:text-[11px] text-muted">ARC DUAL-KERNEL: DETERMINISTIC DATA ENGINE → VERIFIABLE AI SYNTHESIS</div>
     </div>
     <div class="p-2 sm:p-3 grid grid-cols-1 xl:grid-cols-12 gap-3">
       <div class="xl:col-span-3 flex flex-col gap-2">
-        <div class="bg-[#0d0e11] rounded p-3">
-          <div class="text-[10px] uppercase text-mute mb-2">Analysis Matrix</div>
+        <div class="surface-themed border border-themed rounded p-3">
+          <div class="text-[10px] uppercase text-muted mb-2">Analysis Matrix</div>
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-1">
             ${cores.map(([id,ic,t,s]) => `
-              <button data-core="${id}" class="w-full text-left p-2 rounded flex items-center gap-2 ${state.aiCore===id?"bg-[#1f1f23]":"bg-[#1b1b1f] hover:bg-[#1f1f23]"}">
-                <span class="material-symbols-outlined text-[18px] shrink-0 ${state.aiCore===id?"text-[#00f0ff]":"text-mute"}">${ic}</span>
-                <div class="min-w-0"><div class="font-display text-[13px] truncate ${state.aiCore===id?"text-[#00f0ff]":""}">${t}</div><div class="text-[11px] text-mute truncate">${s}</div></div>
+              <button data-core="${id}" class="w-full text-left p-2 rounded flex items-center gap-2 ${state.aiCore===id?"card-themed border border-themed":"card-themed border border-themed hover:card-themed border border-themed"}">
+                <span class="material-symbols-outlined text-[18px] shrink-0 ${state.aiCore===id?"text-themed font-semibold":"text-muted"}">${ic}</span>
+                <div class="min-w-0"><div class="font-display text-[13px] truncate ${state.aiCore===id?"text-themed font-semibold":""}">${t}</div><div class="text-[11px] text-muted truncate">${s}</div></div>
               </button>`).join("")}
           </div>
         </div>
-        <div class="bg-[#0d0e11] rounded p-3">
-          <div class="text-[10px] uppercase text-mute mb-2">Fast Telemetry Dispatch</div>
+        <div class="surface-themed border border-themed rounded p-3">
+          <div class="text-[10px] uppercase text-muted mb-2">Fast Telemetry Dispatch</div>
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-1">
             ${[
               ["Analyze ETH 4H setup","ai-analyze"],
@@ -2599,37 +2680,37 @@ function aiView() {
               ["Audit idle cash & USYC yield","ai-treasury"],
               ["Issue 4h Agent Mandate ($250)","ai-mandate-quick"],
               ["Audit wallet activity","ai-wallet"],
-            ].map(([q,act]) => `<button data-act="${act}" class="w-full text-left px-2 py-1.5 rounded bg-[#1f1f23] text-[12px] hover:bg-[#292a2d] flex justify-between items-center">${q}<span class="material-symbols-outlined text-[14px] text-[#00f0ff] shrink-0">arrow_forward</span></button>`).join("")}
+            ].map(([q,act]) => `<button data-act="${act}" class="w-full text-left px-2 py-1.5 rounded card-themed border border-themed text-[12px] hover:card-themed border border-themed flex justify-between items-center">${q}<span class="material-symbols-outlined text-[14px] text-themed font-semibold shrink-0">arrow_forward</span></button>`).join("")}
           </div>
         </div>
       </div>
-      <div class="xl:col-span-9 bg-[#0d0e11] rounded p-3 sm:p-4">
+      <div class="xl:col-span-9 surface-themed border border-themed rounded p-3 sm:p-4">
         ${state.aiCore === "market" && a ? `
-          <div class="font-display text-[18px] text-[#00f0ff]">${a.trend.toUpperCase()} STRUCTURE</div>
+          <div class="font-display text-[18px] text-themed font-semibold">${a.trend.toUpperCase()} STRUCTURE</div>
           <p class="mt-2 text-[14px]">${a.setup}</p>
           <p class="mt-2 text-[13px] text-sub">${a.why}</p>
           <p class="mt-2 text-[13px] text-[#F59E0B]">What could invalidate it — ${a.invalidateText}</p>
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3 mt-4 tnum text-[12px]">
-            <div class="bg-[#1b1b1f] p-2 rounded"><div class="text-mute text-[10px]">TREND</div>${a.trend}</div>
-            <div class="bg-[#1b1b1f] p-2 rounded"><div class="text-mute text-[10px]">MOMENTUM</div>${a.momentum}</div>
-            <div class="bg-[#1b1b1f] p-2 rounded"><div class="text-mute text-[10px]">SUPPORT</div>${fmtUsd(a.support)}</div>
-            <div class="bg-[#1b1b1f] p-2 rounded"><div class="text-mute text-[10px]">RESISTANCE</div>${fmtUsd(a.resistance)}</div>
-            <div class="bg-[#1b1b1f] p-2 rounded"><div class="text-mute text-[10px]">INVALIDATION</div>${fmtUsd(a.invalidation)}</div>
-            <div class="bg-[#1b1b1f] p-2 rounded"><div class="text-mute text-[10px]">CONFIDENCE</div>${fmt(a.confidence*100,1)}%</div>
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">TREND</div>${a.trend}</div>
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">MOMENTUM</div>${a.momentum}</div>
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">SUPPORT</div>${fmtUsd(a.support)}</div>
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">RESISTANCE</div>${fmtUsd(a.resistance)}</div>
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">INVALIDATION</div>${fmtUsd(a.invalidation)}</div>
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">CONFIDENCE</div>${fmt(a.confidence*100,1)}%</div>
           </div>
           <button data-act="apply-levels" class="mt-4 px-3 py-1.5 rounded bg-[#00f0ff] text-[#00363a] text-[12px] font-display font-bold">Apply to chart</button>
         ` : state.aiCore === "portfolio" ? `
-          <div class="font-display text-[18px] text-[#00f0ff]">PORTFOLIO HEALTH</div>
+          <div class="font-display text-[18px] text-themed font-semibold">PORTFOLIO HEALTH</div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 tnum">
-            <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">TOTAL</div><div class="text-[20px]">${fmtUsd(p.total)}</div></div>
-            <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">LARGEST</div><div class="text-[20px]">${p.largest?.sym} ${fmt(p.largest?.alloc,1)}%</div></div>
-            <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">STABLES</div><div class="text-[20px]">${fmt(p.stables,1)}%</div></div>
-            <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">24H P&L</div><div class="text-[20px] text-pos">+${fmtUsd(p.pnl)}</div></div>
+            <div class="card-themed border border-themed p-3 rounded"><div class="text-[10px] text-muted">TOTAL</div><div class="text-[20px]">${fmtUsd(p.total)}</div></div>
+            <div class="card-themed border border-themed p-3 rounded"><div class="text-[10px] text-muted">LARGEST</div><div class="text-[20px]">${p.largest?.sym} ${fmt(p.largest?.alloc,1)}%</div></div>
+            <div class="card-themed border border-themed p-3 rounded"><div class="text-[10px] text-muted">STABLES</div><div class="text-[20px]">${fmt(p.stables,1)}%</div></div>
+            <div class="card-themed border border-themed p-3 rounded"><div class="text-[10px] text-muted">24H P&L</div><div class="text-[20px] text-pos">+${fmtUsd(p.pnl)}</div></div>
           </div>
           <p class="mt-4 text-[14px]">${p.observation}</p>
-          <button data-nav="portfolio" class="mt-4 px-3 py-1.5 rounded bg-[#292a2d] text-[12px]">View allocation</button>
+          <button data-nav="portfolio" class="mt-4 px-3 py-1.5 rounded card-themed border border-themed text-[12px]">View allocation</button>
         ` : state.aiCore === "treasury" ? renderTreasuryAnalysis() : state.aiCore === "mandates" ? renderMandatesPanel() : state.aiCore === "wallet" ? `
-          <div class="font-display text-[18px] text-[#00f0ff]">WALLET FORENSICS</div>
+          <div class="font-display text-[18px] text-themed font-semibold">WALLET FORENSICS</div>
           <div class="mt-3 text-[13px] space-y-1 text-sub">
             <div>Address ${w.address} · ${w.holdings} assets</div>
             <div>${w.freq}</div>
@@ -2637,7 +2718,7 @@ function aiView() {
             <div>No seed, key, or signing authority is granted to the model.</div>
           </div>
         ` : state.aiCore === "trade" ? renderTradeAnalysis() : `
-          <div class="text-mute text-[13px]">Dispatch an analysis from the left rail. The model receives structured market and portfolio payloads — it does not invent prices.</div>
+          <div class="text-muted text-[13px]">Dispatch an analysis from the left rail. The model receives structured market and portfolio payloads — it does not invent prices.</div>
         `}
       </div>
     </div>
@@ -2653,43 +2734,43 @@ function renderTreasuryAnalysis() {
     <div class="font-display text-[18px] text-pos flex items-center gap-2">
       <span class="material-symbols-outlined text-[22px]">savings</span> ARC SMART TREASURY ANALYZER
     </div>
-    <div class="text-[12px] text-mute mt-1">Institutional Cash Optimization · Hashnote USYC 4.95% APY (Short-Term US Treasuries)</div>
+    <div class="text-[12px] text-muted mt-1">Institutional Cash Optimization · Hashnote USYC 4.95% APY (Short-Term US Treasuries)</div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 tnum">
-      <div class="bg-[#1b1b1f] p-3 rounded">
-        <div class="text-[10px] text-mute">IDLE CASH (USDC)</div>
-        <div class="text-[20px] font-semibold text-white mt-1">${fmtUsd(idleUsdc)}</div>
-        <div class="text-[11px] text-mute mt-0.5">Liquid protocol units</div>
+      <div class="card-themed border border-themed p-3 rounded">
+        <div class="text-[10px] text-muted">IDLE CASH (USDC)</div>
+        <div class="text-[20px] font-semibold text-themed mt-1">${fmtUsd(idleUsdc)}</div>
+        <div class="text-[11px] text-muted mt-0.5">Liquid protocol units</div>
       </div>
-      <div class="bg-[#1b1b1f] p-3 rounded">
-        <div class="text-[10px] text-mute">YIELD ASSETS (USYC)</div>
+      <div class="card-themed border border-themed p-3 rounded">
+        <div class="text-[10px] text-muted">YIELD ASSETS (USYC)</div>
         <div class="text-[20px] font-semibold text-pos mt-1">${fmtUsd(usycBal)}</div>
         <div class="text-[11px] text-pos mt-0.5">Earning 4.95% APY</div>
       </div>
-      <div class="bg-[#1b1b1f] p-3 rounded">
-        <div class="text-[10px] text-mute">FORFEITED DRAG</div>
-        <div class="text-[20px] font-semibold ${opp.dailyForfeited > 0.05 ? "text-[#F59E0B]" : "text-mute"} mt-1">-${fmtUsd(opp.dailyForfeited)}/d</div>
-        <div class="text-[11px] text-mute mt-0.5">-$${fmt(opp.annualForfeited, 2)}/yr</div>
+      <div class="card-themed border border-themed p-3 rounded">
+        <div class="text-[10px] text-muted">FORFEITED DRAG</div>
+        <div class="text-[20px] font-semibold ${opp.dailyForfeited > 0.05 ? "text-[#F59E0B]" : "text-muted"} mt-1">-${fmtUsd(opp.dailyForfeited)}/d</div>
+        <div class="text-[11px] text-muted mt-0.5">-$${fmt(opp.annualForfeited, 2)}/yr</div>
       </div>
-      <div class="bg-[#1b1b1f] p-3 rounded">
-        <div class="text-[10px] text-mute">JIT UNWIND STATUS</div>
-        <div class="text-[20px] font-semibold text-[#00f0ff] mt-1">${usycBal > 0 ? "ARMED" : "UNFUNDED"}</div>
-        <div class="text-[11px] text-mute mt-0.5">${usycBal > 0 ? "Instant swap cover" : "Zero USYC collateral"}</div>
+      <div class="card-themed border border-themed p-3 rounded">
+        <div class="text-[10px] text-muted">JIT UNWIND STATUS</div>
+        <div class="text-[20px] font-semibold text-themed font-semibold mt-1">${usycBal > 0 ? "ARMED" : "UNFUNDED"}</div>
+        <div class="text-[11px] text-muted mt-0.5">${usycBal > 0 ? "Instant swap cover" : "Zero USYC collateral"}</div>
       </div>
     </div>
-    <div class="mt-4 p-3 bg-[#1b1b1f] rounded text-[13px] space-y-2 text-sub">
-      <div class="font-display text-[14px] text-white">Institutional Recommendation</div>
+    <div class="mt-4 p-3 card-themed border border-themed rounded text-[13px] space-y-2 text-sub">
+      <div class="font-display text-[14px] text-themed">Institutional Recommendation</div>
       <p>
         ${idleUsdc > 100
-          ? `You have <strong class="text-white">${fmtUsd(idleUsdc)}</strong> in non-yielding native USDC. By sweeping <strong class="text-pos">$${fmt(sweep.sweepAmount, 0)} USDC</strong> into USYC while keeping a $100 buffer for gas and tactical operations, your portfolio will generate an additional <strong class="text-pos">+$${fmt(sweep.sweepAmount * USYC_APY, 2)}/year</strong> with zero liquidity friction.`
+          ? `You have <strong class="text-themed">${fmtUsd(idleUsdc)}</strong> in non-yielding native USDC. By sweeping <strong class="text-pos">$${fmt(sweep.sweepAmount, 0)} USDC</strong> into USYC while keeping a $100 buffer for gas and tactical operations, your portfolio will generate an additional <strong class="text-pos">+$${fmt(sweep.sweepAmount * USYC_APY, 2)}/year</strong> with zero liquidity friction.`
           : `Your cash holdings are capital efficient. Liquid USDC is positioned within the recommended operating buffer ($100 max idle).`}
       </p>
-      <p class="text-[11px] text-mute">
+      <p class="text-[11px] text-muted">
         *Arc native properties: USDC is protocol gas (18 decimals); USYC is 6-decimal T-Bill ERC-20 with sub-second deterministic redemption.
       </p>
     </div>
     <div class="mt-4 flex gap-3">
       ${sweep.recommended ? `<button data-act="sweep-yield" class="px-4 py-2 rounded bg-[#70ffba] text-[#003822] font-display font-bold text-[13px] flex items-center gap-1.5"><span class="material-symbols-outlined text-[17px]">savings</span> Execute Sweep to USYC</button>` : ""}
-      <button data-nav="portfolio" class="px-4 py-2 rounded bg-[#292a2d] text-[13px] font-display">View Portfolio Balances</button>
+      <button data-nav="portfolio" class="px-4 py-2 rounded card-themed border border-themed text-[13px] font-display">View Portfolio Balances</button>
     </div>
   `;
 }
@@ -2699,10 +2780,10 @@ function renderMandatesPanel() {
   return `
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
       <div>
-        <div class="font-display text-[18px] text-[#00f0ff] flex items-center gap-2">
+        <div class="font-display text-[18px] text-themed font-semibold flex items-center gap-2">
           <span class="material-symbols-outlined text-[22px]">policy</span> BOUNDED AGENTIC MANDATES
         </div>
-        <div class="text-[12px] text-mute mt-0.5">EIP-712 Scoped Delegation Permits for Autonomous Agents & Trading Bots</div>
+        <div class="text-[12px] text-muted mt-0.5">EIP-712 Scoped Delegation Permits for Autonomous Agents & Trading Bots</div>
       </div>
       <button data-act="open-mandate-modal" class="self-start sm:self-auto px-3 py-1.5 rounded bg-[#00f0ff] text-[#00363a] font-display font-bold text-[12px] flex items-center gap-1">
         <span class="material-symbols-outlined text-[16px]">add</span> Issue New Mandate
@@ -2710,29 +2791,29 @@ function renderMandatesPanel() {
     </div>
 
     <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 tnum text-[12px]">
-      <div class="bg-[#1b1b1f] p-3 rounded">
-        <div class="text-[10px] text-mute uppercase">Active Mandates</div>
-        <div class="text-[20px] font-semibold text-white mt-1">${list.filter((m) => !m.revoked && Math.floor(Date.now() / 1000) <= m.deadline).length}</div>
-        <div class="text-[11px] text-mute mt-0.5">Cryptographically bounded</div>
+      <div class="card-themed border border-themed p-3 rounded">
+        <div class="text-[10px] text-muted uppercase">Active Mandates</div>
+        <div class="text-[20px] font-semibold text-themed mt-1">${list.filter((m) => !m.revoked && Math.floor(Date.now() / 1000) <= m.deadline).length}</div>
+        <div class="text-[11px] text-muted mt-0.5">Cryptographically bounded</div>
       </div>
-      <div class="bg-[#1b1b1f] p-3 rounded">
-        <div class="text-[10px] text-mute uppercase">Authorized Budget</div>
-        <div class="text-[20px] font-semibold text-[#00f0ff] mt-1">$${fmt(list.reduce((s, m) => s + (m.revoked ? 0 : m.remainingSpend), 0), 2)}</div>
-        <div class="text-[11px] text-mute mt-0.5">Hard cap across all agents</div>
+      <div class="card-themed border border-themed p-3 rounded">
+        <div class="text-[10px] text-muted uppercase">Authorized Budget</div>
+        <div class="text-[20px] font-semibold text-themed font-semibold mt-1">$${fmt(list.reduce((s, m) => s + (m.revoked ? 0 : m.remainingSpend), 0), 2)}</div>
+        <div class="text-[11px] text-muted mt-0.5">Hard cap across all agents</div>
       </div>
-      <div class="bg-[#1b1b1f] p-3 rounded">
-        <div class="text-[10px] text-mute uppercase">Policy Enforcement</div>
+      <div class="card-themed border border-themed p-3 rounded">
+        <div class="text-[10px] text-muted uppercase">Policy Enforcement</div>
         <div class="text-[20px] font-semibold text-pos mt-1">FAIL-CLOSED</div>
-        <div class="text-[11px] text-mute mt-0.5">Zero key custody given to AI</div>
+        <div class="text-[11px] text-muted mt-0.5">Zero key custody given to AI</div>
       </div>
     </div>
 
-    <div class="mt-4 bg-[#1b1b1f] rounded p-3">
-      <div class="font-display text-[13px] text-white mb-2">Permit Registry</div>
+    <div class="mt-4 card-themed border border-themed rounded p-3">
+      <div class="font-display text-[13px] text-themed mb-2">Permit Registry</div>
       ${list.length ? `
         <div class="overflow-x-auto">
           <table class="w-full text-left tnum text-[12px] min-w-[580px]">
-            <thead class="text-[10px] uppercase text-mute border-b border-[#1F2430]">
+            <thead class="text-[10px] uppercase text-muted border-b border-themed">
               <tr>
                 <th class="py-2">Mandate ID</th>
                 <th>Agent</th>
@@ -2751,20 +2832,20 @@ function renderMandatesPanel() {
                 const active = !m.revoked && !expired;
                 const remainingMin = Math.max(0, Math.floor((m.deadline - nowSec) / 60));
                 return `
-                <tr class="border-b border-[#1F2430]/50">
-                  <td class="py-2.5 font-mono text-[11px] text-[#00f0ff]">${m.id.slice(0, 14)}…</td>
-                  <td class="font-mono text-[11px] text-mute">${shortAddr(m.agent)}</td>
-                  <td>${m.allowedPairs.map((p) => `<span class="px-1 py-0.5 bg-[#292a2d] text-[10px] rounded mr-1">${p}</span>`).join("")}</td>
-                  <td><span class="text-white font-semibold">$${fmt(m.remainingSpend, 0)}</span> <span class="text-mute">/ $${fmt(m.maxSpendUsd, 0)}</span></td>
+                <tr class="border-b border-themed/50">
+                  <td class="py-2.5 font-mono text-[11px] text-themed font-semibold">${m.id.slice(0, 14)}…</td>
+                  <td class="font-mono text-[11px] text-muted">${shortAddr(m.agent)}</td>
+                  <td>${m.allowedPairs.map((p) => `<span class="px-1 py-0.5 card-themed border border-themed text-[10px] rounded mr-1">${p}</span>`).join("")}</td>
+                  <td><span class="text-themed font-semibold">$${fmt(m.remainingSpend, 0)}</span> <span class="text-muted">/ $${fmt(m.maxSpendUsd, 0)}</span></td>
                   <td>${m.maxSlippageBps} bps</td>
-                  <td>${expired ? `<span class="text-mute">Expired</span>` : `<span class="text-pos">${remainingMin}m left</span>`}</td>
+                  <td>${expired ? `<span class="text-muted">Expired</span>` : `<span class="text-pos">${remainingMin}m left</span>`}</td>
                   <td>
-                    ${active ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#70ffba]/15 text-pos rounded font-bold">ARMED</span>` : m.revoked ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#ffb4ab]/15 text-neg rounded">REVOKED</span>` : `<span class="text-[10px] px-1.5 py-0.5 bg-[#292a2d] text-mute rounded">EXPIRED</span>`}
+                    ${active ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#70ffba]/15 text-pos rounded font-bold">ARMED</span>` : m.revoked ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#ffb4ab]/15 text-neg rounded">REVOKED</span>` : `<span class="text-[10px] px-1.5 py-0.5 card-themed border border-themed text-muted rounded">EXPIRED</span>`}
                   </td>
                   <td>
                     ${active ? `
                       <div class="flex items-center gap-1.5">
-                        <button data-test-mandate="${m.id}" class="px-2 py-0.5 rounded bg-[#00f0ff]/20 hover:bg-[#00f0ff]/30 text-[#00f0ff] font-semibold text-[10px] transition" title="Test execute a bounded trade as the agent">Test Exec</button>
+                        <button data-test-mandate="${m.id}" class="px-2 py-0.5 rounded bg-[#00f0ff]/20 hover:bg-[#00f0ff]/30 text-themed font-semibold font-semibold text-[10px] transition" title="Test execute a bounded trade as the agent">Test Exec</button>
                         <button data-revoke-mandate="${m.id}" class="px-2 py-0.5 rounded bg-[#ffb4ab]/20 text-neg text-[10px] hover:bg-[#ffb4ab]/30">Revoke</button>
                       </div>` : ""}
                   </td>
@@ -2773,7 +2854,7 @@ function renderMandatesPanel() {
             </tbody>
           </table>
         </div>` : `
-        <div class="py-8 text-center text-mute text-[13px]">
+        <div class="py-8 text-center text-muted text-[13px]">
           No active agentic mandates. Click "Issue New Mandate" to grant a bounded, zero-custody EIP-712 permit to an execution agent.
         </div>`}
     </div>
@@ -2785,13 +2866,13 @@ function renderTradeAnalysis() {
   const q = quoteTrade({ side: state.side, amountUsd: state.amount, price: pair.price, slippageBps: state.slippage * 100 });
   const t = analyzeTrade(q);
   return `
-    <div class="font-display text-[18px] text-[#00f0ff]">TRADE ANALYZER</div>
-    <div class="text-[12px] text-mute mt-1">Data → Calculations → AI interpretation</div>
+    <div class="font-display text-[18px] text-themed font-semibold">TRADE ANALYZER</div>
+    <div class="text-[12px] text-muted mt-1">Data → Calculations → AI interpretation</div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 tnum text-[13px]">
-      <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">TRADE VALUE</div>${fmtUsd(t.tradeValue)}</div>
-      <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">NAV</div>${fmtUsd(t.portfolio)}</div>
-      <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">SIZE</div>${fmt(t.sizePct,2)}%</div>
-      <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">IMPACT</div>${fmt(t.impact,2)}%</div>
+      <div class="card-themed border border-themed p-3 rounded"><div class="text-[10px] text-muted">TRADE VALUE</div>${fmtUsd(t.tradeValue)}</div>
+      <div class="card-themed border border-themed p-3 rounded"><div class="text-[10px] text-muted">NAV</div>${fmtUsd(t.portfolio)}</div>
+      <div class="card-themed border border-themed p-3 rounded"><div class="text-[10px] text-muted">SIZE</div>${fmt(t.sizePct,2)}%</div>
+      <div class="card-themed border border-themed p-3 rounded"><div class="text-[10px] text-muted">IMPACT</div>${fmt(t.impact,2)}%</div>
     </div>
     <p class="mt-4 text-[14px]">${t.note}</p>
     <button data-nav="terminal" class="mt-4 px-3 py-1.5 rounded bg-[#00E599] text-[#08090C] text-[12px] font-display font-bold">Open order panel</button>
@@ -2816,7 +2897,7 @@ function activityView() {
       <div class="flex items-center justify-between mb-4">
         <div>
           <h2 class="font-display font-bold text-[20px]">Activity Ledger</h2>
-          <p class="font-mono text-[11px] text-fog mt-0.5">Signed tickets · EIP-712 receipts · Mandate executions</p>
+          <p class="font-mono text-[11px] text-muted mt-0.5">Signed tickets · EIP-712 receipts · Mandate executions</p>
         </div>
         <div class="flex items-center gap-2">
           <span class="badge-settled px-2.5 py-1 rounded-pill font-mono text-[11px]">settled</span>
@@ -2831,11 +2912,11 @@ function activityView() {
         const totalSpent = state.activity.filter((a) => a.type === "trade").reduce((s, t) => s + (t.amount || 0), 0);
         const cap = 10000;
         const pct = Math.min(100, (totalSpent / cap) * 100);
-        return `<div class="mb-5 bg-snow border border-mist rounded-card p-4">
+        return `<div class="mb-5 card-themed border border-themed rounded-card p-4">
           <div class="flex items-center justify-between mb-2">
             <div>
               <span class="font-display font-semibold text-[13px]">Session Spend Utilization</span>
-              <span class="ml-2 font-mono text-fog text-[11px]">${fmtUsd(totalSpent)} of ${fmtUsd(cap)} cap</span>
+              <span class="ml-2 font-mono text-muted text-[11px]">${fmtUsd(totalSpent)} of ${fmtUsd(cap)} cap</span>
             </div>
             <span class="font-mono text-[11px] ${pct > 80 ? 'text-refused' : pct > 50 ? 'text-hold' : 'text-paid'}">${pct.toFixed(1)}%</span>
           </div>
@@ -2846,11 +2927,11 @@ function activityView() {
       })()}
 
       ${rows.length ? `
-      <div class="bg-snow border border-mist rounded-panel overflow-hidden">
+      <div class="card-themed border border-themed rounded-panel overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left text-[12px] min-w-[680px]">
-            <thead class="border-b border-mist">
-              <tr class="font-mono text-[10px] uppercase text-fog">
+            <thead class="border-b border-themed">
+              <tr class="font-mono text-[10px] uppercase text-muted">
                 <th class="px-4 py-3 font-medium">Time</th>
                 <th>Type</th>
                 <th>Details</th>
@@ -2862,22 +2943,22 @@ function activityView() {
             </thead>
             <tbody>
               ${rows.map((r) => `
-              <tr class="border-b border-mist/50 hover:bg-mist/20 transition-colors">
-                <td class="px-4 py-3 font-mono text-[10px] text-fog whitespace-nowrap">${new Date(r.ts).toLocaleString()}</td>
+              <tr class="border-b border-themed/50 hover:bg-mist/20 transition-colors">
+                <td class="px-4 py-3 font-mono text-[10px] text-muted whitespace-nowrap">${new Date(r.ts).toLocaleString()}</td>
                 <td>${statusBadge(r.status, r.type)}</td>
                 <td>
                   <div class="font-display font-semibold text-[12px]">${escapeHtml(r.label)}</div>
-                  <div class="font-mono text-[10px] text-fog">${escapeHtml(r.detail)}</div>
+                  <div class="font-mono text-[10px] text-muted">${escapeHtml(r.detail)}</div>
                 </td>
-                <td class="font-mono tnum text-[12px] text-smoke">${r.amount ? fmtUsd(r.amount) : "—"}</td>
+                <td class="font-mono tnum text-[12px] text-sub">${r.amount ? fmtUsd(r.amount) : "—"}</td>
                 <td>${statusBadge(r.status)}</td>
                 <td>
-                  ${(r.receipt || r.receiptId) ? `<button data-view-receipt="${escapeHtml(r.receipt?.receiptId || r.receiptId)}" class="badge-anchored px-2 py-0.5 rounded-pill font-mono text-[10px] hover:opacity-80 transition flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px]">verified</span>SHA-256</button>` : '<span class="text-fog font-mono text-[10px]">—</span>'}
+                  ${(r.receipt || r.receiptId) ? `<button data-view-receipt="${escapeHtml(r.receipt?.receiptId || r.receiptId)}" class="badge-anchored px-2 py-0.5 rounded-pill font-mono text-[10px] hover:opacity-80 transition flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px]">verified</span>SHA-256</button>` : '<span class="text-muted font-mono text-[10px]">—</span>'}
                 </td>
                 <td class="pr-4">
                   ${typeof r.hash === "string" && r.hash.length > 20
                     ? `<a href="${ARC.explorer}/tx/${r.hash}" target="_blank" rel="noreferrer" class="font-mono text-[10px] text-electric hover:underline">${r.hash.slice(0,8)}… ↗</a>`
-                    : '<span class="text-fog font-mono text-[10px]">—</span>'}
+                    : '<span class="text-muted font-mono text-[10px]">—</span>'}
                 </td>
               </tr>`).join("")}
             </tbody>
@@ -2885,10 +2966,10 @@ function activityView() {
         </div>
       </div>
       ` : `
-      <div class="bg-snow border border-mist rounded-panel px-4 py-14 text-center">
+      <div class="card-themed border border-themed rounded-panel px-4 py-14 text-center">
         <span class="material-symbols-outlined text-[40px] text-mist block mb-3">history</span>
-        <div class="font-display font-semibold text-[15px] text-smoke">No signed tickets yet</div>
-        <p class="font-mono text-[11px] text-fog mt-1">Go to Terminal → select a pair → Review trade → Sign to create your first entry.</p>
+        <div class="font-display font-semibold text-[15px] text-sub">No signed tickets yet</div>
+        <p class="font-mono text-[11px] text-muted mt-1">Go to Terminal → select a pair → Review trade → Sign to create your first entry.</p>
       </div>
       `}
     </div>
@@ -2901,39 +2982,39 @@ function proofView() {
   const chainOk = !!state.proof.live?.chainOk;
   const when = state.proof.checkedAt ? new Date(state.proof.checkedAt).toLocaleString() : "not run this session";
   const row = (r) => `
-    <div class="flex gap-3 items-start border-b border-[#1F2430]/60 py-2">
+    <div class="flex gap-3 items-start border-b border-themed/60 py-2">
       <span class="tnum text-[11px] ${r.ok ? "text-pos" : "text-neg"}">${r.ok ? "PASS" : "FAIL"}</span>
       <span class="text-[12px] text-themed">${escapeHtml(r.detail)}</span>
     </div>`;
   return `
-  <main class="pt-14 pb-20 md:pb-4 min-h-screen px-3 sm:px-4 py-4 max-w-5xl mx-auto">
+  <main class="pt-20 sm:pt-24 pb-24 md:pb-8 min-h-screen px-3 sm:px-4 py-4 max-w-5xl mx-auto">
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
       <div>
         <div class="font-display text-[16px]">Proof · re-query, do not screenshot</div>
-        <p class="text-[12px] text-mute mt-1">Live rows hit ${escapeHtml(ARC.rpc)}. Local rows are fail-closed unit checks in this process. Last run ${escapeHtml(when)}.</p>
+        <p class="text-[12px] text-muted mt-1">Live rows hit ${escapeHtml(ARC.rpc)}. Local rows are fail-closed unit checks in this process. Last run ${escapeHtml(when)}.</p>
       </div>
       <button data-act="proof" class="self-start sm:self-auto px-3 py-1.5 rounded bg-[#00F0FF] text-[#08090C] font-display text-[12px] font-bold">${state.proof.running ? "Querying…" : "Run proof"}</button>
     </div>
     <div class="mt-4 grid md:grid-cols-2 gap-3">
-      <section class="bg-[#0d0e11] rounded p-4">
-        <div class="font-display text-[12px] uppercase text-[#00f0ff]">Live Arc RPC</div>
+      <section class="surface-themed border border-themed rounded p-4">
+        <div class="font-display text-[12px] uppercase text-themed font-semibold">Live Arc RPC</div>
         <div class="mt-1 text-[12px] ${chainOk ? "text-pos" : "text-[#F59E0B]"}">${chainOk ? "Chain ID matches 5042." : "Chain not confirmed this session."}</div>
-        <div class="mt-2">${live.length ? live.map(row).join("") : `<div class="text-[12px] text-mute py-3">Not queried yet.</div>`}</div>
+        <div class="mt-2">${live.length ? live.map(row).join("") : `<div class="text-[12px] text-muted py-3">Not queried yet.</div>`}</div>
       </section>
-      <section class="bg-[#0d0e11] rounded p-4">
-        <div class="font-display text-[12px] uppercase text-[#00f0ff]">Negative proofs</div>
-        <div class="mt-1 text-[12px] text-mute">The desk must refuse garbage, not only accept the happy path.</div>
-        <div class="mt-2">${local.length ? local.map(row).join("") : `<div class="text-[12px] text-mute py-3">Not run yet.</div>`}</div>
+      <section class="surface-themed border border-themed rounded p-4">
+        <div class="font-display text-[12px] uppercase text-themed font-semibold">Negative proofs</div>
+        <div class="mt-1 text-[12px] text-muted">The desk must refuse garbage, not only accept the happy path.</div>
+        <div class="mt-2">${local.length ? local.map(row).join("") : `<div class="text-[12px] text-muted py-3">Not run yet.</div>`}</div>
       </section>
     </div>
-    <section class="mt-4 bg-[#0d0e11] border border-[#1F2430] rounded-lg p-5">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1F2430]">
+    <section class="mt-4 surface-themed border border-themed border border-themed rounded-lg p-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-themed">
         <div>
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-[#00f0ff] text-[22px]">gavel</span>
-            <span class="font-display text-[15px] uppercase font-bold text-white tracking-wide">InterminalSettlement · Arc Mainnet Protocol</span>
+            <span class="material-symbols-outlined text-themed font-semibold text-[22px]">gavel</span>
+            <span class="font-display text-[15px] uppercase font-bold text-themed tracking-wide">InterminalSettlement · Arc Mainnet Protocol</span>
           </div>
-          <p class="text-[12px] text-mute mt-0.5">EIP-712 TradeTicket execution, Bounded Mandates, and On-Chain Audit Anchoring on Chain ID 5042.</p>
+          <p class="text-[12px] text-muted mt-0.5">EIP-712 TradeTicket execution, Bounded Mandates, and On-Chain Audit Anchoring on Chain ID 5042.</p>
         </div>
         <div class="flex items-center gap-2">
           ${state.settlementContractAddress ? `
@@ -2950,95 +3031,95 @@ function proofView() {
       </div>
 
       <div class="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3 text-[12px]">
-        <div class="bg-[#12151D] p-3 rounded border border-[#1F2430]/60">
-          <div class="text-[10px] uppercase text-mute">Target Chain</div>
-          <div class="font-semibold text-white mt-0.5">Arc Mainnet (5042)</div>
-          <div class="text-[10px] text-mute mt-1">Gas: 18-dec Native USDC</div>
+        <div class="card-themed border border-themed p-3 rounded border border-themed/60">
+          <div class="text-[10px] uppercase text-muted">Target Chain</div>
+          <div class="font-semibold text-themed mt-0.5">Arc Mainnet (5042)</div>
+          <div class="text-[10px] text-muted mt-1">Gas: 18-dec Native USDC</div>
         </div>
-        <div class="bg-[#12151D] p-3 rounded border border-[#1F2430]/60">
-          <div class="text-[10px] uppercase text-mute">Contract Artifact</div>
-          <div class="font-semibold text-[#00f0ff] mt-0.5">InterminalSettlement.sol</div>
-          <div class="text-[10px] text-mute mt-1">8,896 bytes bytecode · 26 ABI methods</div>
+        <div class="card-themed border border-themed p-3 rounded border border-themed/60">
+          <div class="text-[10px] uppercase text-muted">Contract Artifact</div>
+          <div class="font-semibold text-themed font-semibold mt-0.5">InterminalSettlement.sol</div>
+          <div class="text-[10px] text-muted mt-1">8,896 bytes bytecode · 26 ABI methods</div>
         </div>
-        <div class="bg-[#12151D] p-3 rounded border border-[#1F2430]/60">
-          <div class="text-[10px] uppercase text-mute">Arc AMM Router</div>
-          <div class="font-mono text-[11px] text-white mt-0.5 truncate" title="${ARC.router}">${shortAddr(ARC.router)}</div>
+        <div class="card-themed border border-themed p-3 rounded border border-themed/60">
+          <div class="text-[10px] uppercase text-muted">Arc AMM Router</div>
+          <div class="font-mono text-[11px] text-themed mt-0.5 truncate" title="${ARC.router}">${shortAddr(ARC.router)}</div>
           <div class="text-[10px] text-pos mt-1">Uniswap V2 Compatible</div>
         </div>
-        <div class="bg-[#12151D] p-3 rounded border border-[#1F2430]/60">
-          <div class="text-[10px] uppercase text-mute">Settlement Address</div>
+        <div class="card-themed border border-themed p-3 rounded border border-themed/60">
+          <div class="text-[10px] uppercase text-muted">Settlement Address</div>
           <div class="font-mono text-[11px] ${state.settlementContractAddress ? "text-pos" : "text-[#F59E0B]"} mt-0.5 truncate">
             ${state.settlementContractAddress ? shortAddr(state.settlementContractAddress) : "Not deployed yet"}
           </div>
-          <div class="text-[10px] text-mute mt-1">
-            ${state.settlementContractAddress ? `<a href="${ARC.explorer}/address/${state.settlementContractAddress}" target="_blank" class="text-[#00f0ff] hover:underline">View in Arc Explorer ↗</a>` : "Ready for broadcast"}
+          <div class="text-[10px] text-muted mt-1">
+            ${state.settlementContractAddress ? `<a href="${ARC.explorer}/address/${state.settlementContractAddress}" target="_blank" class="text-themed font-semibold hover:underline">View in Arc Explorer ↗</a>` : "Ready for broadcast"}
           </div>
         </div>
       </div>
 
-      <div class="mt-4 p-3 rounded bg-[#12151D] border border-[#1F2430]/60 text-[11px] text-mute">
-        <div class="flex items-center justify-between text-white font-semibold mb-1">
+      <div class="mt-4 p-3 rounded card-themed border border-themed border border-themed/60 text-[11px] text-muted">
+        <div class="flex items-center justify-between text-themed font-semibold mb-1">
           <span>Deployment Options</span>
           <span class="text-[10px] text-pos">Zero AI Key Custody</span>
         </div>
         <div class="space-y-1">
           <div>• <strong>Browser Wallet (1-Click):</strong> Connect MetaMask/Rabby on Arc Mainnet and click "Deploy Contract to Arc Mainnet". The wallet requests approval using native USDC for gas.</div>
-          <div>• <strong>Headless CLI:</strong> Run <code class="bg-[#08090C] px-1.5 py-0.5 rounded text-[#00f0ff] font-mono">$env:PRIVATE_KEY="0x..."; node scripts/deploy.mjs</code> from your terminal.</div>
+          <div>• <strong>Headless CLI:</strong> Run <code class="bg-[#08090C] px-1.5 py-0.5 rounded text-themed font-semibold font-mono">$env:PRIVATE_KEY="0x..."; node scripts/deploy.mjs</code> from your terminal.</div>
         </div>
       </div>
     </section>
 
-    <section class="mt-3 bg-[#0d0e11] border border-[#1F2430] rounded-lg p-5">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1F2430]">
+    <section class="mt-3 surface-themed border border-themed border border-themed rounded-lg p-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-themed">
         <div>
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined text-pos text-[20px]">candlestick_chart</span>
-            <span class="font-display text-[15px] uppercase font-bold text-white tracking-wide">Live DEX Market Data Engine</span>
+            <span class="font-display text-[15px] uppercase font-bold text-themed tracking-wide">Live DEX Market Data Engine</span>
           </div>
-          <p class="text-[12px] text-mute mt-0.5">Streaming institutional price feeds from Uniswap V3 on Ethereum & verified DEX oracles.</p>
+          <p class="text-[12px] text-muted mt-0.5">Streaming institutional price feeds from Uniswap V3 on Ethereum & verified DEX oracles.</p>
         </div>
         <div class="flex items-center gap-2">
           <span class="px-2.5 py-1 rounded bg-[#00E599]/15 text-pos border border-[#00E599]/30 text-[11px] font-mono flex items-center gap-1.5 font-semibold">
             <span class="w-2 h-2 rounded-full bg-[#00E599] ${state.marketFeedStatus?.live ? 'animate-pulse' : ''}"></span>
             ${state.marketFeedStatus?.live ? "LIVE DEX FEED ACTIVE" : "CONNECTING TO DEX"}
           </span>
-          <button data-act="sync-market" class="px-3 py-1 rounded bg-[#292a2d] hover:bg-[#343538] text-[11px] text-white flex items-center gap-1">
+          <button data-act="sync-market" class="px-3 py-1 rounded card-themed border border-themed hover:bg-[#343538] text-[11px] text-themed flex items-center gap-1">
             <span class="material-symbols-outlined text-[14px]">refresh</span> Refresh Feeds
           </button>
         </div>
       </div>
       <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[12px]">
-        <div class="bg-[#12151D] p-2.5 rounded">
-          <div class="text-[10px] text-mute uppercase">ETH / USDC</div>
-          <div class="font-mono text-white font-bold text-[14px] mt-0.5">${fmtUsd(PAIRS["ETH/USDC"].price)}</div>
+        <div class="card-themed border border-themed p-2.5 rounded">
+          <div class="text-[10px] text-muted uppercase">ETH / USDC</div>
+          <div class="font-mono text-themed font-bold text-[14px] mt-0.5">${fmtUsd(PAIRS["ETH/USDC"].price)}</div>
           <div class="text-[10px] ${PAIRS["ETH/USDC"].change >= 0 ? "text-pos" : "text-neg"}">${fmtPct(PAIRS["ETH/USDC"].change)} (24h)</div>
         </div>
-        <div class="bg-[#12151D] p-2.5 rounded">
-          <div class="text-[10px] text-mute uppercase">BTC / USDC</div>
-          <div class="font-mono text-white font-bold text-[14px] mt-0.5">${fmtUsd(PAIRS["BTC/USDC"].price)}</div>
+        <div class="card-themed border border-themed p-2.5 rounded">
+          <div class="text-[10px] text-muted uppercase">BTC / USDC</div>
+          <div class="font-mono text-themed font-bold text-[14px] mt-0.5">${fmtUsd(PAIRS["BTC/USDC"].price)}</div>
           <div class="text-[10px] ${PAIRS["BTC/USDC"].change >= 0 ? "text-pos" : "text-neg"}">${fmtPct(PAIRS["BTC/USDC"].change)} (24h)</div>
         </div>
-        <div class="bg-[#12151D] p-2.5 rounded">
-          <div class="text-[10px] text-mute uppercase">EURC / USDC</div>
-          <div class="font-mono text-white font-bold text-[14px] mt-0.5">${PAIRS["EURC/USDC"].price.toFixed(4)}</div>
+        <div class="card-themed border border-themed p-2.5 rounded">
+          <div class="text-[10px] text-muted uppercase">EURC / USDC</div>
+          <div class="font-mono text-themed font-bold text-[14px] mt-0.5">${PAIRS["EURC/USDC"].price.toFixed(4)}</div>
           <div class="text-[10px] ${PAIRS["EURC/USDC"].change >= 0 ? "text-pos" : "text-neg"}">${fmtPct(PAIRS["EURC/USDC"].change)} (24h)</div>
         </div>
-        <div class="bg-[#12151D] p-2.5 rounded">
-          <div class="text-[10px] text-mute uppercase">USYC / USDC (NAV)</div>
-          <div class="font-mono text-white font-bold text-[14px] mt-0.5">${PAIRS["USYC/USDC"].price.toFixed(4)}</div>
+        <div class="card-themed border border-themed p-2.5 rounded">
+          <div class="text-[10px] text-muted uppercase">USYC / USDC (NAV)</div>
+          <div class="font-mono text-themed font-bold text-[14px] mt-0.5">${PAIRS["USYC/USDC"].price.toFixed(4)}</div>
           <div class="text-[10px] text-pos">+5.10% APY Yield</div>
         </div>
       </div>
     </section>
 
-    <section class="mt-3 bg-[#0d0e11] rounded p-4">
-      <div class="font-display text-[12px] uppercase text-[#00f0ff]">Policy rubric</div>
-      <p class="text-[12px] text-mute mt-1">These gates are the same functions the Review button uses. They are not a hidden README claim.</p>
+    <section class="mt-3 surface-themed border border-themed rounded p-4">
+      <div class="font-display text-[12px] uppercase text-themed font-semibold">Policy rubric</div>
+      <p class="text-[12px] text-muted mt-1">These gates are the same functions the Review button uses. They are not a hidden README claim.</p>
       <div class="mt-3 grid md:grid-cols-2 gap-2">
-        ${POLICY.map((p) => `<div class="border border-[#1F2430] rounded p-3"><div class="text-[12px] text-white">${escapeHtml(p.title)}</div><div class="text-[12px] text-mute mt-1">${escapeHtml(p.rule)}</div></div>`).join("")}
+        ${POLICY.map((p) => `<div class="border border-themed rounded p-3"><div class="text-[12px] text-themed">${escapeHtml(p.title)}</div><div class="text-[12px] text-muted mt-1">${escapeHtml(p.rule)}</div></div>`).join("")}
       </div>
     </section>
-    <section class="mt-3 bg-[#0d0e11] rounded p-4">
+    <section class="mt-3 surface-themed border border-themed rounded p-4">
       <div class="font-display text-[12px] uppercase text-[#F59E0B]">Known limitations</div>
       <ul class="mt-2 space-y-1 text-[12px] text-sub list-disc pl-4">
         ${LIMITATIONS.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}
@@ -3053,37 +3134,37 @@ function importTokenModal() {
   const err = state.importTokenError || "";
   return `
   <div class="fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-4">
-    <div class="absolute inset-0 bg-paper/85 backdrop-blur-md" data-act="close-import"></div>
-    <div class="relative z-10 w-full max-w-md bg-snow border border-mist rounded-panel p-5 shadow-invoice">
+    <div class="absolute inset-0 surface-themed/85 backdrop-blur-md" data-act="close-import"></div>
+    <div class="relative z-10 w-full max-w-md card-themed border border-themed rounded-panel p-5 shadow-invoice">
       <div class="flex items-center justify-between mb-4">
         <div>
           <div class="font-display font-bold text-[16px]">Import Arc ERC-20 Token</div>
-          <div class="font-mono text-[11px] text-fog mt-0.5">Fetch name, symbol, decimals from Arc mainnet</div>
+          <div class="font-mono text-[11px] text-muted mt-0.5">Fetch name, symbol, decimals from Arc mainnet</div>
         </div>
-        <button data-act="close-import" class="p-1.5 rounded-full hover:bg-mist text-smoke">
+        <button data-act="close-import" class="p-1.5 rounded-full hover:bg-mist text-sub">
           <span class="material-symbols-outlined text-[18px]">close</span>
         </button>
       </div>
       <div class="space-y-3">
         <div>
-          <label class="font-mono text-[10px] uppercase text-fog tracking-wider block mb-1.5">Contract Address (Arc Mainnet)</label>
-          <input id="import-token-addr" class="w-full bg-paper border border-mist focus:border-electric/60 rounded-card px-3 py-2 font-mono text-[12px] text-ink placeholder-fog outline-none" placeholder="0x… ERC-20 address on Arc" />
+          <label class="font-mono text-[10px] uppercase text-muted tracking-wider block mb-1.5">Contract Address (Arc Mainnet)</label>
+          <input id="import-token-addr" class="w-full surface-themed border border-themed focus:border-electric/60 rounded-card px-3 py-2 font-mono text-[12px] text-ink placeholder-fog outline-none" placeholder="0x… ERC-20 address on Arc" />
         </div>
         ${err ? `<div class="flex items-start gap-2 bg-refused/10 border border-refused/25 rounded-card px-3 py-2">
           <span class="material-symbols-outlined text-refused text-[15px] mt-0.5">error</span>
           <span class="font-mono text-refused text-[11px]">${escapeHtml(err)}</span>
         </div>` : ""}
-        <button data-act="do-import-token" ${importing ? "disabled" : ""} class="w-full py-2.5 rounded-pill bg-electric text-white font-display font-bold text-[13px] hover:bg-electric/90 transition disabled:opacity-60 flex items-center justify-center gap-2">
+        <button data-act="do-import-token" ${importing ? "disabled" : ""} class="w-full py-2.5 rounded-pill bg-electric text-themed font-display font-bold text-[13px] hover:bg-electric/90 transition disabled:opacity-60 flex items-center justify-center gap-2">
           ${importing ? '<span class="material-symbols-outlined text-[17px] animate-spin">sync</span> Querying Arc…' : '<span class="material-symbols-outlined text-[17px]">add_circle</span> Import Token'}
         </button>
         ${Object.keys(CUSTOM_PAIRS).length ? `
-          <div class="border-t border-mist pt-3">
-            <div class="font-mono text-[10px] uppercase text-fog tracking-wider mb-2">Already imported</div>
+          <div class="border-t border-themed pt-3">
+            <div class="font-mono text-[10px] uppercase text-muted tracking-wider mb-2">Already imported</div>
             ${Object.entries(CUSTOM_PAIRS).map(([k, v]) => `
-              <div class="flex items-center justify-between py-1.5 border-b border-mist/50 last:border-0">
+              <div class="flex items-center justify-between py-1.5 border-b border-themed/50 last:border-0">
                 <div>
                   <span class="font-display font-semibold text-[12px]">${v.symbol}</span>
-                  <span class="font-mono text-[10px] text-fog ml-2">${v.name}</span>
+                  <span class="font-mono text-[10px] text-muted ml-2">${v.name}</span>
                 </div>
                 <button data-trade="${k}" data-act="close-import" class="px-2 py-0.5 rounded-pill text-[10px] badge-settled font-mono hover:opacity-80">Trade</button>
               </div>
@@ -3107,26 +3188,26 @@ function reviewModal() {
   const sellAmt = isBuy ? state.amount : state.amount / pair.price;
   return `
   <div class="fixed inset-0 z-[70] flex items-center justify-center p-2 sm:p-4">
-    <div class="absolute inset-0 bg-[#0d0e11]/85 backdrop-blur-md" data-act="close-review"></div>
+    <div class="absolute inset-0 surface-themed border border-themed/85 backdrop-blur-md" data-act="close-review"></div>
     <div class="relative z-10 w-full max-w-5xl max-h-[90vh] overflow-y-auto flex flex-col lg:flex-row gap-3">
-      <div class="flex-1 bg-[#1f1f23] rounded-lg p-4 sm:p-6 relative overflow-hidden">
+      <div class="flex-1 card-themed border border-themed rounded-lg p-4 sm:p-6 relative overflow-hidden">
         <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#00f0ff] via-[#dbfcff] to-[#01e599]"></div>
         <div class="flex items-start justify-between gap-2">
           <div>
-            <div class="flex items-center gap-1 text-[#00f0ff]"><span class="material-symbols-outlined text-[18px]">verified_user</span><span class="font-display text-[16px] sm:text-[18px] uppercase">Review & Confirm Trade</span></div>
-            <div class="text-[10px] uppercase tracking-wider text-mute mt-1">EIP-712 ticket · no router broadcast</div>
+            <div class="flex items-center gap-1 text-themed font-semibold"><span class="material-symbols-outlined text-[18px]">verified_user</span><span class="font-display text-[16px] sm:text-[18px] uppercase">Review & Confirm Trade</span></div>
+            <div class="text-[10px] uppercase tracking-wider text-muted mt-1">EIP-712 ticket · no router broadcast</div>
           </div>
-          <div class="text-[10px] sm:text-[11px] px-2 py-0.5 rounded bg-[#292a2d] shrink-0"><span class="w-2 h-2 inline-block rounded-full bg-[#01e599] animate-pulse mr-1"></span>Arc · ${ARC.chainId}</div>
+          <div class="text-[10px] sm:text-[11px] px-2 py-0.5 rounded card-themed border border-themed shrink-0"><span class="w-2 h-2 inline-block rounded-full bg-[#01e599] animate-pulse mr-1"></span>Arc · ${ARC.chainId}</div>
         </div>
-        <div class="mt-4 bg-[#0d0e11] p-3 rounded">
-          <div class="text-[10px] uppercase text-mute">You send</div>
-          <div class="flex justify-between items-baseline"><div class="font-display text-[22px] sm:text-[28px]">${fmt(sellAmt, isBuy ? 2 : 5)} <span class="text-[#00f0ff] text-[14px]">${sellSym}</span></div><div class="text-[12px] text-mute">${shortAddr(state.address)}</div></div>
+        <div class="mt-4 surface-themed border border-themed p-3 rounded">
+          <div class="text-[10px] uppercase text-muted">You send</div>
+          <div class="flex justify-between items-baseline"><div class="font-display text-[22px] sm:text-[28px]">${fmt(sellAmt, isBuy ? 2 : 5)} <span class="text-themed font-semibold text-[14px]">${sellSym}</span></div><div class="text-[12px] text-muted">${shortAddr(state.address)}</div></div>
         </div>
-        <div class="flex justify-center -my-2 relative z-10"><div class="bg-[#292a2d] px-2 py-0.5 rounded-full tnum text-[11px] text-[#00dbe9]">1 ${pair.base} = ${fmtUsd(q.effective)}</div></div>
-        <div class="bg-[#0d0e11] p-3 rounded">
-          <div class="text-[10px] uppercase text-mute">Estimated receive</div>
-          <div class="font-display text-[22px] sm:text-[28px] text-pos">${fmt(inAmt, isBuy ? 5 : 2)} <span class="text-white text-[14px]">${inSym}</span></div>
-          <div class="mt-2 flex justify-between text-[11px] sm:text-[12px] bg-[#1b1b1f] px-2 py-1 rounded"><span class="text-mute">Guaranteed min</span><span class="tnum">${fmt(q.minReceived, isBuy ? 5 : 2)} ${inSym}</span></div>
+        <div class="flex justify-center -my-2 relative z-10"><div class="card-themed border border-themed px-2 py-0.5 rounded-full tnum text-[11px] text-[#00dbe9]">1 ${pair.base} = ${fmtUsd(q.effective)}</div></div>
+        <div class="surface-themed border border-themed p-3 rounded">
+          <div class="text-[10px] uppercase text-muted">Estimated receive</div>
+          <div class="font-display text-[22px] sm:text-[28px] text-pos">${fmt(inAmt, isBuy ? 5 : 2)} <span class="text-themed text-[14px]">${inSym}</span></div>
+          <div class="mt-2 flex justify-between text-[11px] sm:text-[12px] card-themed border border-themed px-2 py-1 rounded"><span class="text-muted">Guaranteed min</span><span class="tnum">${fmt(q.minReceived, isBuy ? 5 : 2)} ${inSym}</span></div>
         </div>
         ${(() => {
           if (state.side === "buy") {
@@ -3139,39 +3220,39 @@ function reviewModal() {
             if (jit.needed && jit.canCover) {
               return `
               <div class="mt-3 bg-[#00f0ff]/10 border border-[#00f0ff]/30 p-2.5 rounded text-[12px] text-themed">
-                <div class="flex items-center gap-1.5 text-[#00f0ff] font-semibold text-[11px] uppercase">
+                <div class="flex items-center gap-1.5 text-themed font-semibold font-semibold text-[11px] uppercase">
                   <span class="material-symbols-outlined text-[16px]">swap_calls</span> Smart Treasury JIT Unwind Armed
                 </div>
-                <div class="mt-1 text-[11px] text-mute">
-                  Liquid USDC: <strong class="text-white">$${fmt(state.balances.USDC || 0, 2)}</strong> · Auto-redeeming <strong class="text-[#00f0ff]">${fmt(jit.usycToRedeem, 2)} USYC</strong> to cover ticket size.
+                <div class="mt-1 text-[11px] text-muted">
+                  Liquid USDC: <strong class="text-themed">$${fmt(state.balances.USDC || 0, 2)}</strong> · Auto-redeeming <strong class="text-themed font-semibold">${fmt(jit.usycToRedeem, 2)} USYC</strong> to cover ticket size.
                 </div>
               </div>`;
             }
           }
           return "";
         })()}
-        <div class="mt-3 bg-[#1b1b1f] p-3 rounded text-[12px] grid grid-cols-2 gap-2">
-          <div><div class="text-mute text-[11px]">Price impact</div><div class="tnum text-pos">${fmt(q.impact*100,2)}%</div></div>
-          <div><div class="text-mute text-[11px]">Route</div><div class="text-white text-[11px]">Interminal Settlement → Arc AMM</div></div>
-          <div class="col-span-2 sm:col-span-1"><div class="text-mute text-[11px]">Settlement Contract</div><div class="text-[#00f0ff] font-mono text-[11px] truncate"><a href="${ARC.explorer}/address/${ARC.settlement}" target="_blank" class="hover:underline">${shortAddr(ARC.settlement)}</a></div></div>
-          <div class="col-span-2 sm:col-span-1"><div class="text-mute text-[11px]">Network gas</div><div class="tnum text-white">${q.gasUsd} USDC</div></div>
+        <div class="mt-3 card-themed border border-themed p-3 rounded text-[12px] grid grid-cols-2 gap-2">
+          <div><div class="text-muted text-[11px]">Price impact</div><div class="tnum text-pos">${fmt(q.impact*100,2)}%</div></div>
+          <div><div class="text-muted text-[11px]">Route</div><div class="text-themed text-[11px]">Interminal Settlement → Arc AMM</div></div>
+          <div class="col-span-2 sm:col-span-1"><div class="text-muted text-[11px]">Settlement Contract</div><div class="text-themed font-semibold font-mono text-[11px] truncate"><a href="${ARC.explorer}/address/${ARC.settlement}" target="_blank" class="hover:underline">${shortAddr(ARC.settlement)}</a></div></div>
+          <div class="col-span-2 sm:col-span-1"><div class="text-muted text-[11px]">Network gas</div><div class="tnum text-themed">${q.gasUsd} USDC</div></div>
         </div>
         <div class="mt-4 flex flex-col sm:flex-row gap-2">
-          <button data-act="close-review" class="w-full sm:w-1/3 py-2 rounded bg-[#292a2d] font-display text-[13px]">Cancel & Adjust</button>
+          <button data-act="close-review" class="w-full sm:w-1/3 py-2 rounded card-themed border border-themed font-display text-[13px]">Cancel & Adjust</button>
           <button data-act="sign" class="w-full sm:w-2/3 py-2 rounded bg-[#00f0ff] text-[#00363a] font-display font-bold text-[13px] flex items-center justify-center gap-1">
             <span class="material-symbols-outlined text-[18px]">verified_user</span> Authorize & Sign (${shortAddr(state.address)})
           </button>
         </div>
       </div>
-      <div class="lg:w-80 bg-[#0d0e11] rounded-lg p-4 text-[12px]">
-        <div class="font-display text-[12px] text-[#00f0ff] uppercase mb-2">Pre-flight · AI + Risk</div>
+      <div class="lg:w-80 surface-themed border border-themed rounded-lg p-4 text-[12px]">
+        <div class="font-display text-[12px] text-themed font-semibold uppercase mb-2">Pre-flight · AI + Risk</div>
         ${(() => { const t = analyzeTrade(q); const r = riskMetrics(); return `
           <div class="space-y-2 text-sub">
-            <div class="flex justify-between"><span>Ticket / NAV</span><span class="tnum text-white">${fmt(t.sizePct,2)}%</span></div>
+            <div class="flex justify-between"><span>Ticket / NAV</span><span class="tnum text-themed">${fmt(t.sizePct,2)}%</span></div>
             <div class="flex justify-between"><span>Impact</span><span class="tnum">${fmt(t.impact,2)}%</span></div>
             <div class="flex justify-between"><span>Concentration now</span><span class="tnum">${r.concentration}</span></div>
             <p class="pt-2">${t.note}</p>
-            <p class="text-mute">The model cannot sign. Exact calldata is shown to the wallet.</p>
+            <p class="text-muted">The model cannot sign. Exact calldata is shown to the wallet.</p>
           </div>`; })()}
       </div>
     </div>
@@ -3183,18 +3264,18 @@ function executedModal() {
   const tx = state.lastTx;
   return `
   <div class="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4">
-    <div class="absolute inset-0 bg-[#0d0e11]/80 backdrop-blur-sm" data-act="close-tx"></div>
-    <div class="relative bg-[#1f1f23] rounded-lg p-4 sm:p-6 w-full max-w-md mx-2">
+    <div class="absolute inset-0 surface-themed border border-themed/80 backdrop-blur-sm" data-act="close-tx"></div>
+    <div class="relative card-themed border border-themed rounded-lg p-4 sm:p-6 w-full max-w-md mx-2">
       <div class="font-display text-[16px] text-pos">TICKET SIGNED</div>
       <div class="mt-3 text-[14px]">${tx.label}</div>
       <div class="mt-2 tnum text-[12px] space-y-1 text-sub">
-        <div class="flex justify-between"><span>Quoted price</span><span class="text-white">${fmtUsd(tx.price)}</span></div>
+        <div class="flex justify-between"><span>Quoted price</span><span class="text-themed">${fmtUsd(tx.price)}</span></div>
         <div class="flex justify-between"><span>Network</span><span>Arc ${ARC.chainId}</span></div>
         <div class="flex justify-between"><span>Status</span><span class="text-pos">Wallet signed</span></div>
-        <div class="flex justify-between gap-2"><span>Signature</span><span class="text-[#00f0ff] font-mono text-[11px] truncate text-right">${typeof tx.hash === "string" && tx.hash.length > 20 ? tx.hash.slice(0, 10) + "…" + tx.hash.slice(-8) : tx.hash}</span></div>
+        <div class="flex justify-between gap-2"><span>Signature</span><span class="text-themed font-semibold font-mono text-[11px] truncate text-right">${typeof tx.hash === "string" && tx.hash.length > 20 ? tx.hash.slice(0, 10) + "…" + tx.hash.slice(-8) : tx.hash}</span></div>
       </div>
       <div class="mt-4 flex flex-col gap-2">
-        <button data-act="view-tx-receipt" class="w-full py-2 rounded bg-[#0d0e11] hover:bg-[#121316] border border-[#00f0ff]/40 text-[#00f0ff] font-display text-[12px] flex items-center justify-center gap-1.5 transition">
+        <button data-act="view-tx-receipt" class="w-full py-2 rounded surface-themed border border-themed hover:card-themed border border-[#00f0ff]/40 text-themed font-semibold font-display text-[12px] flex items-center justify-center gap-1.5 transition">
           <span class="material-symbols-outlined text-[16px]">verified</span> View Cryptographic Audit Receipt
         </button>
         <button data-act="close-tx" class="w-full py-2 rounded bg-[#00f0ff] text-[#00363a] font-display font-bold text-[13px]">View portfolio</button>
@@ -3213,27 +3294,27 @@ function searchModal() {
   return `
   <div class="fixed inset-0 z-[70] flex items-start justify-center pt-16 sm:pt-24 px-3 sm:px-4">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-act="close-search"></div>
-    <div class="relative w-full max-w-lg bg-[#1f1f23] rounded-lg p-3 shadow-2xl border border-[#1F2430]">
+    <div class="relative w-full max-w-lg card-themed border border-themed rounded-lg p-3 shadow-2xl border border-themed">
       <div class="relative">
-        <span class="material-symbols-outlined text-[18px] text-mute absolute left-2.5 top-2.5">search</span>
-        <input id="search-in" value="${escapeHtml(state.searchQuery)}" class="w-full bg-[#0d0e11] border border-[#1F2430] rounded pl-9 pr-3 py-2 outline-none focus:border-[#00f0ff] text-[14px] text-white" placeholder="Search markets (e.g. ETH, EURC, USYC, BTC)…" />
+        <span class="material-symbols-outlined text-[18px] text-muted absolute left-2.5 top-2.5">search</span>
+        <input id="search-in" value="${escapeHtml(state.searchQuery)}" class="w-full surface-themed border border-themed border border-themed rounded pl-9 pr-3 py-2 outline-none focus:border-[#00f0ff] text-[14px] text-themed" placeholder="Search markets (e.g. ETH, EURC, USYC, BTC)…" />
       </div>
       <div class="mt-2 max-h-72 overflow-y-auto space-y-1">
         ${pairs.length ? pairs.map(([k, v]) => `
-          <button data-trade="${k}" class="w-full flex items-center justify-between px-3 py-2 text-[13px] hover:bg-[#292a2d] rounded transition">
+          <button data-trade="${k}" class="w-full flex items-center justify-between px-3 py-2 text-[13px] hover:card-themed border border-themed rounded transition">
             <div class="flex items-center gap-2">
-              <span class="font-display font-semibold text-white">${k}</span>
-              <span class="text-[11px] text-mute">${TOKEN_META[v.base]?.name || ""}</span>
+              <span class="font-display font-semibold text-themed">${k}</span>
+              <span class="text-[11px] text-muted">${TOKEN_META[v.base]?.name || ""}</span>
             </div>
             <div class="text-right tnum">
-              <div class="font-semibold text-white">${k === "EURC/USDC" ? v.price.toFixed(4) : fmtUsd(v.price)}</div>
+              <div class="font-semibold text-themed">${k === "EURC/USDC" ? v.price.toFixed(4) : fmtUsd(v.price)}</div>
               <div class="text-[11px] ${v.change >= 0 ? "text-pos" : "text-neg"}">${fmtPct(v.change)}</div>
             </div>
           </button>
-        `).join("") : `<div class="py-6 text-center text-mute text-[12px]">No matching Arc markets found</div>`}
+        `).join("") : `<div class="py-6 text-center text-muted text-[12px]">No matching Arc markets found</div>`}
       </div>
-      <div class="mt-2 pt-2 border-t border-[#1F2430] flex justify-between text-[11px] text-mute">
-        <span>Press <kbd class="px-1 bg-[#121316] rounded border border-[#1F2430]">ESC</kbd> to close</span>
+      <div class="mt-2 pt-2 border-t border-themed flex justify-between text-[11px] text-muted">
+        <span>Press <kbd class="px-1 card-themed rounded border border-themed">ESC</kbd> to close</span>
         <span>${pairs.length} markets</span>
       </div>
     </div>
@@ -3243,16 +3324,16 @@ function searchModal() {
 function alertsPanel() {
   if (!state.alertsOpen) return "";
   return `
-  <div class="fixed top-14 right-2 sm:right-4 z-[60] w-[calc(100vw-1rem)] sm:w-80 max-w-sm bg-[#1f1f23] border border-[#1F2430] rounded p-3 shadow-xl">
-    <div class="font-display text-[12px] uppercase text-[#00f0ff] mb-2 flex justify-between items-center">
+  <div class="fixed top-14 right-2 sm:right-4 z-[60] w-[calc(100vw-1rem)] sm:w-80 max-w-sm card-themed border border-themed border border-themed rounded p-3 shadow-xl">
+    <div class="font-display text-[12px] uppercase text-themed font-semibold mb-2 flex justify-between items-center">
       <span>Alerts</span>
-      <button data-act="close-alerts" class="text-mute hover:text-white text-[10px]">Close</button>
+      <button data-act="close-alerts" class="text-muted hover:text-themed text-[10px]">Close</button>
     </div>
-    ${state.alerts.map((a)=>`<div class="py-1.5 text-[12px] border-b border-[#1F2430]/60 flex justify-between items-center">
+    ${state.alerts.map((a)=>`<div class="py-1.5 text-[12px] border-b border-themed/60 flex justify-between items-center">
       <span>${escapeHtml(a.text)}</span>
-      <button data-alert-toggle="${a.id}" class="text-[10px] ${a.armed ? "text-pos" : "text-mute hover:text-white"} font-semibold">${a.armed ? "ARMED" : "OFF"}</button>
+      <button data-alert-toggle="${a.id}" class="text-[10px] ${a.armed ? "text-pos" : "text-muted hover:text-themed"} font-semibold">${a.armed ? "ARMED" : "OFF"}</button>
     </div>`).join("")}
-    <div class="text-[11px] text-mute mt-2">In-app alerts persisted locally.</div>
+    <div class="text-[11px] text-muted mt-2">In-app alerts persisted locally.</div>
   </div>`;
 }
 
@@ -3262,59 +3343,59 @@ function receiptModal() {
   const isOk = verifyReceiptIntegrity(r);
   return `
   <div class="fixed inset-0 z-[80] flex items-center justify-center p-2 sm:p-4">
-    <div class="absolute inset-0 bg-[#0d0e11]/85 backdrop-blur-md" data-act="close-receipt"></div>
-    <div class="relative z-10 w-full max-w-2xl bg-[#1f1f23] rounded-lg p-4 sm:p-6 border border-[#1F2430] shadow-2xl max-h-[92vh] overflow-y-auto">
-      <div class="flex items-start justify-between pb-3 border-b border-[#1F2430]">
+    <div class="absolute inset-0 surface-themed border border-themed/85 backdrop-blur-md" data-act="close-receipt"></div>
+    <div class="relative z-10 w-full max-w-2xl card-themed border border-themed rounded-lg p-4 sm:p-6 border border-themed shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-start justify-between pb-3 border-b border-themed">
         <div>
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-[20px] text-[#00f0ff]">verified</span>
-            <span class="font-display text-[15px] sm:text-[16px] text-white uppercase">Cryptographic Audit Certificate</span>
+            <span class="material-symbols-outlined text-[20px] text-themed font-semibold">verified</span>
+            <span class="font-display text-[15px] sm:text-[16px] text-themed uppercase">Cryptographic Audit Certificate</span>
           </div>
-          <div class="text-[11px] text-mute mt-0.5">Arc Mainnet (Chain 5042) · Tamper-Evident SHA-256 Digest</div>
+          <div class="text-[11px] text-muted mt-0.5">Arc Mainnet (Chain 5042) · Tamper-Evident SHA-256 Digest</div>
         </div>
         <div class="flex items-center gap-2">
           <span class="text-[10px] px-2 py-0.5 rounded ${isOk ? "bg-[#70ffba]/15 text-pos font-bold border border-[#70ffba]/30" : "bg-[#ffb4ab]/15 text-neg font-bold"}">
             ${isOk ? "✓ INTEGRITY VERIFIED" : "⚠ DIGEST MISMATCH"}
           </span>
-          <button data-act="close-receipt" class="text-mute hover:text-white p-1"><span class="material-symbols-outlined text-[18px]">close</span></button>
+          <button data-act="close-receipt" class="text-muted hover:text-themed p-1"><span class="material-symbols-outlined text-[18px]">close</span></button>
         </div>
       </div>
 
       <div class="mt-4 space-y-3 tnum text-[12px]">
-        <div class="bg-[#0d0e11] p-3 rounded grid grid-cols-2 gap-3">
-          <div><span class="text-mute text-[10px] uppercase">Receipt ID</span><div class="font-mono text-[11px] text-white truncate">${r.receiptId}</div></div>
-          <div><span class="text-mute text-[10px] uppercase">Arc Block Height</span><div class="text-[#00f0ff] font-semibold">#${Number(r.blockNumber).toLocaleString()}</div></div>
-          <div><span class="text-mute text-[10px] uppercase">Timestamp (UTC)</span><div class="text-white">${new Date(r.timestamp).toISOString()}</div></div>
-          <div><span class="text-mute text-[10px] uppercase">Trader Signer</span><div class="font-mono text-[11px] text-white">${shortAddr(r.trader)}</div></div>
+        <div class="surface-themed border border-themed p-3 rounded grid grid-cols-2 gap-3">
+          <div><span class="text-muted text-[10px] uppercase">Receipt ID</span><div class="font-mono text-[11px] text-themed truncate">${r.receiptId}</div></div>
+          <div><span class="text-muted text-[10px] uppercase">Arc Block Height</span><div class="text-themed font-semibold font-semibold">#${Number(r.blockNumber).toLocaleString()}</div></div>
+          <div><span class="text-muted text-[10px] uppercase">Timestamp (UTC)</span><div class="text-themed">${new Date(r.timestamp).toISOString()}</div></div>
+          <div><span class="text-muted text-[10px] uppercase">Trader Signer</span><div class="font-mono text-[11px] text-themed">${shortAddr(r.trader)}</div></div>
         </div>
 
-        <div class="bg-[#0d0e11] p-3 rounded">
-          <div class="text-[10px] uppercase text-mute mb-1">Execution Telemetry</div>
+        <div class="surface-themed border border-themed p-3 rounded">
+          <div class="text-[10px] uppercase text-muted mb-1">Execution Telemetry</div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <div><span class="text-mute text-[10px]">Market</span><div class="font-semibold text-white">${r.pair}</div></div>
-            <div><span class="text-mute text-[10px]">Effective Rate</span><div class="font-semibold text-pos">${fmtUsd(r.effectivePrice)}</div></div>
-            <div><span class="text-mute text-[10px]">Impact</span><div class="text-white">${r.priceImpactPct}%</div></div>
-            <div><span class="text-mute text-[10px]">Gas Token</span><div class="text-white">${r.gasUsd} USDC</div></div>
+            <div><span class="text-muted text-[10px]">Market</span><div class="font-semibold text-themed">${r.pair}</div></div>
+            <div><span class="text-muted text-[10px]">Effective Rate</span><div class="font-semibold text-pos">${fmtUsd(r.effectivePrice)}</div></div>
+            <div><span class="text-muted text-[10px]">Impact</span><div class="text-themed">${r.priceImpactPct}%</div></div>
+            <div><span class="text-muted text-[10px]">Gas Token</span><div class="text-themed">${r.gasUsd} USDC</div></div>
           </div>
         </div>
 
-        <div class="bg-[#0d0e11] p-3 rounded space-y-2">
+        <div class="surface-themed border border-themed p-3 rounded space-y-2">
           <div>
-            <div class="text-[10px] uppercase text-mute">EIP-712 Signature</div>
-            <div class="font-mono text-[10px] text-[#00f0ff] break-all bg-[#121316] p-1.5 rounded mt-0.5">${r.signature}</div>
+            <div class="text-[10px] uppercase text-muted">EIP-712 Signature</div>
+            <div class="font-mono text-[10px] text-themed font-semibold break-all card-themed p-1.5 rounded mt-0.5">${r.signature}</div>
           </div>
           <div>
-            <div class="text-[10px] uppercase text-mute">SHA-256 Canonical Integrity Digest</div>
-            <div class="font-mono text-[10px] text-pos break-all bg-[#121316] p-1.5 rounded mt-0.5">${r.integrityDigest}</div>
+            <div class="text-[10px] uppercase text-muted">SHA-256 Canonical Integrity Digest</div>
+            <div class="font-mono text-[10px] text-pos break-all card-themed p-1.5 rounded mt-0.5">${r.integrityDigest}</div>
           </div>
         </div>
       </div>
 
       <div class="mt-5 flex flex-col sm:flex-row gap-2">
-        <button data-act="copy-receipt" class="flex-1 py-2 rounded bg-[#292a2d] hover:bg-[#343538] font-display text-[12px] flex items-center justify-center gap-1.5">
+        <button data-act="copy-receipt" class="flex-1 py-2 rounded card-themed border border-themed hover:bg-[#343538] font-display text-[12px] flex items-center justify-center gap-1.5">
           <span class="material-symbols-outlined text-[16px]">content_copy</span> Copy JSON-LD
         </button>
-        <button data-act="download-receipt" class="flex-1 py-2 rounded bg-[#292a2d] hover:bg-[#343538] font-display text-[12px] flex items-center justify-center gap-1.5">
+        <button data-act="download-receipt" class="flex-1 py-2 rounded card-themed border border-themed hover:bg-[#343538] font-display text-[12px] flex items-center justify-center gap-1.5">
           <span class="material-symbols-outlined text-[16px]">download</span> Download (.json)
         </button>
         ${state.settlementContractAddress ? `
@@ -3337,60 +3418,60 @@ function mandateModal() {
   const defaultAgent = "0x742d35Cc6634C0532925a3b844Bc454e4438f44e";
   return `
   <div class="fixed inset-0 z-[80] flex items-center justify-center p-2 sm:p-4">
-    <div class="absolute inset-0 bg-[#0d0e11]/85 backdrop-blur-md" data-act="close-mandate-modal"></div>
-    <div class="relative z-10 w-full max-w-lg bg-[#1f1f23] rounded-lg p-4 sm:p-6 border border-[#1F2430] shadow-2xl">
-      <div class="flex items-start justify-between pb-3 border-b border-[#1F2430]">
+    <div class="absolute inset-0 surface-themed border border-themed/85 backdrop-blur-md" data-act="close-mandate-modal"></div>
+    <div class="relative z-10 w-full max-w-lg card-themed border border-themed rounded-lg p-4 sm:p-6 border border-themed shadow-2xl">
+      <div class="flex items-start justify-between pb-3 border-b border-themed">
         <div>
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-[20px] text-[#00f0ff]">policy</span>
-            <span class="font-display text-[16px] text-white uppercase">Issue Agentic Mandate</span>
+            <span class="material-symbols-outlined text-[20px] text-themed font-semibold">policy</span>
+            <span class="font-display text-[16px] text-themed uppercase">Issue Agentic Mandate</span>
           </div>
-          <div class="text-[11px] text-mute mt-0.5">EIP-712 Scoped Delegation Permit · Zero Key Custody</div>
+          <div class="text-[11px] text-muted mt-0.5">EIP-712 Scoped Delegation Permit · Zero Key Custody</div>
         </div>
-        <button data-act="close-mandate-modal" class="text-mute hover:text-white p-1"><span class="material-symbols-outlined text-[18px]">close</span></button>
+        <button data-act="close-mandate-modal" class="text-muted hover:text-themed p-1"><span class="material-symbols-outlined text-[18px]">close</span></button>
       </div>
 
       <div class="mt-4 space-y-3 text-[12px]">
         <div>
-          <label class="block text-[10px] uppercase text-mute mb-1">Target Agent / Smart Account Address</label>
-          <input id="mandate-agent-input" class="w-full bg-[#0d0e11] border border-[#1F2430] focus:border-[#00f0ff] rounded px-3 py-2 font-mono text-[12px] text-white outline-none" value="${defaultAgent}" />
+          <label class="block text-[10px] uppercase text-muted mb-1">Target Agent / Smart Account Address</label>
+          <input id="mandate-agent-input" class="w-full surface-themed border border-themed border border-themed focus:border-[#00f0ff] rounded px-3 py-2 font-mono text-[12px] text-themed outline-none" value="${defaultAgent}" />
         </div>
 
         <div>
-          <label class="block text-[10px] uppercase text-mute mb-1">Authorized Spend Budget (USDC)</label>
+          <label class="block text-[10px] uppercase text-muted mb-1">Authorized Spend Budget (USDC)</label>
           <div class="grid grid-cols-4 gap-2">
             ${[50, 100, 250, 500].map((amt) => `
-              <button data-mandate-spend="${amt}" class="mandate-spend-btn py-1.5 rounded bg-[#0d0e11] hover:bg-[#1b1b1f] border border-[#1F2430] text-center font-display font-semibold transition ${amt===(state.mandateSpend||250)?"border-[#00f0ff] text-[#00f0ff]":""}">$${amt}</button>
+              <button data-mandate-spend="${amt}" class="mandate-spend-btn py-1.5 rounded surface-themed border border-themed hover:card-themed border border-themed border border-themed text-center font-display font-semibold transition ${amt===(state.mandateSpend||250)?"border-[#00f0ff] text-themed font-semibold":""}">$${amt}</button>
             `).join("")}
           </div>
         </div>
 
         <div>
-          <label class="block text-[10px] uppercase text-mute mb-1">Max Slippage Band</label>
+          <label class="block text-[10px] uppercase text-muted mb-1">Max Slippage Band</label>
           <div class="grid grid-cols-3 gap-2">
             ${[[20,"20 bps (0.2%)"],[30,"30 bps (0.3%)"],[50,"50 bps (0.5%)"]].map(([bps, label]) => `
-              <button data-mandate-slip="${bps}" class="mandate-slip-btn py-1.5 rounded bg-[#0d0e11] hover:bg-[#1b1b1f] border border-[#1F2430] text-center font-display transition ${bps===(state.mandateSlip||30)?"border-[#00f0ff] text-[#00f0ff] font-semibold":""}">${label}</button>
+              <button data-mandate-slip="${bps}" class="mandate-slip-btn py-1.5 rounded surface-themed border border-themed hover:card-themed border border-themed border border-themed text-center font-display transition ${bps===(state.mandateSlip||30)?"border-[#00f0ff] text-themed font-semibold font-semibold":""}">${label}</button>
             `).join("")}
           </div>
         </div>
 
         <div>
-          <label class="block text-[10px] uppercase text-mute mb-1">Session Duration (Time-to-Live)</label>
+          <label class="block text-[10px] uppercase text-muted mb-1">Session Duration (Time-to-Live)</label>
           <div class="grid grid-cols-4 gap-2">
             ${[[3600,"1 hour"],[14400,"4 hours"],[43200,"12 hours"],[86400,"24 hours"]].map(([sec, label]) => `
-              <button data-mandate-ttl="${sec}" class="mandate-ttl-btn py-1.5 rounded bg-[#0d0e11] hover:bg-[#1b1b1f] border border-[#1F2430] text-center font-display transition ${sec===(state.mandateTtl||14400)?"border-[#00f0ff] text-[#00f0ff] font-semibold":""}">${label}</button>
+              <button data-mandate-ttl="${sec}" class="mandate-ttl-btn py-1.5 rounded surface-themed border border-themed hover:card-themed border border-themed border border-themed text-center font-display transition ${sec===(state.mandateTtl||14400)?"border-[#00f0ff] text-themed font-semibold font-semibold":""}">${label}</button>
             `).join("")}
           </div>
         </div>
 
-        <div class="p-3 bg-[#121316] rounded text-[11px] text-sub space-y-1">
-          <div class="text-[#00f0ff] font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">lock</span> Cryptographic Boundary</div>
+        <div class="p-3 card-themed rounded text-[11px] text-sub space-y-1">
+          <div class="text-themed font-semibold font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">lock</span> Cryptographic Boundary</div>
           <div>Agent can only execute within approved pairs (ETH/USDC, EURC/USDC, USYC/USDC). Any spend above the cap or expired timestamp will be rejected automatically.</div>
         </div>
       </div>
 
       <div class="mt-5 flex gap-2">
-        <button data-act="close-mandate-modal" class="w-1/3 py-2 rounded bg-[#292a2d] font-display text-[12px]">Cancel</button>
+        <button data-act="close-mandate-modal" class="w-1/3 py-2 rounded card-themed border border-themed font-display text-[12px]">Cancel</button>
         <button data-act="sign-mandate" class="w-2/3 py-2 rounded bg-[#00f0ff] text-[#00363a] font-display font-bold text-[12px] flex items-center justify-center gap-1">
           <span class="material-symbols-outlined text-[16px]">fingerprint</span> Sign & Arm Mandate
         </button>
@@ -3408,24 +3489,23 @@ function render() {
   const selStart = (activeEl && "selectionStart" in activeEl) ? activeEl.selectionStart : null;
   const selEnd = (activeEl && "selectionEnd" in activeEl) ? activeEl.selectionEnd : null;
 
-  if (!state.connected || state.wrongNetwork) {
-    if (state.view === "proof" && !state.wrongNetwork) {
-      root.innerHTML = `<div class="px-4 py-4"><button data-act="home" class="text-[12px] text-[#00F0FF]">← Back</button></div>` + proofView();
-      bind();
-      return;
-    }
-    root.innerHTML = state.connected && state.wrongNetwork ? wrongNet() : landing();
+  if (state.connected && state.wrongNetwork) {
+    root.innerHTML = header() + wrongNet() + footer() + bottomNav();
     bind();
     return;
   }
-  const body = {
+
+  const bodyMap = {
+    landing: landing,
     terminal: terminalView,
     markets: marketsView,
     portfolio: portfolioView,
     ai: aiView,
     activity: activityView,
     proof: proofView,
-  }[state.view] || terminalView;
+  };
+  const body = bodyMap[state.view] || (state.connected ? terminalView : landing);
+
   root.innerHTML = header() + body() + footer() + bottomNav();
   const modalRoot = $("#modal-root");
   if (modalRoot) {
@@ -3444,16 +3524,21 @@ function render() {
   }
 
   requestAnimationFrame(() => {
-    if (state.view === "terminal") drawChart($("#main-chart"), state.candles, state.indicators);
+    if (state.view === "terminal") {
+      const chartEl = $("#main-chart");
+      if (chartEl && state.candles?.length) drawChart(chartEl, state.candles, state.indicators);
+    }
     if (state.view === "portfolio") {
-      const p = portfolioSnapshot();
-      const curve = Array.from({ length: 36 }, (_, i) => p.total * (0.88 + i * 0.0035) + Math.sin(i / 4) * 120);
-      curve[curve.length - 1] = p.total;
-      drawSpark($("#nav-chart"), curve, "#00F0FF");
+      const navChart = $("#nav-chart");
+      if (navChart) {
+        const p = portfolioSnapshot();
+        const curve = Array.from({ length: 36 }, (_, i) => p.total * (0.88 + i * 0.0035) + Math.sin(i / 4) * 120);
+        curve[curve.length - 1] = p.total;
+        drawSpark(navChart, curve, state.theme === "dark" ? "#FFFFFF" : "#000000");
+      }
     }
   });
 }
-
 function loadMarket() {
   state.candles = generateCandles(state.pair, state.timeframe, 120);
   state.indicators = computeIndicators(state.candles);
