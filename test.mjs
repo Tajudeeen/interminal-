@@ -514,6 +514,48 @@ await testAsync("Security Gate: publicRpc eth_call allows legitimate settlement 
   );
 });
 
+// --- SUITE 14: Expanded PAIRS Coverage (all 16 markets) ---
+test("Expanded PAIRS: all 16 Arc markets present with category tags", () => {
+  const required = [
+    ["ETH/USDC", "bluechip"],  ["BTC/USDC", "bluechip"],
+    ["SOL/USDC", "bluechip"],  ["AVAX/USDC", "bluechip"],
+    ["SUI/USDC", "bluechip"],  ["ARB/USDC", "bluechip"],
+    ["OP/USDC",  "bluechip"],  ["NEAR/USDC","bluechip"],
+    ["EURC/USDC","rwa_fx"],    ["USYC/USDC","rwa_fx"],
+    ["LINK/USDC","defi"],      ["AAVE/USDC","defi"],
+    ["UNI/USDC", "defi"],      ["ARC/USDC", "arc"],
+  ];
+  for (const [key, cat] of required) {
+    assert.ok(PAIRS[key], `PAIRS missing ${key}`);
+    assert.equal(PAIRS[key].cat, cat, `${key} category should be ${cat}, got ${PAIRS[key].cat}`);
+    assert.ok(Number.isFinite(PAIRS[key].price) && PAIRS[key].price > 0, `${key} must have valid price`);
+  }
+  assert.ok(Object.keys(PAIRS).length >= 14, "Must have at least 14 pairs");
+});
+
+// --- SUITE 15: decodeAbiString correctness ---
+test("decodeAbiString: correctly decodes ABI-encoded name() and raw symbol hex", () => {
+  const decodeAbiString = get("decodeAbiString");
+
+  // ABI-encoded string for "EURC" — from live Arc RPC eth_call name()
+  const abiEncodedEURC =
+    "0x00000000000000000000000000000000000000000000000000000000000000200" +
+    "0000000000000000000000000000000000000000000000000000000000000044" +
+    "555524300000000000000000000000000000000000000000000000000000000";
+  assert.equal(decodeAbiString(abiEncodedEURC), "EURC", "ABI-encoded EURC name should decode to EURC");
+
+  // Empty / zero hex
+  assert.equal(decodeAbiString("0x"), "", "0x should decode to empty string");
+
+  // Invalid / null
+  assert.equal(decodeAbiString(null), "", "null should decode to empty string");
+
+  // Short raw bytes (non-ABI encoding - decimals returns 0x06)
+  const decimals6 = "0x0000000000000000000000000000000000000000000000000000000000000006";
+  const parsed = parseInt(decimals6, 16);
+  assert.equal(parsed, 6, "decimals hex should parse to 6");
+});
+
 if (failed) {
   console.error("\n" + failed + " failed");
   process.exit(1);

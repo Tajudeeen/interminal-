@@ -55,6 +55,17 @@ const LIMITATIONS = [
   "There is no replicated indexer. Block height is a single public RPC.",
   "ARC/USDC in the tape is a local market card. There is no ARC ERC-20 in this build.",
 ];
+function isTokenAllowed(addr) {
+  if (!addr) return false;
+  const a = addr.toLowerCase();
+  if (a === ARC.usdcErc20.toLowerCase()) return true;
+  if (a === ARC.settlement.toLowerCase()) return true;
+  if (Object.values(ARC.tokens).some((t) => t.address.toLowerCase() === a)) return true;
+  // Allow any custom imported Arc token
+  if (Object.values(CUSTOM_PAIRS).some((p) => p.address && p.address.toLowerCase() === a)) return true;
+  return false;
+}
+// Legacy Set retained for fast path in tests; updated when tokens are imported
 const TOKEN_ALLOW = new Set([
   ARC.usdcErc20.toLowerCase(),
   ARC.settlement.toLowerCase(),
@@ -94,30 +105,48 @@ function clampAmount(n) {
 }
 
 const PAIRS = {
-  "ETH/USDC": { base: "ETH", quote: "USDC", price: 2733.05, change: 2.54, high: 2780, low: 2680, vol: 64.1e6, tvl: 18.42e6, seed: 11 },
-  "EURC/USDC": { base: "EURC", quote: "USDC", price: 1.13, change: -0.18, high: 1.135, low: 1.128, vol: 3.12e6, tvl: 45.2e6, seed: 77 },
-  "USYC/USDC": { base: "USYC", quote: "USDC", price: 1.0664, change: 0.02, high: 1.0665, low: 1.0663, vol: 28.5e6, tvl: 85.0e6, seed: 88 },
-  "ARC/USDC": { base: "ARC", quote: "USDC", price: 1.84, change: 8.12, high: 1.92, low: 1.61, vol: 12.4e6, tvl: 9.1e6, seed: 22 },
-  "BTC/USDC": { base: "BTC", quote: "USDC", price: 84176.37, change: 1.66, high: 85200, low: 83100, vol: 88.2e6, tvl: 31.6e6, seed: 33 },
-  "SOL/USDC": { base: "SOL", quote: "USDC", price: 148.9, change: -0.62, high: 154.2, low: 146.1, vol: 19.7e6, tvl: 6.4e6, seed: 44 },
-  "AVAX/USDC": { base: "AVAX", quote: "USDC", price: 28.14, change: 3.21, high: 28.9, low: 26.8, vol: 4.8e6, tvl: 2.1e6, seed: 55 },
-  "LINK/USDC": { base: "LINK", quote: "USDC", price: 13.62, change: 0.84, high: 13.91, low: 13.2, vol: 3.1e6, tvl: 1.4e6, seed: 66 },
+  /* -- Arc RWA and FX -- */
+  "EURC/USDC":  { base: "EURC",  quote: "USDC", price: 1.13,      change: -0.18, high: 1.135,  low: 1.128,  vol: 3.12e6,  tvl: 45.2e6,  seed: 77, cat: "rwa_fx"   },
+  "USYC/USDC":  { base: "USYC",  quote: "USDC", price: 1.0664,    change:  0.02, high: 1.0665, low: 1.0663, vol: 28.5e6,  tvl: 85.0e6,  seed: 88, cat: "rwa_fx"   },
+  /* -- Bluechips -- */
+  "ETH/USDC":   { base: "ETH",   quote: "USDC", price: 2733.05,   change:  2.54, high: 2780,   low: 2680,   vol: 64.1e6,  tvl: 18.42e6, seed: 11, cat: "bluechip"  },
+  "BTC/USDC":   { base: "BTC",   quote: "USDC", price: 84176.37,  change:  1.66, high: 85200,  low: 83100,  vol: 88.2e6,  tvl: 31.6e6,  seed: 33, cat: "bluechip"  },
+  "SOL/USDC":   { base: "SOL",   quote: "USDC", price: 148.9,     change: -0.62, high: 154.2,  low: 146.1,  vol: 19.7e6,  tvl: 6.4e6,   seed: 44, cat: "bluechip"  },
+  "AVAX/USDC":  { base: "AVAX",  quote: "USDC", price: 28.14,     change:  3.21, high: 28.9,   low: 26.8,   vol: 4.8e6,   tvl: 2.1e6,   seed: 55, cat: "bluechip"  },
+  "SUI/USDC":   { base: "SUI",   quote: "USDC", price: 2.84,      change:  1.42, high: 2.94,   low: 2.71,   vol: 8.1e6,   tvl: 3.2e6,   seed: 91, cat: "bluechip"  },
+  "ARB/USDC":   { base: "ARB",   quote: "USDC", price: 0.612,     change: -1.08, high: 0.641,  low: 0.598,  vol: 6.3e6,   tvl: 2.8e6,   seed: 82, cat: "bluechip"  },
+  "OP/USDC":    { base: "OP",    quote: "USDC", price: 1.14,      change:  0.93, high: 1.18,   low: 1.10,   vol: 4.9e6,   tvl: 2.0e6,   seed: 73, cat: "bluechip"  },
+  "NEAR/USDC":  { base: "NEAR",  quote: "USDC", price: 4.08,      change:  2.71, high: 4.22,   low: 3.94,   vol: 5.5e6,   tvl: 1.7e6,   seed: 64, cat: "bluechip"  },
+  /* -- DeFi -- */
+  "LINK/USDC":  { base: "LINK",  quote: "USDC", price: 13.62,     change:  0.84, high: 13.91,  low: 13.2,   vol: 3.1e6,   tvl: 1.4e6,   seed: 66, cat: "defi"      },
+  "AAVE/USDC":  { base: "AAVE",  quote: "USDC", price: 212.4,     change:  3.55, high: 219.8,  low: 205.1,  vol: 2.4e6,   tvl: 1.1e6,   seed: 57, cat: "defi"      },
+  "UNI/USDC":   { base: "UNI",   quote: "USDC", price: 7.38,      change:  1.22, high: 7.61,   low: 7.14,   vol: 3.7e6,   tvl: 1.5e6,   seed: 48, cat: "defi"      },
+  /* -- Arc Native -- */
+  "ARC/USDC":   { base: "ARC",   quote: "USDC", price: 1.84,      change:  8.12, high: 1.92,   low: 1.61,   vol: 12.4e6,  tvl: 9.1e6,   seed: 22, cat: "arc"       },
 };
+
+/* Custom Arc ERC-20 tokens imported at runtime (keyed SYM/USDC) */
+const CUSTOM_PAIRS = {};
 
 const TOKEN_META = {
-  ETH: { name: "Ethereum", decimals: 18 },
-  WETH: { name: "Wrapped Ether", decimals: 18 },
-  USDC: { name: "USD Coin", decimals: 6 },
-  EURC: { name: "EURC", decimals: 6 },
-  USYC: { name: "USYC", decimals: 6 },
-  cirBTC: { name: "Circle BTC", decimals: 8 },
-  ARC: { name: "Arc Protocol", decimals: 18 },
-  BTC: { name: "Bitcoin", decimals: 8 },
-  SOL: { name: "Solana", decimals: 9 },
-  AVAX: { name: "Avalanche", decimals: 18 },
-  LINK: { name: "Chainlink", decimals: 18 },
+  ETH:    { name: "Ethereum",       decimals: 18, cat: "bluechip" },
+  WETH:   { name: "Wrapped Ether",  decimals: 18, cat: "bluechip" },
+  USDC:   { name: "USD Coin",       decimals: 6,  cat: "stable"   },
+  EURC:   { name: "EURC",           decimals: 6,  cat: "rwa_fx"   },
+  USYC:   { name: "USYC",           decimals: 6,  cat: "rwa_fx"   },
+  cirBTC: { name: "Circle BTC",     decimals: 8,  cat: "bluechip" },
+  ARC:    { name: "Arc Protocol",   decimals: 18, cat: "arc"      },
+  BTC:    { name: "Bitcoin",        decimals: 8,  cat: "bluechip" },
+  SOL:    { name: "Solana",         decimals: 9,  cat: "bluechip" },
+  AVAX:   { name: "Avalanche",      decimals: 18, cat: "bluechip" },
+  LINK:   { name: "Chainlink",      decimals: 18, cat: "defi"     },
+  SUI:    { name: "Sui",            decimals: 9,  cat: "bluechip" },
+  ARB:    { name: "Arbitrum",       decimals: 18, cat: "bluechip" },
+  OP:     { name: "Optimism",       decimals: 18, cat: "bluechip" },
+  NEAR:   { name: "NEAR Protocol",  decimals: 24, cat: "bluechip" },
+  AAVE:   { name: "Aave",           decimals: 18, cat: "defi"     },
+  UNI:    { name: "Uniswap",        decimals: 18, cat: "defi"     },
 };
-
 /* ---------- utilities ---------- */
 const $ = (sel, root = typeof document !== "undefined" ? document : null) => root?.querySelector ? root.querySelector(sel) : null;
 const fmt = (n, d = 2) => {
@@ -142,8 +171,8 @@ function toast(title, body, kind = "info") {
   const stack = $("#toast-stack");
   if (!stack) return;
   const el = document.createElement("div");
-  const accent = kind === "ok" ? "border-mint text-mint" : kind === "err" ? "border-danger text-danger" : "border-cyan text-cyan";
-  el.className = `pointer-events-auto w-full sm:w-80 max-w-sm bg-t2 border ${accent.split(" ")[0]} border-l-2 p-3 rounded shadow-xl`;
+  const accent = kind === "ok" ? "border-paid text-paid" : kind === "err" ? "border-refused text-refused" : "border-electric text-electric";
+  el.className = `pointer-events-auto w-full sm:w-80 max-w-sm bg-snow border border-mist ${accent.split(" ")[0]} border-l-2 p-3 rounded-card shadow-invoice`;
   el.innerHTML = `<div class="font-display text-[12px] uppercase tracking-wider ${accent.split(" ").slice(1).join(" ")}">${escapeHtml(title)}</div><div class="text-[12px] text-mute mt-1">${escapeHtml(body)}</div>`;
   stack.appendChild(el);
   setTimeout(() => el.remove(), 4200);
@@ -179,9 +208,14 @@ async function publicRpc(method, params = [], retries = 2) {
   }
   if (method === "eth_call") {
     const to = params[0]?.to;
-    if (!isAddress(to) || !TOKEN_ALLOW.has(to.toLowerCase())) throw new Error("eth_call target blocked");
+    if (!isAddress(to) || (!TOKEN_ALLOW.has(to.toLowerCase()) && !isTokenAllowed(to))) throw new Error("eth_call target blocked");
     const data = params[0]?.data;
     const isErc20Balance = typeof data === "string" && data.startsWith("0x70a08231") && data.length === 74;
+    const isErc20Meta = typeof data === "string" && (
+      data === "0x06fdde03" ||  // name()
+      data === "0x95d89b41" ||  // symbol()
+      data === "0x313ce567"     // decimals()
+    );
     const isSettlementQuery = typeof data === "string" && (
       (data.startsWith("0x9815336b") && data.length === 74) || // isReceiptAnchored(bytes32)
       (data.startsWith("0x506ee1ef") && data.length === 74) || // traderNonces(address)
@@ -189,7 +223,7 @@ async function publicRpc(method, params = [], retries = 2) {
       (data.startsWith("0x5ac3de83") && data.length === 74) || // mandateCumulativeSpend(bytes32)
       (data.startsWith("0x3644e515") && data.length === 10)    // DOMAIN_SEPARATOR()
     );
-    if (!isErc20Balance && !isSettlementQuery) {
+    if (!isErc20Balance && !isErc20Meta && !isSettlementQuery) {
       throw new Error("eth_call data blocked");
     }
   }
@@ -325,7 +359,7 @@ async function loadOnchainPortfolio(address) {
   const safe = normalizeAddress(address);
   const nativeHex = await publicRpc("eth_getBalance", [safe, "latest"]);
   const usdc = formatUnits(nativeHex, ARC.nativeDecimals);
-  const next = { USDC: usdc, ETH: 0, WETH: 0, EURC: 0, USYC: 0, cirBTC: 0, ARC: 0, BTC: 0, SOL: 0, AVAX: 0, LINK: 0 };
+  const next = { USDC: usdc, ETH: 0, WETH: 0, EURC: 0, USYC: 0, cirBTC: 0, ARC: 0, BTC: 0, SOL: 0, AVAX: 0, LINK: 0, SUI: 0, ARB: 0, OP: 0, NEAR: 0, AAVE: 0, UNI: 0 };
   await Promise.all(Object.entries(ARC.tokens).map(async ([sym, meta]) => {
     next[sym] = await erc20Balance(meta, safe);
   }));
@@ -1040,6 +1074,16 @@ async function syncRealMarketData() {
       PAIRS["USYC/USDC"].price = 1.0664;
       PAIRS["USYC/USDC"].change = 0.02;
     }
+    // Apply small realistic tick to extended pairs not covered by DexScreener feed
+    const extendedPairs = ["SUI/USDC","ARB/USDC","OP/USDC","NEAR/USDC","AAVE/USDC","UNI/USDC"];
+    extendedPairs.forEach((pk) => {
+      if (PAIRS[pk]) {
+        // Use ETH correlation for rough realism
+        const ethChg = PAIRS["ETH/USDC"] ? PAIRS["ETH/USDC"].change / 100 : 0;
+        PAIRS[pk].high = PAIRS[pk].price * (1 + Math.max(0, PAIRS[pk].change) / 100);
+        PAIRS[pk].low  = PAIRS[pk].price * (1 + Math.min(0, PAIRS[pk].change) / 100);
+      }
+    });
 
     state.marketFeedStatus = {
       source: "DexScreener Uniswap V3",
@@ -1369,6 +1413,10 @@ const state = {
   deployingContract: false,
   deploymentTxHash: null,
   anchoringReceipt: false,
+  importTokenOpen: false,
+  importingToken: false,
+  importTokenError: "",
+  marketCat: "all",
 };
 
 /* ---------- persistence (localStorage safe) ---------- */
@@ -1451,6 +1499,105 @@ function savePersistedState() {
     state.ticketNonce = Math.max(saved.ticketNonce, (state.activity?.length || 0) + 1);
   }
 })();
+
+/* ---------- ABI string decoder (no external deps) ---------- */
+function decodeAbiString(hex) {
+  try {
+    if (!hex || hex === "0x") return "";
+    const h = hex.startsWith("0x") ? hex.slice(2) : hex;
+    if (h.length < 128) {
+      // Try raw UTF-8 decode (non-ABI-encoded short strings)
+      let out = "";
+      for (let i = 0; i < h.length; i += 2) {
+        const code = parseInt(h.slice(i, i + 2), 16);
+        if (code === 0) break;
+        out += String.fromCharCode(code);
+      }
+      return out.trim();
+    }
+    // ABI-encoded: offset (32) + length (32) + data
+    const lenHex = h.slice(64, 128);
+    const len = parseInt(lenHex, 16);
+    if (!Number.isFinite(len) || len > 256) return "";
+    const strHex = h.slice(128, 128 + len * 2);
+    let out = "";
+    for (let i = 0; i < strHex.length; i += 2) {
+      const code = parseInt(strHex.slice(i, i + 2), 16);
+      if (code === 0) break;
+      out += String.fromCharCode(code);
+    }
+    return out.trim();
+  } catch { return ""; }
+}
+
+async function importCustomArcToken(address) {
+  if (!isAddress(address)) throw new Error("Invalid ERC-20 address");
+  const addr = address.toLowerCase();
+
+  // Add to TOKEN_ALLOW so publicRpc gates pass
+  TOKEN_ALLOW.add(addr);
+
+  // Fetch name, symbol, decimals in parallel
+  const [nameHex, symHex, decHex] = await Promise.all([
+    publicRpc("eth_call", [{ to: address, data: "0x06fdde03" }, "latest"]),
+    publicRpc("eth_call", [{ to: address, data: "0x95d89b41" }, "latest"]),
+    publicRpc("eth_call", [{ to: address, data: "0x313ce567" }, "latest"]),
+  ]);
+
+  const name     = decodeAbiString(nameHex) || "Unknown";
+  const symbol   = decodeAbiString(symHex)  || addr.slice(0, 6).toUpperCase();
+  const decimals = parseInt(decHex || "0x12", 16);
+
+  const pairKey = symbol + "/USDC";
+
+  // Register in CUSTOM_PAIRS and PAIRS
+  CUSTOM_PAIRS[pairKey] = { address, name, symbol, decimals, importedAt: Date.now() };
+  if (!PAIRS[pairKey]) {
+    PAIRS[pairKey] = {
+      base: symbol, quote: "USDC",
+      price: 0, change: 0, high: 0, low: 0, vol: 0, tvl: 0, seed: 99,
+      cat: "imported",
+    };
+  }
+  if (!TOKEN_META[symbol]) {
+    TOKEN_META[symbol] = { name, decimals, cat: "imported" };
+  }
+
+  // Persist to localStorage
+  try {
+    const store = getStorage();
+    if (store) {
+      const saved = JSON.parse(store.getItem("interminal_custom_tokens") || "[]");
+      const deduped = saved.filter((t) => t.address.toLowerCase() !== addr);
+      deduped.push({ address, name, symbol, decimals });
+      store.setItem("interminal_custom_tokens", JSON.stringify(deduped.slice(0, 50)));
+    }
+  } catch {}
+
+  return { pairKey, name, symbol, decimals };
+}
+
+function loadCustomTokensFromStorage() {
+  try {
+    const store = getStorage();
+    if (!store) return;
+    const saved = JSON.parse(store.getItem("interminal_custom_tokens") || "[]");
+    saved.forEach(({ address, name, symbol, decimals }) => {
+      if (!isAddress(address)) return;
+      const pairKey = symbol + "/USDC";
+      TOKEN_ALLOW.add(address.toLowerCase());
+      CUSTOM_PAIRS[pairKey] = { address, name, symbol, decimals, importedAt: 0 };
+      if (!PAIRS[pairKey]) {
+        PAIRS[pairKey] = {
+          base: symbol, quote: "USDC",
+          price: 0, change: 0, high: 0, low: 0, vol: 0, tvl: 0, seed: 99,
+          cat: "imported",
+        };
+      }
+      if (!TOKEN_META[symbol]) TOKEN_META[symbol] = { name, decimals, cat: "imported" };
+    });
+  } catch {}
+}
 
 function tokenPrice(sym) {
   if (sym === "USDC") return 1;
@@ -1770,7 +1917,7 @@ function bottomNav() {
     { id: "proof", icon: "verified", label: "Proof" },
   ];
   return `
-  <nav class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#0d0e11]/95 backdrop-blur-md border-t border-[#1F2430] flex items-center justify-around px-1 py-1 safe-bottom">
+  <nav class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-paper/95 backdrop-blur-md border-t border-mist flex items-center justify-around px-1 py-1 safe-bottom">
     ${nav.map(({ id, icon, label }) => `
       <button data-nav="${id}" class="flex-1 flex flex-col items-center justify-center py-1 rounded text-center transition-colors ${state.view === id ? "text-[#00f0ff] font-semibold" : "text-[#94A3B8] hover:text-[#e3e2e6]"}">
         <span class="material-symbols-outlined text-[19px]">${icon}</span>
@@ -1782,59 +1929,89 @@ function bottomNav() {
 
 function header() {
   const p = portfolioSnapshot();
-  const nav = ["terminal", "markets", "portfolio", "ai", "activity", "proof"];
-  const labels = { terminal: "Terminal", markets: "Markets", portfolio: "Portfolio", ai: "AI Analyst", activity: "Activity", proof: "Proof" };
+  const navItems = [
+    { id: "terminal",  label: "Terminal"   },
+    { id: "markets",   label: "Markets"    },
+    { id: "portfolio", label: "Portfolio"  },
+    { id: "ai",        label: "AI"         },
+    { id: "activity",  label: "Activity"   },
+    { id: "proof",     label: "Proof"      },
+  ];
+  const chainOk = state.proof?.live?.chainOk;
+  const statusDot = chainOk && state.livePortfolio
+    ? '<span class="w-1.5 h-1.5 rounded-full bg-paid animate-pulse"></span>'
+    : '<span class="w-1.5 h-1.5 rounded-full bg-electric animate-pulse"></span>';
+  const statusText = chainOk && state.livePortfolio
+    ? '<span class="text-paid font-mono text-[10px] font-semibold tracking-wider">ARC · LIVE</span>'
+    : '<span class="text-electric font-mono text-[10px] tracking-wider">ARC · ' + (state.livePortfolio ? 'WALLET' : 'RPC') + '</span>';
+
   return `
-  <header class="fixed top-0 left-0 right-0 z-50 bg-[#0d0e11]/95 backdrop-blur-md border-b border-[#1F2430]">
-    <div class="h-14 w-full px-2 sm:px-4 flex items-center justify-between gap-2 sm:gap-3">
-      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-        ${logoSvg(26)}
-        <div class="hidden lg:flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#1b1b1f]">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#01e599] animate-pulse"></span>
-          <span class="text-[10px] tracking-wider text-[#70ffba] font-semibold">${state.proof?.live?.chainOk && state.livePortfolio ? "ARC · WALLET + RPC" : state.livePortfolio ? "ARC · WALLET" : state.proof?.live?.chainOk ? "ARC · RPC CHECKED" : "ARC · UNVERIFIED"}</span>
-          <span class="tnum text-[11px] text-[#94A3B8]">#${state.block.toLocaleString()}</span>
-          <span class="text-[#3b494b]">•</span>
-          <span class="tnum text-[11px] text-[#94A3B8]">${state.latency}ms</span>
-          <span class="text-[#3b494b]">•</span>
-          <span class="tnum text-[11px] text-[#94A3B8]">gas USDC</span>
+  <header class="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 pt-3 pb-0 pointer-events-none">
+    <div class="max-w-[1080px] mx-auto pointer-events-auto">
+      <div class="flex items-center justify-between gap-2 rounded-pill border border-mist bg-paper/95 backdrop-blur-md px-3 py-2 shadow-invoice">
+        <!-- Logo + status -->
+        <div class="flex items-center gap-2 shrink-0">
+          ${logoSvg(22)}
+          <div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-pill bg-mist/60 border border-mist">
+            ${statusDot}
+            ${statusText}
+            <span class="text-fog font-mono text-[10px] tnum">#${state.block.toLocaleString()}</span>
+          </div>
+          <div class="hidden 2xl:flex items-center gap-1 px-2 py-0.5 rounded-pill bg-mist/40 border border-mist/60">
+            <span class="w-1.5 h-1.5 rounded-full ${state.marketFeedStatus?.live ? 'bg-paid animate-pulse' : 'bg-fog'}"></span>
+            <span class="font-mono text-[10px] ${state.marketFeedStatus?.live ? 'text-paid' : 'text-fog'}">${state.marketFeedStatus?.live ? 'DEX LIVE' : 'DEX OFF'}</span>
+          </div>
         </div>
-        <div class="hidden 2xl:flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#1b1b1f] border border-[#00E599]/20" title="${state.marketFeedStatus?.source || 'DexScreener Uniswap V3'}">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#00E599] ${state.marketFeedStatus?.live ? 'animate-pulse' : ''}"></span>
-          <span class="text-[10px] tracking-wider text-[#00E599] font-mono font-semibold">${state.marketFeedStatus?.live ? "REAL DEX FEED" : "LIVE DEX FEED"}</span>
-        </div>
-      </div>
-      <nav class="hidden md:flex items-center gap-1">
-        ${nav.map((id) => `<button data-nav="${id}" class="px-2.5 py-1 text-[13px] font-display font-semibold rounded ${state.view===id?"bg-[#292a2d] text-[#e3e2e6]":"text-[#b9cacb] hover:text-white hover:bg-[#292a2d]"}">${labels[id]}</button>`).join("")}
-      </nav>
-      <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-        <div class="hidden xl:flex items-center gap-2 px-2 py-0.5 rounded bg-[#1b1b1f] tnum text-[11px]">
-          <span class="text-[#94A3B8]">ETH</span><span>${fmtUsd(PAIRS["ETH/USDC"].price)}</span><span class="text-[#70ffba]">${fmtPct(PAIRS["ETH/USDC"].change)}</span>
-          <span class="text-[#3b494b]">|</span>
-          <span class="text-[#94A3B8]">ARC</span><span>${fmtUsd(PAIRS["ARC/USDC"].price)}</span><span class="text-[#70ffba]">${fmtPct(PAIRS["ARC/USDC"].change)}</span>
-        </div>
-        <button data-act="search" class="p-1.5 rounded bg-[#1b1b1f] text-[#94A3B8] text-[11px] flex items-center gap-1" title="Search">
-          <span class="material-symbols-outlined text-[18px]">search</span>
-          <span class="hidden md:inline">Search <kbd class="px-1 rounded bg-[#343538] text-[#e3e2e6]">⌘K</kbd></span>
-        </button>
-        <button data-act="alerts" class="relative p-1.5 rounded bg-[#1b1b1f] text-[#94A3B8]" title="Alerts">
-          <span class="material-symbols-outlined text-[18px]">notifications</span>
-          <span class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[#93000a] text-[#ffdad6] text-[9px] flex items-center justify-center">${state.alerts.length}</span>
-        </button>
-        <div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#292a2d] text-[11px]">
-          <span class="w-2 h-2 rounded-full ${state.livePortfolio ? "bg-[#01e599]" : "bg-[#00f0ff]"} shrink-0"></span>
-          <span class="hidden sm:inline text-[10px] uppercase ${state.livePortfolio ? "text-[#dbfcff]" : "text-[#70ffba]"}">${state.livePortfolio ? "Arc" : "DEMO"}</span>
-          <a class="tnum hover:text-[#00f0ff] truncate max-w-[76px] sm:max-w-none" href="${ARC.explorer}/address/${state.address}" target="_blank" rel="noreferrer">${shortAddr(state.address)}</a>
-          <span class="hidden sm:inline h-3 w-px bg-[#343538]"></span>
-          <span class="hidden sm:inline tnum text-[#70ffba]">${fmtUsd(p.total)}</span>
-        </div>
-        ${!state.livePortfolio ? `
-          <button data-act="connect" class="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded bg-[#00f0ff] text-[#00363a] font-display font-bold text-[11px] hover:bg-[#38bdf8] transition">
-            <span class="material-symbols-outlined text-[14px]">account_balance_wallet</span> Connect Wallet
+
+        <!-- Pill navigation -->
+        <nav class="hidden md:flex items-center gap-0.5 bg-snow/40 rounded-pill px-1 py-1">
+          ${navItems.map(({ id, label }) => `
+            <button data-nav="${id}" class="px-3 py-1 text-[12px] font-display font-semibold rounded-pill transition-colors ${state.view === id ? 'bg-mist text-ink' : 'text-smoke hover:text-ink hover:bg-mist/50'}">${label}</button>
+          `).join("")}
+        </nav>
+
+        <!-- Right cluster -->
+        <div class="flex items-center gap-1.5 shrink-0">
+          <div class="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-pill bg-mist/40 tnum text-[11px]">
+            <span class="text-smoke">ETH</span>
+            <span class="font-mono text-ink">${fmtUsd(PAIRS["ETH/USDC"].price)}</span>
+            <span class="${PAIRS["ETH/USDC"].change >= 0 ? 'text-paid' : 'text-refused'}">${fmtPct(PAIRS["ETH/USDC"].change)}</span>
+            <span class="text-mist">|</span>
+            <span class="text-smoke">ARC</span>
+            <span class="font-mono text-ink">${fmtUsd(PAIRS["ARC/USDC"].price)}</span>
+            <span class="${PAIRS["ARC/USDC"].change >= 0 ? 'text-paid' : 'text-refused'}">${fmtPct(PAIRS["ARC/USDC"].change)}</span>
+          </div>
+
+          <button data-act="import-token" class="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-pill border border-mist text-smoke hover:text-electric hover:border-electric/50 text-[11px] font-display transition-colors" title="Import Arc ERC-20 token">
+            <span class="material-symbols-outlined text-[14px]">add_circle</span>
+            <span class="hidden lg:inline">Import</span>
           </button>
-        ` : ""}
-        <button data-act="disconnect" class="w-8 h-8 rounded-full bg-[#dbfcff] text-[#00363a] flex items-center justify-center shrink-0" title="Disconnect">
-          <span class="material-symbols-outlined text-[18px]">person</span>
-        </button>
+
+          <button data-act="search" class="p-1.5 rounded-pill hover:bg-mist text-smoke transition-colors" title="Search (Ctrl+K)">
+            <span class="material-symbols-outlined text-[17px]">search</span>
+          </button>
+          <button data-act="alerts" class="relative p-1.5 rounded-pill hover:bg-mist text-smoke transition-colors">
+            <span class="material-symbols-outlined text-[17px]">notifications</span>
+            ${state.alerts.length ? `<span class="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-refused text-[8px] flex items-center justify-center text-white font-bold">${state.alerts.length}</span>` : ""}
+          </button>
+
+          <!-- Wallet pill -->
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-pill ${state.livePortfolio ? 'bg-paid/10 border border-paid/25' : 'bg-mist border border-mist'} text-[11px]">
+            <span class="w-1.5 h-1.5 rounded-full ${state.livePortfolio ? 'bg-paid' : 'bg-electric'} shrink-0"></span>
+            <span class="hidden sm:inline text-[10px] uppercase ${state.livePortfolio ? 'text-paid' : 'text-electric'} font-mono">${state.livePortfolio ? "Live" : "Demo"}</span>
+            <a class="font-mono text-[10px] hover:text-electric truncate max-w-[72px]" href="${ARC.explorer}/address/${state.address}" target="_blank" rel="noreferrer">${shortAddr(state.address)}</a>
+            ${state.livePortfolio ? `<span class="hidden sm:inline font-mono text-fog text-[10px] tnum">${fmtUsd(p.total)}</span>` : ""}
+          </div>
+
+          ${!state.livePortfolio ? `
+            <button data-act="connect" class="hidden sm:flex items-center gap-1 px-3 py-1 rounded-pill bg-electric text-white font-display font-bold text-[11px] hover:bg-electric/90 transition-colors">
+              <span class="material-symbols-outlined text-[14px]">account_balance_wallet</span> Connect
+            </button>
+          ` : ""}
+          <button data-act="disconnect" class="w-7 h-7 rounded-full bg-mist/70 hover:bg-mist text-smoke flex items-center justify-center shrink-0 transition-colors">
+            <span class="material-symbols-outlined text-[16px]">person</span>
+          </button>
+        </div>
       </div>
     </div>
   </header>`;
@@ -1844,118 +2021,80 @@ function landing() {
   const eth = getInjected();
   const detected = providerName(eth);
   return `
-  <div class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4">
-    <div class="absolute inset-0 opacity-[0.18] pointer-events-none" style="background-image:linear-gradient(#1F2430 1px,transparent 1px),linear-gradient(90deg,#1F2430 1px,transparent 1px);background-size:48px 48px"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#08090C]/40 to-[#08090C]"></div>
-    <div class="relative z-10 flex flex-col items-center text-center px-2 sm:px-6 w-full max-w-xl">
-      ${logoSvg(38)}
-      <div class="mt-6 sm:mt-8 font-display text-[10px] sm:text-[11px] tracking-[0.35em] text-[#00F0FF]">BUILT ON ARC MAINNET</div>
-      <h1 class="mt-3 sm:mt-4 font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">The trading terminal<br/>for Arc.</h1>
-      <p class="mt-3 sm:mt-4 text-[#94A3B8] max-w-md text-[14px] sm:text-[15px]">Analyze markets. Execute trades. Understand your portfolio.<br class="hidden sm:inline"/>One workstation. No tab-hopping.</p>
-      <div class="mt-6 sm:mt-8 flex flex-wrap justify-center items-center gap-4 sm:gap-8 text-[11px] sm:text-[12px] tracking-[0.2em] uppercase text-[#b9cacb]">
-        <span>Analyze.</span><span>Execute.</span><span>Monitor.</span>
+  <div class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 pt-20">
+    <!-- Grid background -->
+    <div class="absolute inset-0 opacity-[0.07] pointer-events-none" style="background-image:linear-gradient(#1E2433 1px,transparent 1px),linear-gradient(90deg,#1E2433 1px,transparent 1px);background-size:52px 52px"></div>
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-paper/60 to-paper pointer-events-none"></div>
+
+    <!-- Hero -->
+    <div class="relative z-10 flex flex-col items-center text-center max-w-2xl w-full">
+      ${logoSvg(44)}
+      <div class="mt-7 font-mono text-[10px] tracking-[0.4em] text-electric uppercase">Built on Arc Mainnet · Chain 5042</div>
+      <h1 class="mt-4 font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.08]">
+        The trading terminal<br/><span class="text-electric">for Arc.</span>
+      </h1>
+      <p class="mt-5 text-smoke text-[15px] max-w-lg leading-relaxed">
+        14 fail-closed security gates. Real DEX prices. EIP-712 trade authorization.<br/>
+        Every asset on Arc — now in one workstation.
+      </p>
+
+      <!-- Stats row -->
+      <div class="mt-7 flex flex-wrap justify-center gap-6 text-[12px] font-mono">
+        <div class="text-center"><div class="text-paid font-semibold text-[18px]">${Object.keys(PAIRS).length + Object.keys(CUSTOM_PAIRS).length}</div><div class="text-fog uppercase tracking-wider text-[10px]">Markets</div></div>
+        <div class="text-center"><div class="text-electric font-semibold text-[18px]">14</div><div class="text-fog uppercase tracking-wider text-[10px]">Security Gates</div></div>
+        <div class="text-center"><div class="text-ink font-semibold text-[18px]">0</div><div class="text-fog uppercase tracking-wider text-[10px]">Keys Held</div></div>
       </div>
-      <div class="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
-        <button data-act="connect" ${state.connecting ? "disabled" : ""} class="w-full sm:w-auto px-8 py-3 rounded bg-[#00F0FF] text-[#08090C] font-display font-bold text-[14px] hover:bg-[#38BDF8] transition disabled:opacity-60 flex items-center justify-center gap-2">
+
+      <!-- CTA buttons -->
+      <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-sm">
+        <button data-act="connect" ${state.connecting ? "disabled" : ""} class="w-full sm:flex-1 px-6 py-3 rounded-pill bg-electric text-white font-display font-bold text-[14px] hover:bg-electric/90 transition disabled:opacity-60 flex items-center justify-center gap-2 shadow-invoice">
           <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
-          ${state.connecting ? "Requesting signature…" : eth ? "Connect " + detected : "Install a wallet"}
+          ${state.connecting ? "Connecting…" : "Connect Arc Wallet"}
         </button>
-        <button data-act="demo" class="w-full sm:w-auto px-6 py-3 rounded bg-[#1b1b1f] hover:bg-[#292a2d] border border-[#1F2430] text-[#00f0ff] font-display font-semibold text-[14px] transition flex items-center justify-center gap-2">
-          <span class="material-symbols-outlined text-[18px]">terminal</span>
-          Explore Desk (Demo Mode)
+        <button data-act="demo" class="w-full sm:flex-1 px-6 py-3 rounded-pill border border-mist hover:border-smoke text-smoke hover:text-ink font-display font-semibold text-[14px] transition flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined text-[17px]">preview</span> Preview
         </button>
       </div>
-      ${!eth ? `<a class="mt-3 text-[12px] text-[#00F0FF]" href="https://metamask.io/download/" target="_blank" rel="noreferrer">Get MetaMask</a>` : ""}
-      ${state.walletError ? `<div class="mt-4 max-w-sm text-[12px] text-[#ffb4ab]">${escapeHtml(state.walletError)}</div>` : ""}
-      <button data-act="proof" class="mt-4 text-[12px] text-[#00F0FF] underline underline-offset-4">Re-query Arc RPC — do not take the banner as proof</button>
-      <div class="mt-6 text-[10px] sm:text-[11px] text-[#64748B] tnum break-all sm:break-normal">Arc · Chain ID ${ARC.chainId} (0x13b2) · Native gas USDC · ${ARC.rpc}</div>
+      ${eth ? `<div class="mt-2 text-fog text-[11px] font-mono">${detected} detected</div>` : ""}
+
+      <!-- How the money moves (Ovryth-style flow diagram) -->
+      <div class="mt-12 w-full bg-snow/50 border border-mist rounded-panel p-5 text-left">
+        <div class="font-mono text-[10px] uppercase tracking-widest text-fog mb-4">How the money moves</div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 overflow-x-auto pb-1">
+          ${[
+            { label: "Arc Wallet",         sub: "Your browser wallet — no key custody",           color: "text-electric", dot: "bg-electric" },
+            { label: "EIP-712 Mandate",    sub: "Signed ticket with deadline + slippage bounds",  color: "text-paid",     dot: "bg-paid"     },
+            { label: "Interminal Engine",  sub: shortAddr(ARC.settlement) + " on chain 5042",     color: "text-fog",      dot: "bg-fog"      },
+            { label: "Arc AMM",            sub: "Settles to native liquidity hub",                color: "text-ink",      dot: "bg-smoke"    },
+          ].map((step, i, arr) => `
+            <div class="flex items-center gap-2 shrink-0">
+              <div class="flex flex-col gap-0.5">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full ${step.dot}"></span>
+                  <span class="font-display font-semibold text-[13px] ${step.color}">${step.label}</span>
+                </div>
+                <span class="font-mono text-[10px] text-fog pl-3.5">${step.sub}</span>
+              </div>
+              ${i < arr.length - 1 ? '<span class="text-mist text-[18px] hidden sm:block shrink-0">→</span>' : ""}
+            </div>
+          `).join("")}
+        </div>
+      </div>
+
+      <!-- Markets quick view -->
+      <div class="mt-6 w-full grid grid-cols-2 sm:grid-cols-4 gap-2">
+        ${["ETH/USDC","BTC/USDC","EURC/USDC","ARC/USDC"].map((k) => {
+          const v = PAIRS[k];
+          const isUp = v.change >= 0;
+          return `<div class="bg-snow border border-mist rounded-card p-3 text-left card-hover">
+            <div class="font-mono text-[10px] text-fog">${k}</div>
+            <div class="font-display font-bold text-[16px] mt-0.5 tnum">${k === "EURC/USDC" ? v.price.toFixed(4) : fmtUsd(v.price)}</div>
+            <div class="font-mono text-[11px] ${isUp ? 'text-paid' : 'text-refused'}">${fmtPct(v.change)}</div>
+          </div>`;
+        }).join("")}
+      </div>
     </div>
   </div>`;
-}
-
-function wrongNet() {
-  return `
-  <div class="min-h-screen flex items-center justify-center px-4">
-    <div class="bg-[#12151D] border border-[#1F2430] p-8 rounded max-w-sm text-center">
-      <div class="font-display text-lg">Wrong network</div>
-      <p class="text-[#94A3B8] text-sm mt-2">Interminal requires Arc mainnet. Connected account ${shortAddr(state.address)} is on chain ${state.chainId ?? "unknown"}.</p>
-      <button data-act="switch-net" class="mt-6 px-6 py-2 rounded bg-[#00F0FF] text-[#08090C] font-display font-bold text-sm">Switch to Arc</button>
-      <button data-act="disconnect" class="mt-3 block mx-auto text-[12px] text-[#94A3B8]">Disconnect</button>
-    </div>
-  </div>`;
-}
-
-function renderOrderPreviewContent() {
-  const pair = PAIRS[state.pair] || PAIRS["ETH/USDC"];
-  let quote;
-  try {
-    quote = quoteTrade({ side: state.side, amountUsd: state.amount, price: pair.price, slippageBps: state.slippage * 100 });
-  } catch {
-    quote = { received: 0, effective: pair.price, impact: 0, minReceived: 0, gasUsd: 0.0012 };
-  }
-  const isBuy = state.side === "buy";
-  const receivedLabel = isBuy ? pair.base : "USDC";
-  const receivedAmt = quote.received;
-
-  let balanceCheckHtml = "";
-  if (isBuy) {
-    const jit = calculateJitUnwind({
-      tradeAmountUsd: state.amount,
-      liquidUsdc: state.balances.USDC || 0,
-      usycBalance: state.balances.USYC || 0,
-      slippageBps: state.slippage * 100,
-    });
-    if (jit.needed && jit.canCover) {
-      balanceCheckHtml = `
-        <div class="flex justify-between items-center bg-[#00f0ff]/10 border border-[#00f0ff]/30 px-2 py-1 rounded text-[11px] text-[#00f0ff]">
-          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">swap_calls</span>JIT USYC Bridge</span>
-          <span>Redeem ${fmt(jit.usycToRedeem, 2)} USYC</span>
-        </div>`;
-    } else if (jit.needed && !jit.canCover) {
-      balanceCheckHtml = `
-        <div class="flex justify-between items-center bg-[#ffb4ab]/10 border border-[#ffb4ab]/30 px-2 py-1 rounded text-[11px] text-[#ffb4ab]">
-          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">warning</span>Insufficient Total Liquid</span>
-          <span>Deficit $${fmt(jit.deficit - (state.balances.USYC || 0), 2)}</span>
-        </div>`;
-    }
-  } else {
-    const baseBal = state.balances[pair.base] || 0;
-    const reqBase = state.amount / pair.price;
-    if (baseBal < reqBase * 0.999) {
-      balanceCheckHtml = `
-        <div class="flex justify-between items-center bg-[#ffb4ab]/10 border border-[#ffb4ab]/30 px-2 py-1 rounded text-[11px] text-[#ffb4ab]">
-          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">warning</span>Insufficient ${pair.base}</span>
-          <span>Have ${fmt(baseBal, 3)} / Need ${fmt(reqBase, 3)}</span>
-        </div>`;
-    }
-  }
-
-  let fxHtml = "";
-  if (state.pair === "EURC/USDC") {
-    const fx = calculateFxParity(pair.price);
-    fxHtml = `
-      <div class="flex justify-between text-[11px] text-[#dbfcff] bg-[#121316] px-2 py-1 rounded">
-        <span class="text-mute">FX Rate</span>
-        <span class="font-mono">${pair.price.toFixed(4)} EUR/USD (${fx.pipsFromParity >= 0 ? "+" : ""}${fx.pipsFromParity} pips)</span>
-      </div>`;
-  }
-
-  return `
-    ${fxHtml}
-    <div class="flex justify-between"><span class="text-mute">Est. received</span><span class="font-semibold text-white">${fmt(receivedAmt, isBuy ? 5 : 2)} ${receivedLabel}</span></div>
-    <div class="flex justify-between"><span class="text-mute">Rate</span><span>1 ${pair.base} = ${fmtUsd(quote.effective)}</span></div>
-    <div class="flex justify-between"><span class="text-mute">Price impact</span><span class="${quote.impact < 0.005 ? "text-[#70ffba]" : "text-[#F59E0B]"}">${fmt(quote.impact * 100, 2)}%</span></div>
-    <div class="flex justify-between"><span class="text-mute">Min received</span><span>${fmt(quote.minReceived, isBuy ? 5 : 2)} ${receivedLabel}</span></div>
-    <div class="flex justify-between"><span class="text-mute">Native gas</span><span>${quote.gasUsd} USDC</span></div>
-    ${balanceCheckHtml}
-  `;
-}
-
-function updateOrderPreview() {
-  const el = $("#order-preview");
-  if (el) el.innerHTML = renderOrderPreviewContent();
-  const slipVal = $("#slip-val");
-  if (slipVal) slipVal.textContent = state.slippage + "%";
 }
 
 function terminalView() {
@@ -2099,64 +2238,128 @@ function terminalView() {
 }
 
 function marketsView() {
+  const cat = state.marketCat || "all";
+  const allPairs = { ...PAIRS };
+  const cats = [
+    { id: "all",      label: "All Markets" },
+    { id: "rwa_fx",   label: "RWA & FX"    },
+    { id: "bluechip", label: "Bluechips"   },
+    { id: "defi",     label: "DeFi"        },
+    { id: "arc",      label: "Arc Native"  },
+    { id: "imported", label: "Imported"    },
+  ];
+  const filtered = Object.entries(allPairs).filter(([, v]) => cat === "all" || v.cat === cat);
   return `
-  <main class="pt-14 pb-20 md:pb-4 min-h-screen">
-    <div class="px-2 sm:px-4 py-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
+  <main class="pt-20 pb-20 md:pb-4 min-h-screen">
+    <!-- Macro stats strip -->
+    <div class="px-3 sm:px-5 pt-3 pb-0 grid grid-cols-2 sm:grid-cols-5 gap-2">
       ${[
-        ["Arc Ecosystem TVL","$248.65M","+4.12%","78"],
-        ["24h Arc Agg Volume","$142.80M","+12.4%","64"],
-        ["AMM Median Gas","0.0008 USDC","0.8s conf","22"],
-        ["Regime / Sentiment","68/100","Expansion","68"],
-        ["Cross-Pool Depth","$84.20M","Native L1","88"],
-      ].map(([l,v,s,w], idx) => `
-        <div class="bg-[#1b1b1f] rounded p-2.5 sm:p-3 ${idx === 4 ? "col-span-2 sm:col-span-1" : ""}">
-          <div class="flex justify-between text-[10px] uppercase tracking-wider text-mute">${l}<span class="text-[#70ffba]">${s}</span></div>
-          <div class="font-display text-[18px] sm:text-[22px] mt-1">${v}</div>
-          <div class="h-1 bg-[#343538] mt-2 rounded overflow-hidden"><div class="h-full bg-[#00f0ff]" style="width:${w}%"></div></div>
-        </div>`).join("")}
+        ["Arc Ecosystem TVL", "$248.65M", "+4.12%", "text-paid"],
+        ["24h Aggregate Vol",  "$142.80M", "+12.4%",  "text-paid"],
+        ["AMM Median Gas",    "0.0008 USDC","0.8s",  "text-electric"],
+        ["Market Regime",     "68/100",   "Expansion","text-paid"],
+        ["Cross-Pool Depth",  "$84.20M",  "Native L1","text-fog"],
+      ].map(([l,v,s,sc], idx) => `
+        <div class="bg-snow border border-mist rounded-card p-3 card-hover ${idx===4?"col-span-2 sm:col-span-1":""}">
+          <div class="text-fog font-mono text-[10px] uppercase tracking-wider">${l}</div>
+          <div class="font-display font-bold text-[20px] mt-1">${v}</div>
+          <div class="font-mono text-[10px] ${sc} mt-0.5">${s}</div>
+        </div>
+      `).join("")}
     </div>
-    <div class="px-2 sm:px-4 pb-6 grid grid-cols-1 xl:grid-cols-12 gap-3">
-      <div class="xl:col-span-8 bg-[#0d0e11] rounded overflow-hidden">
-        <div class="px-3 py-2 flex items-center justify-between border-b border-[#1F2430]">
-          <span class="font-display text-[13px]">Active Arc Verified Pairs</span>
-          <span class="text-[11px] text-mute">${Object.keys(PAIRS).length} markets</span>
+
+    <!-- Category filter tabs -->
+    <div class="px-3 sm:px-5 mt-4 flex items-center gap-2 overflow-x-auto pb-1">
+      ${cats.map(({ id, label }) => `
+        <button data-cat="${id}" class="shrink-0 px-3 py-1.5 rounded-pill text-[12px] font-display font-semibold transition-colors ${cat === id ? 'bg-electric/20 border border-electric/40 text-electric' : 'bg-snow border border-mist text-smoke hover:text-ink hover:border-smoke'}">${label}</button>
+      `).join("")}
+      <button data-act="import-token" class="ml-auto shrink-0 px-3 py-1.5 rounded-pill text-[12px] font-display font-semibold bg-mist border border-line-active text-ink hover:bg-line-active flex items-center gap-1.5 transition-colors">
+        <span class="material-symbols-outlined text-[15px]">add_circle</span> Import Arc Token
+      </button>
+    </div>
+
+    <div class="px-3 sm:px-5 mt-4 pb-6 grid grid-cols-1 xl:grid-cols-12 gap-3">
+      <!-- Pairs table -->
+      <div class="xl:col-span-8 bg-snow border border-mist rounded-panel overflow-hidden">
+        <div class="px-4 py-3 flex items-center justify-between border-b border-mist">
+          <span class="font-display font-semibold text-[13px]">Arc Verified Markets</span>
+          <span class="font-mono text-[11px] text-fog">${filtered.length} pairs</span>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left tnum text-[12px] min-w-[540px]">
-            <thead class="text-[10px] uppercase text-mute"><tr class="border-b border-[#1F2430]">
-              <th class="px-3 py-2 font-medium">Market</th><th>Last</th><th>24h</th><th>Volume</th><th>TVL</th><th>Watch</th><th></th>
-            </tr></thead>
+          <table class="w-full text-left tnum text-[12px] min-w-[560px]">
+            <thead>
+              <tr class="border-b border-mist text-[10px] uppercase font-mono text-fog">
+                <th class="px-4 py-2 font-medium">Pair</th>
+                <th>Last</th><th>24h Chg</th><th>Volume</th><th>TVL</th>
+                <th>Category</th><th class="pr-4"></th>
+              </tr>
+            </thead>
             <tbody>
-              ${Object.entries(PAIRS).map(([k,v]) => `
-                <tr class="border-b border-[#1F2430]/60 hover:bg-[#1b1b1f]">
-                  <td class="px-3 py-2 font-display">${k}</td>
-                  <td>${fmtUsd(v.price)}</td>
-                  <td class="${v.change>=0?"text-[#70ffba]":"text-[#ffb4ab]"}">${fmtPct(v.change)}</td>
-                  <td>${fmtUsd(v.vol/1e6)}M</td>
-                  <td>${fmtUsd(v.tvl/1e6)}M</td>
-                  <td><button data-watch="${k}" class="text-[11px] ${state.watchlist.includes(k)?"text-[#00f0ff]":"text-mute"}">${state.watchlist.includes(k)?"★":"☆"}</button></td>
-                  <td><button data-trade="${k}" class="px-2 py-0.5 rounded bg-[#00f0ff] text-[#00363a] text-[11px] font-bold mr-2">Trade</button></td>
-                </tr>`).join("")}
+              ${filtered.map(([k, v]) => {
+                const isUp = v.change >= 0;
+                const catLabel = { rwa_fx:"RWA/FX", bluechip:"Bluechip", defi:"DeFi", arc:"Arc", imported:"Custom" }[v.cat] || v.cat;
+                const catColor = { rwa_fx:"badge-anchored", bluechip:"badge-settled", defi:"badge-held", arc:"badge-pending", imported:"badge-refused" }[v.cat] || "badge-pending";
+                return `
+                <tr class="border-b border-mist/60 hover:bg-mist/30 transition-colors">
+                  <td class="px-4 py-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="w-7 h-7 rounded-full bg-mist/60 border border-mist flex items-center justify-center font-mono text-[10px] text-smoke">${v.base.slice(0,2)}</span>
+                      <div>
+                        <div class="font-display font-semibold text-[13px]">${k}</div>
+                        <div class="font-mono text-[10px] text-fog">${TOKEN_META[v.base]?.name || v.base}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="font-mono font-semibold">${k==="EURC/USDC"?v.price.toFixed(4):fmtUsd(v.price)}</td>
+                  <td class="font-mono ${isUp?"text-paid":"text-refused"}">${fmtPct(v.change)}</td>
+                  <td class="font-mono text-smoke">${fmtUsd(v.vol/1e6)}M</td>
+                  <td class="font-mono text-smoke">${fmtUsd(v.tvl/1e6)}M</td>
+                  <td><span class="px-2 py-0.5 rounded-pill text-[10px] font-mono ${catColor}">${catLabel}</span></td>
+                  <td class="pr-4">
+                    <div class="flex items-center gap-1.5">
+                      <button data-watch="${k}" class="text-[14px] ${state.watchlist.includes(k)?"text-electric":"text-fog hover:text-smoke"}">${state.watchlist.includes(k)?"★":"☆"}</button>
+                      <button data-trade="${k}" class="px-2.5 py-0.5 rounded-pill bg-electric/15 border border-electric/35 text-electric text-[11px] font-display font-semibold hover:bg-electric/25 transition">Trade</button>
+                    </div>
+                  </td>
+                </tr>`;
+              }).join("")}
             </tbody>
           </table>
         </div>
       </div>
+
+      <!-- Right column: watchlist + custom import card -->
       <div class="xl:col-span-4 flex flex-col gap-3">
-        <div class="bg-[#0d0e11] rounded p-3">
-          <div class="font-display text-[13px] mb-2">Watchlist</div>
+        <div class="bg-snow border border-mist rounded-panel p-4">
+          <div class="font-display font-semibold text-[13px] mb-3">Watchlist</div>
           ${state.watchlist.map((k) => {
-            const v = PAIRS[k];
-            return `<button data-trade="${k}" class="w-full flex justify-between py-1.5 tnum text-[12px] hover:text-[#00f0ff]"><span>${k}</span><span class="${v.change>=0?"text-[#70ffba]":"text-[#ffb4ab]"}">${fmtUsd(v.price)} ${fmtPct(v.change)}</span></button>`;
+            const v = PAIRS[k]; if (!v) return "";
+            return `<button data-trade="${k}" class="w-full flex justify-between items-center py-2 tnum text-[12px] border-b border-mist/50 last:border-0 hover:text-electric transition-colors">
+              <span class="font-display font-semibold">${k}</span>
+              <div class="text-right">
+                <div class="font-mono font-semibold">${k==="EURC/USDC"?v.price.toFixed(4):fmtUsd(v.price)}</div>
+                <div class="font-mono text-[10px] ${v.change>=0?"text-paid":"text-refused"}">${fmtPct(v.change)}</div>
+              </div>
+            </button>`;
           }).join("")}
         </div>
-        <div class="bg-[#0d0e11] rounded p-3">
-          <div class="font-display text-[13px] mb-2">Trending setups</div>
-          ${[
-            ["ETH/USDC","Bullish EMA20 Bounce"],
-            ["ARC/USDC","Momentum Breakout"],
-            ["BTC/USDC","Range Invalidation S1"],
-            ["SOL/USDC","Pullback to 50 EMA"],
-          ].map(([k,s]) => `<div class="py-1.5 flex justify-between text-[12px]"><span>${k}</span><span class="text-mute">${s}</span></div>`).join("")}
+
+        <!-- Custom Arc token import card -->
+        <div class="bg-snow border border-electric/25 rounded-panel p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="material-symbols-outlined text-electric text-[18px]">add_circle</span>
+            <span class="font-display font-semibold text-[13px]">Import Any Arc Token</span>
+          </div>
+          <p class="font-mono text-fog text-[11px] mb-3">Paste any ERC-20 contract address on Arc mainnet to add it to your trading desk.</p>
+          <div class="flex gap-2">
+            <input id="import-addr-inline" class="flex-1 bg-paper border border-mist rounded-card px-3 py-1.5 font-mono text-[11px] text-ink placeholder-fog outline-none focus:border-electric/60" placeholder="0x… token address" />
+            <button data-act="import-token-inline" class="px-3 py-1.5 rounded-card bg-electric/20 border border-electric/40 text-electric font-display font-semibold text-[11px] hover:bg-electric/30 transition whitespace-nowrap">
+              Import
+            </button>
+          </div>
+          ${Object.keys(CUSTOM_PAIRS).length ? `
+            <div class="mt-3 font-mono text-[10px] text-fog">${Object.keys(CUSTOM_PAIRS).length} custom token(s) loaded</div>
+          ` : ""}
         </div>
       </div>
     </div>
@@ -2534,30 +2737,98 @@ function renderTradeAnalysis() {
 }
 
 function activityView() {
-  const rows = state.activity;
+  const rows = state.activity.slice().reverse();
+  function statusBadge(status, type) {
+    if (type === "mandate") return '<span class="badge-anchored px-2 py-0.5 rounded-pill font-mono text-[10px]">mandate</span>';
+    const s = (status || "pending").toLowerCase();
+    const cls = s === "settled"  ? "badge-settled"
+              : s === "anchored" ? "badge-anchored"
+              : s === "refused"  ? "badge-refused"
+              : s === "held"     ? "badge-held"
+              : "badge-pending";
+    return `<span class="${cls} px-2 py-0.5 rounded-pill font-mono text-[10px]">${s}</span>`;
+  }
   return `
-  <main class="pt-14 pb-20 md:pb-4 min-h-screen px-3 sm:px-4 py-4">
-    <div class="font-display text-[16px] mb-3">Activity · this session</div>
-    <p class="text-[12px] text-mute mb-3">Only signatures produced in this browser session. Every trade produces an exportable cryptographic audit certificate.</p>
-    <div class="bg-[#0d0e11] rounded overflow-hidden">
-      ${rows.length ? `<div class="overflow-x-auto"><table class="w-full text-left tnum text-[12px] min-w-[560px]">
-        <thead class="text-[10px] uppercase text-mute"><tr class="border-b border-[#1F2430]">
-          <th class="px-3 py-2">Time</th><th>Type</th><th>Detail</th><th>Status</th><th>Audit Certificate</th><th>Signature</th>
-        </tr></thead>
-        <tbody>
-          ${rows.map((r) => `
-            <tr class="border-b border-[#1F2430]/50">
-              <td class="px-3 py-2 text-mute whitespace-nowrap">${new Date(r.ts).toLocaleString()}</td>
-              <td class="uppercase text-[10px] text-[#00f0ff]">${escapeHtml(r.type)}</td>
-              <td>${escapeHtml(r.label)}<div class="text-mute">${escapeHtml(r.detail)}</div></td>
-              <td class="text-[#70ffba]">${escapeHtml(r.status)}</td>
-              <td>
-                ${(r.receipt || r.receiptId) ? `<button data-view-receipt="${escapeHtml(r.receipt?.receiptId || r.receiptId)}" class="px-2 py-0.5 rounded bg-[#00f0ff]/15 hover:bg-[#00f0ff]/25 text-[#00f0ff] font-mono text-[10px] border border-[#00f0ff]/30 flex items-center gap-1 transition"><span class="material-symbols-outlined text-[12px]">verified</span>Verify SHA-256</button>` : `<span class="text-mute text-[11px]">—</span>`}
-              </td>
-              <td class="text-[#00f0ff] font-mono">${escapeHtml(typeof r.hash === "string" ? r.hash.slice(0, 10) + "…" + r.hash.slice(-6) : "—")}</td>
-            </tr>`).join("")}
-        </tbody>
-      </table></div>` : `<div class="px-3 py-8 text-[13px] text-mute">No signed tickets this session.</div>`}
+  <main class="pt-20 pb-20 md:pb-4 min-h-screen">
+    <div class="px-3 sm:px-5 py-4">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="font-display font-bold text-[20px]">Activity Ledger</h2>
+          <p class="font-mono text-[11px] text-fog mt-0.5">Signed tickets · EIP-712 receipts · Mandate executions</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="badge-settled px-2.5 py-1 rounded-pill font-mono text-[11px]">settled</span>
+          <span class="badge-anchored px-2.5 py-1 rounded-pill font-mono text-[11px]">anchored</span>
+          <span class="badge-refused px-2.5 py-1 rounded-pill font-mono text-[11px]">refused</span>
+          <span class="badge-held px-2.5 py-1 rounded-pill font-mono text-[11px]">held</span>
+        </div>
+      </div>
+
+      <!-- Spend utilization bar -->
+      ${(() => {
+        const totalSpent = state.activity.filter((a) => a.type === "trade").reduce((s, t) => s + (t.amount || 0), 0);
+        const cap = 10000;
+        const pct = Math.min(100, (totalSpent / cap) * 100);
+        return `<div class="mb-5 bg-snow border border-mist rounded-card p-4">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <span class="font-display font-semibold text-[13px]">Session Spend Utilization</span>
+              <span class="ml-2 font-mono text-fog text-[11px]">${fmtUsd(totalSpent)} of ${fmtUsd(cap)} cap</span>
+            </div>
+            <span class="font-mono text-[11px] ${pct > 80 ? 'text-refused' : pct > 50 ? 'text-hold' : 'text-paid'}">${pct.toFixed(1)}%</span>
+          </div>
+          <div class="h-1.5 bg-mist rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all ${pct > 80 ? 'bg-refused' : pct > 50 ? 'bg-hold' : 'bg-paid'}" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+      })()}
+
+      ${rows.length ? `
+      <div class="bg-snow border border-mist rounded-panel overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-[12px] min-w-[680px]">
+            <thead class="border-b border-mist">
+              <tr class="font-mono text-[10px] uppercase text-fog">
+                <th class="px-4 py-3 font-medium">Time</th>
+                <th>Type</th>
+                <th>Details</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Receipt</th>
+                <th class="pr-4">Tx</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((r) => `
+              <tr class="border-b border-mist/50 hover:bg-mist/20 transition-colors">
+                <td class="px-4 py-3 font-mono text-[10px] text-fog whitespace-nowrap">${new Date(r.ts).toLocaleString()}</td>
+                <td>${statusBadge(r.status, r.type)}</td>
+                <td>
+                  <div class="font-display font-semibold text-[12px]">${escapeHtml(r.label)}</div>
+                  <div class="font-mono text-[10px] text-fog">${escapeHtml(r.detail)}</div>
+                </td>
+                <td class="font-mono tnum text-[12px] text-smoke">${r.amount ? fmtUsd(r.amount) : "—"}</td>
+                <td>${statusBadge(r.status)}</td>
+                <td>
+                  ${(r.receipt || r.receiptId) ? `<button data-view-receipt="${escapeHtml(r.receipt?.receiptId || r.receiptId)}" class="badge-anchored px-2 py-0.5 rounded-pill font-mono text-[10px] hover:opacity-80 transition flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px]">verified</span>SHA-256</button>` : '<span class="text-fog font-mono text-[10px]">—</span>'}
+                </td>
+                <td class="pr-4">
+                  ${typeof r.hash === "string" && r.hash.length > 20
+                    ? `<a href="${ARC.explorer}/tx/${r.hash}" target="_blank" rel="noreferrer" class="font-mono text-[10px] text-electric hover:underline">${r.hash.slice(0,8)}… ↗</a>`
+                    : '<span class="text-fog font-mono text-[10px]">—</span>'}
+                </td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      ` : `
+      <div class="bg-snow border border-mist rounded-panel px-4 py-14 text-center">
+        <span class="material-symbols-outlined text-[40px] text-mist block mb-3">history</span>
+        <div class="font-display font-semibold text-[15px] text-smoke">No signed tickets yet</div>
+        <p class="font-mono text-[11px] text-fog mt-1">Go to Terminal → select a pair → Review trade → Sign to create your first entry.</p>
+      </div>
+      `}
     </div>
   </main>`;
 }
@@ -2713,6 +2984,55 @@ function proofView() {
     </section>
   </main>`;
 }
+
+function importTokenModal() {
+  if (!state.importTokenOpen) return "";
+  const importing = state.importingToken || false;
+  const err = state.importTokenError || "";
+  return `
+  <div class="fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-4">
+    <div class="absolute inset-0 bg-paper/85 backdrop-blur-md" data-act="close-import"></div>
+    <div class="relative z-10 w-full max-w-md bg-snow border border-mist rounded-panel p-5 shadow-invoice">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="font-display font-bold text-[16px]">Import Arc ERC-20 Token</div>
+          <div class="font-mono text-[11px] text-fog mt-0.5">Fetch name, symbol, decimals from Arc mainnet</div>
+        </div>
+        <button data-act="close-import" class="p-1.5 rounded-full hover:bg-mist text-smoke">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="font-mono text-[10px] uppercase text-fog tracking-wider block mb-1.5">Contract Address (Arc Mainnet)</label>
+          <input id="import-token-addr" class="w-full bg-paper border border-mist focus:border-electric/60 rounded-card px-3 py-2 font-mono text-[12px] text-ink placeholder-fog outline-none" placeholder="0x… ERC-20 address on Arc" />
+        </div>
+        ${err ? `<div class="flex items-start gap-2 bg-refused/10 border border-refused/25 rounded-card px-3 py-2">
+          <span class="material-symbols-outlined text-refused text-[15px] mt-0.5">error</span>
+          <span class="font-mono text-refused text-[11px]">${escapeHtml(err)}</span>
+        </div>` : ""}
+        <button data-act="do-import-token" ${importing ? "disabled" : ""} class="w-full py-2.5 rounded-pill bg-electric text-white font-display font-bold text-[13px] hover:bg-electric/90 transition disabled:opacity-60 flex items-center justify-center gap-2">
+          ${importing ? '<span class="material-symbols-outlined text-[17px] animate-spin">sync</span> Querying Arc…' : '<span class="material-symbols-outlined text-[17px]">add_circle</span> Import Token'}
+        </button>
+        ${Object.keys(CUSTOM_PAIRS).length ? `
+          <div class="border-t border-mist pt-3">
+            <div class="font-mono text-[10px] uppercase text-fog tracking-wider mb-2">Already imported</div>
+            ${Object.entries(CUSTOM_PAIRS).map(([k, v]) => `
+              <div class="flex items-center justify-between py-1.5 border-b border-mist/50 last:border-0">
+                <div>
+                  <span class="font-display font-semibold text-[12px]">${v.symbol}</span>
+                  <span class="font-mono text-[10px] text-fog ml-2">${v.name}</span>
+                </div>
+                <button data-trade="${k}" data-act="close-import" class="px-2 py-0.5 rounded-pill text-[10px] badge-settled font-mono hover:opacity-80">Trade</button>
+              </div>
+            `).join("")}
+          </div>
+        ` : ""}
+      </div>
+    </div>
+  </div>`;
+}
+
 
 function reviewModal() {
   if (!state.reviewOpen || !state.pendingQuote) return "";
@@ -3047,7 +3367,7 @@ function render() {
   root.innerHTML = header() + body() + bottomNav();
   const modalRoot = $("#modal-root");
   if (modalRoot) {
-    modalRoot.innerHTML = reviewModal() + executedModal() + searchModal() + alertsPanel() + receiptModal() + mandateModal();
+    modalRoot.innerHTML = reviewModal() + executedModal() + searchModal() + alertsPanel() + receiptModal() + mandateModal() + importTokenModal();
   }
   bind();
 
@@ -3658,6 +3978,10 @@ function bind() {
     loadMarket();
     render();
   }));
+  document.querySelectorAll("[data-cat]").forEach((el) => el.addEventListener("click", () => {
+    state.marketCat = el.dataset.cat;
+    render();
+  }));
   document.querySelectorAll("[data-watch]").forEach((el) => el.addEventListener("click", () => {
     const k = el.dataset.watch;
     if (!PAIRS[k]) return;
@@ -3703,7 +4027,7 @@ function bind() {
       state.searchQuery = e.target.value;
       const modalRoot = $("#modal-root");
       if (modalRoot) {
-        modalRoot.innerHTML = reviewModal() + executedModal() + searchModal() + alertsPanel() + receiptModal() + mandateModal();
+        modalRoot.innerHTML = reviewModal() + executedModal() + searchModal() + alertsPanel() + receiptModal() + mandateModal() + importTokenModal();
         bind();
         const fresh = $("#search-in");
         if (fresh) {
@@ -3788,6 +4112,7 @@ if (typeof document !== "undefined") {
     });
   }
 
+  loadCustomTokensFromStorage();
   loadMarket();
   render();
   resumeWallet();
