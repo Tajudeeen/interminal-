@@ -1,0 +1,19 @@
+{
+  "name": "interminal",
+  "version": "1.0.0",
+  "description": "Arc-native trading workstation.",
+  "main": "app.js",
+  "scripts": {
+    "test": "node test.mjs",
+    "compile": "node scripts/compile.mjs",
+    "deploy": "node scripts/deploy.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "ethers": "^6.13.2",
+    "solc": "^0.8.28"
+  }
+}

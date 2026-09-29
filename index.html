@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://cdn.vercel-insights.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src https://fonts.gstatic.com; connect-src 'self' https://rpc.mainnet.arc.io https://vitals.vercel-insights.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'none'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com https://cdn.vercel-insights.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src https://fonts.gstatic.com; connect-src 'self' https://rpc.mainnet.arc.io https://api.dexscreener.com https://vitals.vercel-insights.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'none'" />
   <meta name="referrer" content="no-referrer" />
   <title>INTERMINAL — Arc Trading Terminal</title>
+  <link rel="icon" type="image/svg+xml" href="./logo.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
@@ -82,13 +83,15 @@
     .view.active { display: block; }
     #toast-stack { pointer-events: none; }
     #toast-stack > * { pointer-events: auto; }
+    .safe-bottom { padding-bottom: max(0.375rem, env(safe-area-inset-bottom, 0px)); }
   </style>
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
 <body class="bg-void text-ink antialiased min-h-screen">
   <div id="app"></div>
   <div id="modal-root"></div>
-  <div id="toast-stack" class="fixed bottom-4 right-4 z-[80] flex flex-col gap-2"></div>
+  <div id="toast-stack" class="fixed bottom-16 sm:bottom-4 right-2 sm:right-4 left-2 sm:left-auto z-[80] flex flex-col items-center sm:items-end gap-2"></div>
+  <script src="./contractArtifact.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
