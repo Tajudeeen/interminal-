@@ -171,8 +171,8 @@ function toast(title, body, kind = "info") {
   const stack = $("#toast-stack");
   if (!stack) return;
   const el = document.createElement("div");
-  const accent = kind === "ok" ? "border-paid text-paid" : kind === "err" ? "border-refused text-refused" : "border-electric text-electric";
-  el.className = `pointer-events-auto w-full sm:w-80 max-w-sm bg-snow border border-mist ${accent.split(" ")[0]} border-l-2 p-3 rounded-card shadow-invoice`;
+  const accent = kind === "ok" ? "border-green-500 text-pos" : kind === "err" ? "border-red-500 text-neg" : "border-gray-400 text-sub";
+  el.className = `pointer-events-auto w-full sm:w-80 max-w-sm card-themed border-themed ${accent.split(" ")[0]} border-l-2 p-3 rounded-card` + (state.theme === "dark" ? " shadow-invoice" : " shadow-invoice-lm");
   el.innerHTML = `<div class="font-display text-[12px] uppercase tracking-wider ${accent.split(" ").slice(1).join(" ")}">${escapeHtml(title)}</div><div class="text-[12px] text-mute mt-1">${escapeHtml(body)}</div>`;
   stack.appendChild(el);
   setTimeout(() => el.remove(), 4200);
@@ -1417,7 +1417,16 @@ const state = {
   importingToken: false,
   importTokenError: "",
   marketCat: "all",
+  theme: (typeof localStorage !== "undefined" && localStorage.getItem("interminal_theme")) || "dark",
 };
+
+function applyTheme(t) {
+  state.theme = t;
+  if (typeof document !== "undefined") {
+    document.documentElement.classList.toggle("dark", t === "dark");
+    try { localStorage.setItem("interminal_theme", t); } catch {}
+  }
+}
 
 /* ---------- persistence (localStorage safe) ---------- */
 const STORAGE_KEY = "interminal_v1_store";
@@ -1757,7 +1766,7 @@ function drawChart(canvas, candles, indicators) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const w = rect.width, h = rect.height;
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = "#0D0E11";
+  ctx.fillStyle = state.theme === "dark" ? "#0D0D0D" : "#FAFAFA";
   ctx.fillRect(0, 0, w, h);
 
   const padR = 64, padB = 22, padT = 10, padL = 8;
@@ -1773,13 +1782,13 @@ function drawChart(canvas, candles, indicators) {
   const y = (p) => padT + (1 - (p - min) / span) * (h - padT - padB);
   const cw = Math.max(2, ((w - padL - padR) / candles.length) * 0.7);
 
-  ctx.strokeStyle = "#1F2430";
+  ctx.strokeStyle = state.theme === "dark" ? "#2A2A2A" : "#E8E8E8";
   ctx.lineWidth = 1;
   for (let i = 0; i < 6; i++) {
     const yy = padT + ((h - padT - padB) * i) / 5;
     ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(w - padR, yy); ctx.stroke();
     const px = max - (span * i) / 5;
-    ctx.fillStyle = "#94A3B8";
+    ctx.fillStyle = state.theme === "dark" ? "#888888" : "#666666";
     ctx.font = "10px IBM Plex Sans";
     ctx.fillText(fmtUsd(px), w - padR + 6, yy + 3);
   }
@@ -1815,7 +1824,7 @@ function drawChart(canvas, candles, indicators) {
       ctx.setLineDash([]);
       ctx.fillStyle = lv.c;
       ctx.fillRect(w - padR, yy - 8, padR - 2, 16);
-      ctx.fillStyle = "#08090C";
+      ctx.fillStyle = state.theme === "dark" ? "#0A0A0A" : "#FFFFFF";
       ctx.font = "9px IBM Plex Sans";
       ctx.fillText(`${lv.l} ${fmt(lv.p, 0)}`, w - padR + 4, yy + 3);
     });
@@ -1841,7 +1850,7 @@ function drawChart(canvas, candles, indicators) {
       const xx = x(i), yy = y(c.close);
       i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy);
     });
-    ctx.strokeStyle = "#00F0FF";
+    ctx.strokeStyle = state.theme === "dark" ? "#AAAAAA" : "#333333";
     ctx.lineWidth = 2;
     ctx.stroke();
   } else {
@@ -1863,7 +1872,7 @@ function drawChart(canvas, candles, indicators) {
   const last = candles[candles.length - 1];
   const ly = y(last.close);
   ctx.setLineDash([3, 3]);
-  ctx.strokeStyle = "#00F0FF";
+  ctx.strokeStyle = state.theme === "dark" ? "#AAAAAA" : "#333333";
   ctx.beginPath(); ctx.moveTo(padL, ly); ctx.lineTo(w - padR, ly); ctx.stroke();
   ctx.setLineDash([]);
   ctx.fillStyle = "#00F0FF";
@@ -1907,23 +1916,60 @@ function logoSvg(h = 32) {
   </svg>`;
 }
 
+function footer() {
+  if (state.view === "landing") return "";
+  const year = new Date().getFullYear();
+  return `
+  <footer class="hidden md:block border-t" style="border-color:var(--border);background:var(--surface)">
+    <div class="max-w-[1080px] mx-auto px-5 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        ${logoSvg(20)}
+        <div>
+          <div class="font-mono text-[11px] font-semibold" style="color:var(--text)">INTERMINAL</div>
+          <div class="font-mono text-[10px]" style="color:var(--muted)">Arc-native trading terminal · Chain 5042</div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-6 font-mono text-[11px]" style="color:var(--muted)">
+        <a href="${ARC.explorer}/address/${ARC.settlement}" target="_blank" rel="noreferrer" class="hover:underline hover:opacity-80 transition">Settlement ↗</a>
+        <a href="https://github.com/Tajudeeen/interminal-" target="_blank" rel="noreferrer" class="hover:underline hover:opacity-80 transition">GitHub ↗</a>
+        <a href="${ARC.explorer}" target="_blank" rel="noreferrer" class="hover:underline hover:opacity-80 transition">Arc Explorer ↗</a>
+        <button data-nav="proof" class="hover:underline hover:opacity-80 transition text-left">Proof</button>
+      </div>
+      <div class="text-right">
+        <div class="font-mono text-[10px]" style="color:var(--muted)">© ${year} Interminal</div>
+        <div class="font-mono text-[10px] flex items-center gap-1 justify-end mt-0.5" style="color:var(--muted)">
+          <span class="w-1.5 h-1.5 rounded-full ${state.marketFeedStatus?.live ? 'bg-green-500 animate-pulse' : 'bg-gray-500'} inline-block"></span>
+          ${state.marketFeedStatus?.live ? 'DEX feed live' : 'DEX feed offline'}
+          <span class="opacity-40 mx-1">·</span>
+          14 security gates · Zero key custody
+        </div>
+      </div>
+    </div>
+  </footer>`;
+}
+
 function bottomNav() {
   const nav = [
-    { id: "terminal", icon: "candlestick_chart", label: "Terminal" },
-    { id: "markets", icon: "query_stats", label: "Markets" },
-    { id: "portfolio", icon: "account_balance_wallet", label: "Portfolio" },
-    { id: "ai", icon: "auto_awesome", label: "AI Analyst" },
-    { id: "activity", icon: "history", label: "Activity" },
-    { id: "proof", icon: "verified", label: "Proof" },
+    { id: "terminal",  icon: "candlestick_chart",    label: "Terminal"  },
+    { id: "markets",   icon: "query_stats",           label: "Markets"   },
+    { id: "portfolio", icon: "account_balance_wallet",label: "Portfolio" },
+    { id: "ai",        icon: "auto_awesome",          label: "AI"        },
+    { id: "activity",  icon: "history",               label: "Activity"  },
   ];
   return `
-  <nav class="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-paper/95 backdrop-blur-md border-t border-mist flex items-center justify-around px-1 py-1 safe-bottom">
-    ${nav.map(({ id, icon, label }) => `
-      <button data-nav="${id}" class="flex-1 flex flex-col items-center justify-center py-1 rounded text-center transition-colors ${state.view === id ? "text-[#00f0ff] font-semibold" : "text-[#94A3B8] hover:text-[#e3e2e6]"}">
-        <span class="material-symbols-outlined text-[19px]">${icon}</span>
-        <span class="text-[9px] tracking-tight mt-0.5 leading-none">${label}</span>
+  <nav class="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-bottom" style="background:var(--surface);border-top:1px solid var(--border);backdrop-filter:blur(12px)">
+    <div class="flex items-center justify-around px-1 py-2">
+      ${nav.map(({ id, icon, label }) => `
+        <button data-nav="${id}" class="flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-card transition-colors ${state.view === id ? '' : 'opacity-50 hover:opacity-75'}" style="${state.view === id ? 'color:var(--text)' : 'color:var(--muted)'}">
+          <span class="material-symbols-outlined text-[20px]">${icon}</span>
+          <span class="text-[9px] font-display font-semibold tracking-tight">${label}</span>
+        </button>
+      `).join("")}
+      <button data-act="toggle-theme" class="flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-card opacity-50 hover:opacity-75 transition-colors" style="color:var(--muted)">
+        <span class="material-symbols-outlined text-[20px]">${state.theme === "dark" ? "light_mode" : "dark_mode"}</span>
+        <span class="text-[9px] font-display font-semibold tracking-tight">${state.theme === "dark" ? "Light" : "Dark"}</span>
       </button>
-    `).join("")}
+    </div>
   </nav>`;
 }
 
@@ -1937,78 +1983,83 @@ function header() {
     { id: "activity",  label: "Activity"   },
     { id: "proof",     label: "Proof"      },
   ];
+  const isDark = state.theme === "dark";
   const chainOk = state.proof?.live?.chainOk;
-  const statusDot = chainOk && state.livePortfolio
-    ? '<span class="w-1.5 h-1.5 rounded-full bg-paid animate-pulse"></span>'
-    : '<span class="w-1.5 h-1.5 rounded-full bg-electric animate-pulse"></span>';
-  const statusText = chainOk && state.livePortfolio
-    ? '<span class="text-paid font-mono text-[10px] font-semibold tracking-wider">ARC · LIVE</span>'
-    : '<span class="text-electric font-mono text-[10px] tracking-wider">ARC · ' + (state.livePortfolio ? 'WALLET' : 'RPC') + '</span>';
+  const statusLabel = chainOk && state.livePortfolio ? "ARC · LIVE"
+    : state.livePortfolio ? "ARC · WALLET" : "ARC · RPC";
+  const statusColor = state.livePortfolio ? "text-pos" : "text-sub";
 
   return `
-  <header class="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 pt-3 pb-0 pointer-events-none">
+  <header class="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 pt-3 pointer-events-none">
     <div class="max-w-[1080px] mx-auto pointer-events-auto">
-      <div class="flex items-center justify-between gap-2 rounded-pill border border-mist bg-paper/95 backdrop-blur-md px-3 py-2 shadow-invoice">
+      <div class="pill-bar flex items-center justify-between gap-2 rounded-pill px-3 py-2" style="backdrop-filter:blur(12px)">
         <!-- Logo + status -->
         <div class="flex items-center gap-2 shrink-0">
           ${logoSvg(22)}
-          <div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-pill bg-mist/60 border border-mist">
-            ${statusDot}
-            ${statusText}
-            <span class="text-fog font-mono text-[10px] tnum">#${state.block.toLocaleString()}</span>
-          </div>
-          <div class="hidden 2xl:flex items-center gap-1 px-2 py-0.5 rounded-pill bg-mist/40 border border-mist/60">
-            <span class="w-1.5 h-1.5 rounded-full ${state.marketFeedStatus?.live ? 'bg-paid animate-pulse' : 'bg-fog'}"></span>
-            <span class="font-mono text-[10px] ${state.marketFeedStatus?.live ? 'text-paid' : 'text-fog'}">${state.marketFeedStatus?.live ? 'DEX LIVE' : 'DEX OFF'}</span>
+          <div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-pill card-themed border border-themed">
+            <span class="w-1.5 h-1.5 rounded-full ${state.livePortfolio ? 'bg-green-500' : 'bg-gray-500'} ${state.livePortfolio ? 'animate-pulse' : ''}"></span>
+            <span class="font-mono text-[10px] ${statusColor} tracking-wider font-semibold">${statusLabel}</span>
+            <span class="font-mono text-[10px] text-muted tnum">#${state.block.toLocaleString()}</span>
           </div>
         </div>
 
         <!-- Pill navigation -->
-        <nav class="hidden md:flex items-center gap-0.5 bg-snow/40 rounded-pill px-1 py-1">
+        <nav class="hidden md:flex items-center gap-0.5 card-themed rounded-pill px-1 py-1 border border-themed">
           ${navItems.map(({ id, label }) => `
-            <button data-nav="${id}" class="px-3 py-1 text-[12px] font-display font-semibold rounded-pill transition-colors ${state.view === id ? 'bg-mist text-ink' : 'text-smoke hover:text-ink hover:bg-mist/50'}">${label}</button>
+            <button data-nav="${id}" class="px-3 py-1 text-[12px] font-display font-semibold rounded-pill transition-all ${state.view === id ? 'pill-nav-active shadow-sm' : 'text-muted hover:text-themed hover:bg-themed/50'}">${label}</button>
           `).join("")}
         </nav>
 
         <!-- Right cluster -->
         <div class="flex items-center gap-1.5 shrink-0">
-          <div class="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-pill bg-mist/40 tnum text-[11px]">
-            <span class="text-smoke">ETH</span>
-            <span class="font-mono text-ink">${fmtUsd(PAIRS["ETH/USDC"].price)}</span>
-            <span class="${PAIRS["ETH/USDC"].change >= 0 ? 'text-paid' : 'text-refused'}">${fmtPct(PAIRS["ETH/USDC"].change)}</span>
-            <span class="text-mist">|</span>
-            <span class="text-smoke">ARC</span>
-            <span class="font-mono text-ink">${fmtUsd(PAIRS["ARC/USDC"].price)}</span>
-            <span class="${PAIRS["ARC/USDC"].change >= 0 ? 'text-paid' : 'text-refused'}">${fmtPct(PAIRS["ARC/USDC"].change)}</span>
+          <!-- Live ticker -->
+          <div class="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-pill card-themed border border-themed tnum text-[11px]">
+            <span class="text-muted">ETH</span>
+            <span class="font-mono font-semibold">${fmtUsd(PAIRS["ETH/USDC"].price)}</span>
+            <span class="${PAIRS["ETH/USDC"].change >= 0 ? 'text-pos' : 'text-neg'}">${fmtPct(PAIRS["ETH/USDC"].change)}</span>
+            <span class="text-muted opacity-40">|</span>
+            <span class="text-muted">ARC</span>
+            <span class="font-mono font-semibold">${fmtUsd(PAIRS["ARC/USDC"].price)}</span>
+            <span class="${PAIRS["ARC/USDC"].change >= 0 ? 'text-pos' : 'text-neg'}">${fmtPct(PAIRS["ARC/USDC"].change)}</span>
           </div>
 
-          <button data-act="import-token" class="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-pill border border-mist text-smoke hover:text-electric hover:border-electric/50 text-[11px] font-display transition-colors" title="Import Arc ERC-20 token">
+          <!-- Import token -->
+          <button data-act="import-token" class="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-pill card-themed border border-themed text-sub hover:text-themed text-[11px] font-display transition-colors" title="Import Arc ERC-20">
             <span class="material-symbols-outlined text-[14px]">add_circle</span>
             <span class="hidden lg:inline">Import</span>
           </button>
 
-          <button data-act="search" class="p-1.5 rounded-pill hover:bg-mist text-smoke transition-colors" title="Search (Ctrl+K)">
+          <!-- Search -->
+          <button data-act="search" class="p-1.5 rounded-pill card-themed border border-themed text-sub hover:text-themed transition-colors" title="Search (Ctrl+K)">
             <span class="material-symbols-outlined text-[17px]">search</span>
           </button>
-          <button data-act="alerts" class="relative p-1.5 rounded-pill hover:bg-mist text-smoke transition-colors">
+
+          <!-- Alerts -->
+          <button data-act="alerts" class="relative p-1.5 rounded-pill card-themed border border-themed text-sub hover:text-themed transition-colors">
             <span class="material-symbols-outlined text-[17px]">notifications</span>
-            ${state.alerts.length ? `<span class="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-refused text-[8px] flex items-center justify-center text-white font-bold">${state.alerts.length}</span>` : ""}
+            ${state.alerts.length ? `<span class="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-red-600 text-[8px] flex items-center justify-center text-white font-bold">${state.alerts.length}</span>` : ""}
+          </button>
+
+          <!-- Theme toggle -->
+          <button data-act="toggle-theme" class="p-1.5 rounded-pill card-themed border border-themed text-sub hover:text-themed transition-colors" title="${isDark ? 'Switch to light mode' : 'Switch to dark mode'}">
+            <span class="material-symbols-outlined text-[17px]">${isDark ? 'light_mode' : 'dark_mode'}</span>
           </button>
 
           <!-- Wallet pill -->
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-pill ${state.livePortfolio ? 'bg-paid/10 border border-paid/25' : 'bg-mist border border-mist'} text-[11px]">
-            <span class="w-1.5 h-1.5 rounded-full ${state.livePortfolio ? 'bg-paid' : 'bg-electric'} shrink-0"></span>
-            <span class="hidden sm:inline text-[10px] uppercase ${state.livePortfolio ? 'text-paid' : 'text-electric'} font-mono">${state.livePortfolio ? "Live" : "Demo"}</span>
-            <a class="font-mono text-[10px] hover:text-electric truncate max-w-[72px]" href="${ARC.explorer}/address/${state.address}" target="_blank" rel="noreferrer">${shortAddr(state.address)}</a>
-            ${state.livePortfolio ? `<span class="hidden sm:inline font-mono text-fog text-[10px] tnum">${fmtUsd(p.total)}</span>` : ""}
+          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-pill card-themed border border-themed text-[11px]">
+            <span class="w-1.5 h-1.5 rounded-full ${state.livePortfolio ? 'bg-green-500 animate-pulse' : 'bg-gray-500'} shrink-0"></span>
+            <span class="hidden sm:inline font-mono text-[10px] text-sub uppercase">${state.livePortfolio ? "Live" : "Demo"}</span>
+            <a class="font-mono text-[10px] hover:underline truncate max-w-[72px]" href="${ARC.explorer}/address/${state.address}" target="_blank" rel="noreferrer">${shortAddr(state.address)}</a>
+            ${state.livePortfolio ? `<span class="hidden sm:inline font-mono text-muted text-[10px] tnum">${fmtUsd(p.total)}</span>` : ""}
           </div>
 
           ${!state.livePortfolio ? `
-            <button data-act="connect" class="hidden sm:flex items-center gap-1 px-3 py-1 rounded-pill bg-electric text-white font-display font-bold text-[11px] hover:bg-electric/90 transition-colors">
+            <button data-act="connect" class="hidden sm:flex items-center gap-1 px-3 py-1 rounded-pill text-[11px] font-display font-bold transition-colors" style="background:var(--text);color:var(--bg)">
               <span class="material-symbols-outlined text-[14px]">account_balance_wallet</span> Connect
             </button>
           ` : ""}
-          <button data-act="disconnect" class="w-7 h-7 rounded-full bg-mist/70 hover:bg-mist text-smoke flex items-center justify-center shrink-0 transition-colors">
+
+          <button data-act="disconnect" class="w-7 h-7 rounded-full card-themed border border-themed text-sub flex items-center justify-center shrink-0 hover:text-themed transition-colors">
             <span class="material-symbols-outlined text-[16px]">person</span>
           </button>
         </div>
@@ -2020,81 +2071,90 @@ function header() {
 function landing() {
   const eth = getInjected();
   const detected = providerName(eth);
+  const isDark = state.theme === "dark";
   return `
-  <div class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 pt-20">
+  <div class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 pt-16 pb-8">
     <!-- Grid background -->
-    <div class="absolute inset-0 opacity-[0.07] pointer-events-none" style="background-image:linear-gradient(#1E2433 1px,transparent 1px),linear-gradient(90deg,#1E2433 1px,transparent 1px);background-size:52px 52px"></div>
-    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-paper/60 to-paper pointer-events-none"></div>
+    <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px"></div>
 
     <!-- Hero -->
     <div class="relative z-10 flex flex-col items-center text-center max-w-2xl w-full">
-      ${logoSvg(44)}
-      <div class="mt-7 font-mono text-[10px] tracking-[0.4em] text-electric uppercase">Built on Arc Mainnet · Chain 5042</div>
+      ${logoSvg(48)}
+      <div class="mt-6 font-mono text-[10px] tracking-[0.45em] font-semibold" style="color:var(--muted)">BUILT ON ARC MAINNET · CHAIN 5042</div>
       <h1 class="mt-4 font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.08]">
-        The trading terminal<br/><span class="text-electric">for Arc.</span>
+        The trading terminal<br/>for Arc.
       </h1>
-      <p class="mt-5 text-smoke text-[15px] max-w-lg leading-relaxed">
-        14 fail-closed security gates. Real DEX prices. EIP-712 trade authorization.<br/>
-        Every asset on Arc — now in one workstation.
+      <p class="mt-5 text-[15px] max-w-lg leading-relaxed" style="color:var(--sub)">
+        14 fail-closed security gates. Real DEX prices. EIP-712 authorization.<br/>
+        Every asset on Arc — one workstation.
       </p>
 
-      <!-- Stats row -->
-      <div class="mt-7 flex flex-wrap justify-center gap-6 text-[12px] font-mono">
-        <div class="text-center"><div class="text-paid font-semibold text-[18px]">${Object.keys(PAIRS).length + Object.keys(CUSTOM_PAIRS).length}</div><div class="text-fog uppercase tracking-wider text-[10px]">Markets</div></div>
-        <div class="text-center"><div class="text-electric font-semibold text-[18px]">14</div><div class="text-fog uppercase tracking-wider text-[10px]">Security Gates</div></div>
-        <div class="text-center"><div class="text-ink font-semibold text-[18px]">0</div><div class="text-fog uppercase tracking-wider text-[10px]">Keys Held</div></div>
+      <!-- Stats -->
+      <div class="mt-8 flex flex-wrap justify-center gap-8">
+        ${[
+          [Object.keys(PAIRS).length + Object.keys(CUSTOM_PAIRS).length, "Markets"],
+          ["14", "Security Gates"],
+          ["0",  "Keys Held"],
+        ].map(([n, l]) => `<div class="text-center">
+          <div class="font-display font-extrabold text-[28px]">${n}</div>
+          <div class="font-mono text-[10px] uppercase tracking-wider mt-0.5" style="color:var(--muted)">${l}</div>
+        </div>`).join("")}
       </div>
 
-      <!-- CTA buttons -->
-      <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-sm">
-        <button data-act="connect" ${state.connecting ? "disabled" : ""} class="w-full sm:flex-1 px-6 py-3 rounded-pill bg-electric text-white font-display font-bold text-[14px] hover:bg-electric/90 transition disabled:opacity-60 flex items-center justify-center gap-2 shadow-invoice">
+      <!-- CTA -->
+      <div class="mt-10 flex flex-col sm:flex-row items-center gap-3 w-full max-w-sm">
+        <button data-act="connect" ${state.connecting ? "disabled" : ""} class="w-full sm:flex-1 px-6 py-3 rounded-pill font-display font-bold text-[14px] transition disabled:opacity-60 flex items-center justify-center gap-2" style="background:var(--text);color:var(--bg)">
           <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
           ${state.connecting ? "Connecting…" : "Connect Arc Wallet"}
         </button>
-        <button data-act="demo" class="w-full sm:flex-1 px-6 py-3 rounded-pill border border-mist hover:border-smoke text-smoke hover:text-ink font-display font-semibold text-[14px] transition flex items-center justify-center gap-2">
+        <button data-act="demo" class="w-full sm:flex-1 px-6 py-3 rounded-pill font-display font-semibold text-[14px] transition flex items-center justify-center gap-2 card-themed border border-themed" style="color:var(--sub)">
           <span class="material-symbols-outlined text-[17px]">preview</span> Preview
         </button>
       </div>
-      ${eth ? `<div class="mt-2 text-fog text-[11px] font-mono">${detected} detected</div>` : ""}
+      ${eth ? `<div class="mt-2 font-mono text-[11px]" style="color:var(--muted)">${detected} detected</div>` : ""}
 
-      <!-- How the money moves (Ovryth-style flow diagram) -->
-      <div class="mt-12 w-full bg-snow/50 border border-mist rounded-panel p-5 text-left">
-        <div class="font-mono text-[10px] uppercase tracking-widest text-fog mb-4">How the money moves</div>
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 overflow-x-auto pb-1">
+      <!-- Theme toggle on landing -->
+      <button data-act="toggle-theme" class="mt-6 flex items-center gap-1.5 font-mono text-[11px] px-3 py-1.5 rounded-pill card-themed border border-themed transition-colors" style="color:var(--muted)">
+        <span class="material-symbols-outlined text-[15px]">${isDark ? 'light_mode' : 'dark_mode'}</span>
+        ${isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      </button>
+
+      <!-- How the money moves -->
+      <div class="mt-10 w-full card-themed border border-themed rounded-panel p-5 text-left">
+        <div class="font-mono text-[10px] uppercase tracking-widest mb-4" style="color:var(--muted)">How the money moves</div>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 overflow-x-auto pb-1">
           ${[
-            { label: "Arc Wallet",         sub: "Your browser wallet — no key custody",           color: "text-electric", dot: "bg-electric" },
-            { label: "EIP-712 Mandate",    sub: "Signed ticket with deadline + slippage bounds",  color: "text-paid",     dot: "bg-paid"     },
-            { label: "Interminal Engine",  sub: shortAddr(ARC.settlement) + " on chain 5042",     color: "text-fog",      dot: "bg-fog"      },
-            { label: "Arc AMM",            sub: "Settles to native liquidity hub",                color: "text-ink",      dot: "bg-smoke"    },
+            { label: "Arc Wallet",        sub: "Your browser wallet — no key custody"           },
+            { label: "EIP-712 Mandate",   sub: "Signed ticket with deadline + slippage bounds"  },
+            { label: "Interminal Engine", sub: shortAddr(ARC.settlement) + " on chain 5042"     },
+            { label: "Arc AMM",           sub: "Settles to native liquidity hub"                },
           ].map((step, i, arr) => `
-            <div class="flex items-center gap-2 shrink-0">
-              <div class="flex flex-col gap-0.5">
-                <div class="flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full ${step.dot}"></span>
-                  <span class="font-display font-semibold text-[13px] ${step.color}">${step.label}</span>
-                </div>
-                <span class="font-mono text-[10px] text-fog pl-3.5">${step.sub}</span>
+            <div class="flex items-center gap-3 shrink-0">
+              <div>
+                <div class="font-display font-bold text-[13px]">${step.label}</div>
+                <div class="font-mono text-[10px] mt-0.5" style="color:var(--muted)">${step.sub}</div>
               </div>
-              ${i < arr.length - 1 ? '<span class="text-mist text-[18px] hidden sm:block shrink-0">→</span>' : ""}
+              ${i < arr.length - 1 ? `<span class="text-[20px] hidden sm:block shrink-0" style="color:var(--border)">→</span>` : ""}
             </div>
           `).join("")}
         </div>
       </div>
 
-      <!-- Markets quick view -->
+      <!-- Market preview cards -->
       <div class="mt-6 w-full grid grid-cols-2 sm:grid-cols-4 gap-2">
         ${["ETH/USDC","BTC/USDC","EURC/USDC","ARC/USDC"].map((k) => {
           const v = PAIRS[k];
           const isUp = v.change >= 0;
-          return `<div class="bg-snow border border-mist rounded-card p-3 text-left card-hover">
-            <div class="font-mono text-[10px] text-fog">${k}</div>
+          return `<div class="card-themed border border-themed rounded-card p-3 text-left card-hover">
+            <div class="font-mono text-[10px]" style="color:var(--muted)">${k}</div>
             <div class="font-display font-bold text-[16px] mt-0.5 tnum">${k === "EURC/USDC" ? v.price.toFixed(4) : fmtUsd(v.price)}</div>
-            <div class="font-mono text-[11px] ${isUp ? 'text-paid' : 'text-refused'}">${fmtPct(v.change)}</div>
+            <div class="font-mono text-[11px] ${isUp ? 'text-pos' : 'text-neg'}">${fmtPct(v.change)}</div>
           </div>`;
         }).join("")}
       </div>
     </div>
-  </div>`;
+  </div>
+  ${footer()}`;
 }
 
 function terminalView() {
@@ -2125,19 +2185,19 @@ function terminalView() {
             <div class="px-3 py-1 text-[10px] uppercase text-mute">Switch Arc Market</div>
             ${Object.entries(PAIRS).map(([k, v]) => `
               <button data-pair="${k}" class="w-full flex items-center justify-between px-3 py-1.5 tnum text-[12px] hover:bg-[#1f1f23] ${k===state.pair?"text-[#00f0ff] bg-[#1f1f23]":""}">
-                <span>${k}</span><span class="${v.change>=0?"text-[#70ffba]":"text-[#ffb4ab]"}">${fmtUsd(v.price)} (${fmtPct(v.change)})</span>
+                <span>${k}</span><span class="${v.change>=0?"text-pos":"text-neg"}">${fmtUsd(v.price)} (${fmtPct(v.change)})</span>
               </button>`).join("")}
           </div>
         </div>
         <div class="flex items-baseline gap-2">
           <span class="tnum text-[18px] sm:text-[22px] font-bold text-[#00f0ff]">${state.pair==="EURC/USDC" ? pair.price.toFixed(4) : fmtUsd(pair.price)}</span>
-          <span class="tnum text-[11px] sm:text-[12px] ${pair.change>=0?"text-[#70ffba]":"text-[#ffb4ab]"}">${fmtPct(pair.change)} <span class="text-mute hidden sm:inline">(${pair.change>=0?"+":""}${fmtUsd(pair.price*pair.change/100)})</span></span>
+          <span class="tnum text-[11px] sm:text-[12px] ${pair.change>=0?"text-pos":"text-neg"}">${fmtPct(pair.change)} <span class="text-mute hidden sm:inline">(${pair.change>=0?"+":""}${fmtUsd(pair.price*pair.change/100)})</span></span>
         </div>
         <div class="hidden xl:flex items-center gap-6 tnum text-[12px]">
           <div><div class="text-[10px] uppercase text-mute">24h High</div><div>${state.pair==="EURC/USDC"?pair.high.toFixed(4):fmtUsd(pair.high)}</div></div>
           <div><div class="text-[10px] uppercase text-mute">24h Low</div><div>${state.pair==="EURC/USDC"?pair.low.toFixed(4):fmtUsd(pair.low)}</div></div>
           <div><div class="text-[10px] uppercase text-mute">24h Volume</div><div>${fmtUsd(pair.vol/1e6)}M USDC</div></div>
-          <div><div class="text-[10px] uppercase text-mute">Arc Liquidity</div><div class="text-[#dbfcff]">${fmtUsd(pair.tvl/1e6)}M</div></div>
+          <div><div class="text-[10px] uppercase text-mute">Arc Liquidity</div><div class="text-themed">${fmtUsd(pair.tvl/1e6)}M</div></div>
         </div>
       </div>
       <div class="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-mute">
@@ -2152,12 +2212,12 @@ function terminalView() {
         <div class="flex items-center gap-2">
           <span class="px-1.5 py-0.5 rounded bg-[#00f0ff]/20 text-[#00f0ff] font-bold text-[10px]">INSTITUTIONAL FX CORRIDOR</span>
           <span class="text-white font-mono font-semibold">${pair.price.toFixed(4)} EUR/USD</span>
-          <span class="text-mute">Spread: <span class="text-[#70ffba]">${fx.pipSpread} pips</span></span>
-          <span class="text-mute">Parity delta: <span class="${fx.pipsFromParity>=0?"text-[#70ffba]":"text-[#ffb4ab]"}">${fx.pipsFromParity>=0?"+":""}${fx.pipsFromParity} pips</span></span>
+          <span class="text-mute">Spread: <span class="text-pos">${fx.pipSpread} pips</span></span>
+          <span class="text-mute">Parity delta: <span class="${fx.pipsFromParity>=0?"text-pos":"text-neg"}">${fx.pipsFromParity>=0?"+":""}${fx.pipsFromParity} pips</span></span>
         </div>
         <div class="flex items-center gap-4 text-mute">
           <span>ECB: <strong class="text-white">3.50%</strong> vs Fed: <strong class="text-white">5.25%</strong></span>
-          <span class="text-[#70ffba] font-semibold">+175 bps USD Carry Advantage</span>
+          <span class="text-pos font-semibold">+175 bps USD Carry Advantage</span>
         </div>
       </div>`;
     })() : ""}
@@ -2179,8 +2239,8 @@ function terminalView() {
           <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-[#00f0ff]"></span><span class="text-mute">EMA 20:</span><span class="text-[#00f0ff]">${fmtUsd(ind.ema20)}</span></span>
           <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-purple-400"></span><span class="text-mute">EMA 50:</span><span class="text-purple-300">${fmtUsd(ind.ema50)}</span></span>
           <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-[#64748B]"></span><span class="text-mute">EMA 200:</span><span class="text-mute">${fmtUsd(ind.ema200)}</span></span>
-          <span class="text-mute">RSI (14): <span class="text-[#70ffba] font-semibold">${fmt(ind.rsi,2)}</span></span>
-          <span class="text-mute">MACD hist: <span class="${ind.macdHist>=0?"text-[#70ffba]":"text-[#ffb4ab]"}">${fmt(ind.macdHist,2)}</span></span>
+          <span class="text-mute">RSI (14): <span class="text-pos font-semibold">${fmt(ind.rsi,2)}</span></span>
+          <span class="text-mute">MACD hist: <span class="${ind.macdHist>=0?"text-pos":"text-neg"}">${fmt(ind.macdHist,2)}</span></span>
         </div>
         <div class="relative h-[280px] sm:h-[350px] lg:h-[420px]">
           <canvas id="main-chart" class="absolute inset-0 w-full h-full"></canvas>
@@ -2192,9 +2252,9 @@ function terminalView() {
               <div class="font-display text-[11px] tracking-wider text-[#00F0FF]">AI ANALYSIS · ${a.pair} ${a.timeframe.toUpperCase()}</div>
               <button data-act="apply-levels" class="text-[11px] text-[#00f0ff] hover:underline">Apply levels to chart</button>
             </div>
-            <p class="text-[13px] mt-1 text-[#e3e2e6]">${a.setup}</p>
+            <p class="text-[13px] mt-1 text-themed">${a.setup}</p>
             <div class="mt-2 grid grid-cols-2 md:grid-cols-6 gap-2 tnum text-[11px]">
-              <div><div class="text-mute uppercase text-[10px]">Trend</div><div class="text-[#70ffba]">${a.trend}</div></div>
+              <div><div class="text-mute uppercase text-[10px]">Trend</div><div class="text-pos">${a.trend}</div></div>
               <div><div class="text-mute uppercase text-[10px]">Momentum</div><div>${a.momentum}</div></div>
               <div><div class="text-mute uppercase text-[10px]">Support</div><div>${fmtUsd(a.support)}</div></div>
               <div><div class="text-mute uppercase text-[10px]">Resistance</div><div>${fmtUsd(a.resistance)}</div></div>
@@ -2377,12 +2437,12 @@ function portfolioView() {
       <div>
         <div class="text-[10px] uppercase tracking-wider text-mute">Total Portfolio Valuation <span class="ml-1 px-1 bg-[#121316] rounded">LIVE</span></div>
         <div class="flex items-baseline gap-3 mt-1">
-          <span class="font-display text-[26px] sm:text-[32px] text-[#dbfcff]">${fmtUsd(p.total)}</span>
-          <span class="tnum text-[12px] px-2 py-0.5 rounded bg-[#292a2d] text-[#70ffba]">+${fmtUsd(p.pnlDay)} (${fmtPct(p.pnlDayPct)})</span>
+          <span class="font-display text-[26px] sm:text-[32px] text-themed">${fmtUsd(p.total)}</span>
+          <span class="tnum text-[12px] px-2 py-0.5 rounded bg-[#292a2d] text-pos">+${fmtUsd(p.pnlDay)} (${fmtPct(p.pnlDayPct)})</span>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-6 mt-3 tnum text-[12px] sm:text-[13px]">
           <div><div class="text-[10px] uppercase text-mute">Source</div><div class="${state.livePortfolio?"text-[#00f0ff]":"text-mute"}">${state.livePortfolio ? "Arc RPC · live" : "Desk preview"}</div></div>
-          <div><div class="text-[10px] uppercase text-mute">Unrealized P&L</div><div class="text-[#70ffba]">${state.livePortfolio ? "—" : "+$840.50"}</div></div>
+          <div><div class="text-[10px] uppercase text-mute">Unrealized P&L</div><div class="text-pos">${state.livePortfolio ? "—" : "+$840.50"}</div></div>
           <div><div class="text-[10px] uppercase text-mute">Session signed</div><div class="text-[#00dbe9]">${state.activity.filter((a)=>a.type==="trade").length}</div></div>
         </div>
       </div>
@@ -2411,7 +2471,7 @@ function portfolioView() {
               <div class="h-1 bg-[#121316] mt-1 rounded overflow-hidden"><div class="h-full ${Number(w)>50?"bg-[#F59E0B]":"bg-[#00f0ff]"}" style="width:${clamp(Number(w),4,100)}%"></div></div>
             </div>`).join("")}
         </div>
-        <div class="mt-3 keyline pl-3 text-[12px] text-[#b9cacb]">
+        <div class="mt-3 keyline pl-3 text-[12px] text-sub">
           AI interprets these scores only. Backend formulas own the numbers. ${r.largest?`${r.largest.sym} is ${fmt(r.largest.alloc,1)}% of NAV.` : ""}
         </div>
       </div>
@@ -2430,7 +2490,7 @@ function portfolioView() {
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-[#70ffba] shadow-[0_0_8px_rgba(112,255,186,0.6)]"></span>
               <span class="font-display text-[14px] sm:text-[15px] uppercase tracking-wide text-white">Smart Idle Treasury Engine</span>
-              <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#70ffba]/15 text-[#70ffba] font-bold">4.95% T-BILL APY</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#70ffba]/15 text-pos font-bold">4.95% T-BILL APY</span>
             </div>
             <div class="text-[11px] text-mute mt-0.5">Circle & Hashnote USYC · Tokenized US Short-Term Treasury Bills on Arc</div>
           </div>
@@ -2450,8 +2510,8 @@ function portfolioView() {
           </div>
           <div class="bg-[#121316] p-2.5 rounded">
             <div class="text-[10px] uppercase text-mute">USYC Treasury Holdings</div>
-            <div class="text-[16px] text-[#70ffba] font-semibold mt-0.5">${fmtUsd(usycBal)}</div>
-            <div class="text-[10px] text-[#70ffba] mt-0.5">+4.95% Annualized</div>
+            <div class="text-[16px] text-pos font-semibold mt-0.5">${fmtUsd(usycBal)}</div>
+            <div class="text-[10px] text-pos mt-0.5">+4.95% Annualized</div>
           </div>
           <div class="bg-[#121316] p-2.5 rounded">
             <div class="text-[10px] uppercase text-mute">Daily Forfeited Yield</div>
@@ -2481,7 +2541,7 @@ function portfolioView() {
                 <td>${fmtUsd(r.px)}</td>
                 <td>${fmt(r.qty,4)}</td>
                 <td>${fmtUsd(r.value)}</td>
-                <td class="${r.chg>=0?"text-[#70ffba]":"text-[#ffb4ab]"}">${fmtPct(r.chg)}</td>
+                <td class="${r.chg>=0?"text-pos":"text-neg"}">${fmtPct(r.chg)}</td>
                 <td>
                   <div class="flex items-center gap-2"><div class="w-20 h-1 bg-[#1b1b1f] rounded overflow-hidden"><div class="h-full bg-[#00f0ff]" style="width:${r.alloc}%"></div></div>${fmt(r.alloc,1)}%</div>
                 </td>
@@ -2511,7 +2571,7 @@ function aiView() {
     <div class="px-3 sm:px-4 py-2 bg-[#0d0e11] flex flex-wrap items-center justify-between gap-2 border-b border-[#1F2430]">
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-[#00f0ff] shadow-[0_0_8px_rgba(0,240,255,0.6)]"></span>
-        <span class="font-display text-[12px] sm:text-[13px] uppercase tracking-tight text-[#dbfcff]">Arc AI Market & Portfolio Analyst</span>
+        <span class="font-display text-[12px] sm:text-[13px] uppercase tracking-tight text-themed">Arc AI Market & Portfolio Analyst</span>
         <span class="text-[10px] sm:text-[11px] px-1 bg-[#1f1f23] rounded text-mute">TELEMETRY_v4.2</span>
       </div>
       <div class="text-[10px] sm:text-[11px] text-mute">ARC DUAL-KERNEL: DETERMINISTIC DATA ENGINE → VERIFIABLE AI SYNTHESIS</div>
@@ -2545,7 +2605,7 @@ function aiView() {
         ${state.aiCore === "market" && a ? `
           <div class="font-display text-[18px] text-[#00f0ff]">${a.trend.toUpperCase()} STRUCTURE</div>
           <p class="mt-2 text-[14px]">${a.setup}</p>
-          <p class="mt-2 text-[13px] text-[#b9cacb]">${a.why}</p>
+          <p class="mt-2 text-[13px] text-sub">${a.why}</p>
           <p class="mt-2 text-[13px] text-[#F59E0B]">What could invalidate it — ${a.invalidateText}</p>
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3 mt-4 tnum text-[12px]">
             <div class="bg-[#1b1b1f] p-2 rounded"><div class="text-mute text-[10px]">TREND</div>${a.trend}</div>
@@ -2562,13 +2622,13 @@ function aiView() {
             <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">TOTAL</div><div class="text-[20px]">${fmtUsd(p.total)}</div></div>
             <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">LARGEST</div><div class="text-[20px]">${p.largest?.sym} ${fmt(p.largest?.alloc,1)}%</div></div>
             <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">STABLES</div><div class="text-[20px]">${fmt(p.stables,1)}%</div></div>
-            <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">24H P&L</div><div class="text-[20px] text-[#70ffba]">+${fmtUsd(p.pnl)}</div></div>
+            <div class="bg-[#1b1b1f] p-3 rounded"><div class="text-[10px] text-mute">24H P&L</div><div class="text-[20px] text-pos">+${fmtUsd(p.pnl)}</div></div>
           </div>
           <p class="mt-4 text-[14px]">${p.observation}</p>
           <button data-nav="portfolio" class="mt-4 px-3 py-1.5 rounded bg-[#292a2d] text-[12px]">View allocation</button>
         ` : state.aiCore === "treasury" ? renderTreasuryAnalysis() : state.aiCore === "mandates" ? renderMandatesPanel() : state.aiCore === "wallet" ? `
           <div class="font-display text-[18px] text-[#00f0ff]">WALLET FORENSICS</div>
-          <div class="mt-3 text-[13px] space-y-1 text-[#b9cacb]">
+          <div class="mt-3 text-[13px] space-y-1 text-sub">
             <div>Address ${w.address} · ${w.holdings} assets</div>
             <div>${w.freq}</div>
             <div>Realized P&L ${fmtUsd(w.realized)} · Unrealized ${fmtUsd(w.unrealized)}</div>
@@ -2588,7 +2648,7 @@ function renderTreasuryAnalysis() {
   const opp = calculateOpportunityCost(idleUsdc);
   const sweep = calculateYieldSweep({ liquidUsdc: idleUsdc, reserveBufferUsd: 100 });
   return `
-    <div class="font-display text-[18px] text-[#70ffba] flex items-center gap-2">
+    <div class="font-display text-[18px] text-pos flex items-center gap-2">
       <span class="material-symbols-outlined text-[22px]">savings</span> ARC SMART TREASURY ANALYZER
     </div>
     <div class="text-[12px] text-mute mt-1">Institutional Cash Optimization · Hashnote USYC 4.95% APY (Short-Term US Treasuries)</div>
@@ -2600,8 +2660,8 @@ function renderTreasuryAnalysis() {
       </div>
       <div class="bg-[#1b1b1f] p-3 rounded">
         <div class="text-[10px] text-mute">YIELD ASSETS (USYC)</div>
-        <div class="text-[20px] font-semibold text-[#70ffba] mt-1">${fmtUsd(usycBal)}</div>
-        <div class="text-[11px] text-[#70ffba] mt-0.5">Earning 4.95% APY</div>
+        <div class="text-[20px] font-semibold text-pos mt-1">${fmtUsd(usycBal)}</div>
+        <div class="text-[11px] text-pos mt-0.5">Earning 4.95% APY</div>
       </div>
       <div class="bg-[#1b1b1f] p-3 rounded">
         <div class="text-[10px] text-mute">FORFEITED DRAG</div>
@@ -2614,11 +2674,11 @@ function renderTreasuryAnalysis() {
         <div class="text-[11px] text-mute mt-0.5">${usycBal > 0 ? "Instant swap cover" : "Zero USYC collateral"}</div>
       </div>
     </div>
-    <div class="mt-4 p-3 bg-[#1b1b1f] rounded text-[13px] space-y-2 text-[#b9cacb]">
+    <div class="mt-4 p-3 bg-[#1b1b1f] rounded text-[13px] space-y-2 text-sub">
       <div class="font-display text-[14px] text-white">Institutional Recommendation</div>
       <p>
         ${idleUsdc > 100
-          ? `You have <strong class="text-white">${fmtUsd(idleUsdc)}</strong> in non-yielding native USDC. By sweeping <strong class="text-[#70ffba]">$${fmt(sweep.sweepAmount, 0)} USDC</strong> into USYC while keeping a $100 buffer for gas and tactical operations, your portfolio will generate an additional <strong class="text-[#70ffba]">+$${fmt(sweep.sweepAmount * USYC_APY, 2)}/year</strong> with zero liquidity friction.`
+          ? `You have <strong class="text-white">${fmtUsd(idleUsdc)}</strong> in non-yielding native USDC. By sweeping <strong class="text-pos">$${fmt(sweep.sweepAmount, 0)} USDC</strong> into USYC while keeping a $100 buffer for gas and tactical operations, your portfolio will generate an additional <strong class="text-pos">+$${fmt(sweep.sweepAmount * USYC_APY, 2)}/year</strong> with zero liquidity friction.`
           : `Your cash holdings are capital efficient. Liquid USDC is positioned within the recommended operating buffer ($100 max idle).`}
       </p>
       <p class="text-[11px] text-mute">
@@ -2660,7 +2720,7 @@ function renderMandatesPanel() {
       </div>
       <div class="bg-[#1b1b1f] p-3 rounded">
         <div class="text-[10px] text-mute uppercase">Policy Enforcement</div>
-        <div class="text-[20px] font-semibold text-[#70ffba] mt-1">FAIL-CLOSED</div>
+        <div class="text-[20px] font-semibold text-pos mt-1">FAIL-CLOSED</div>
         <div class="text-[11px] text-mute mt-0.5">Zero key custody given to AI</div>
       </div>
     </div>
@@ -2695,15 +2755,15 @@ function renderMandatesPanel() {
                   <td>${m.allowedPairs.map((p) => `<span class="px-1 py-0.5 bg-[#292a2d] text-[10px] rounded mr-1">${p}</span>`).join("")}</td>
                   <td><span class="text-white font-semibold">$${fmt(m.remainingSpend, 0)}</span> <span class="text-mute">/ $${fmt(m.maxSpendUsd, 0)}</span></td>
                   <td>${m.maxSlippageBps} bps</td>
-                  <td>${expired ? `<span class="text-mute">Expired</span>` : `<span class="text-[#70ffba]">${remainingMin}m left</span>`}</td>
+                  <td>${expired ? `<span class="text-mute">Expired</span>` : `<span class="text-pos">${remainingMin}m left</span>`}</td>
                   <td>
-                    ${active ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#70ffba]/15 text-[#70ffba] rounded font-bold">ARMED</span>` : m.revoked ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#ffb4ab]/15 text-[#ffb4ab] rounded">REVOKED</span>` : `<span class="text-[10px] px-1.5 py-0.5 bg-[#292a2d] text-mute rounded">EXPIRED</span>`}
+                    ${active ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#70ffba]/15 text-pos rounded font-bold">ARMED</span>` : m.revoked ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#ffb4ab]/15 text-neg rounded">REVOKED</span>` : `<span class="text-[10px] px-1.5 py-0.5 bg-[#292a2d] text-mute rounded">EXPIRED</span>`}
                   </td>
                   <td>
                     ${active ? `
                       <div class="flex items-center gap-1.5">
                         <button data-test-mandate="${m.id}" class="px-2 py-0.5 rounded bg-[#00f0ff]/20 hover:bg-[#00f0ff]/30 text-[#00f0ff] font-semibold text-[10px] transition" title="Test execute a bounded trade as the agent">Test Exec</button>
-                        <button data-revoke-mandate="${m.id}" class="px-2 py-0.5 rounded bg-[#ffb4ab]/20 text-[#ffb4ab] text-[10px] hover:bg-[#ffb4ab]/30">Revoke</button>
+                        <button data-revoke-mandate="${m.id}" class="px-2 py-0.5 rounded bg-[#ffb4ab]/20 text-neg text-[10px] hover:bg-[#ffb4ab]/30">Revoke</button>
                       </div>` : ""}
                   </td>
                 </tr>`;
@@ -2840,8 +2900,8 @@ function proofView() {
   const when = state.proof.checkedAt ? new Date(state.proof.checkedAt).toLocaleString() : "not run this session";
   const row = (r) => `
     <div class="flex gap-3 items-start border-b border-[#1F2430]/60 py-2">
-      <span class="tnum text-[11px] ${r.ok ? "text-[#70ffba]" : "text-[#ffb4ab]"}">${r.ok ? "PASS" : "FAIL"}</span>
-      <span class="text-[12px] text-[#e3e2e6]">${escapeHtml(r.detail)}</span>
+      <span class="tnum text-[11px] ${r.ok ? "text-pos" : "text-neg"}">${r.ok ? "PASS" : "FAIL"}</span>
+      <span class="text-[12px] text-themed">${escapeHtml(r.detail)}</span>
     </div>`;
   return `
   <main class="pt-14 pb-20 md:pb-4 min-h-screen px-3 sm:px-4 py-4 max-w-5xl mx-auto">
@@ -2855,7 +2915,7 @@ function proofView() {
     <div class="mt-4 grid md:grid-cols-2 gap-3">
       <section class="bg-[#0d0e11] rounded p-4">
         <div class="font-display text-[12px] uppercase text-[#00f0ff]">Live Arc RPC</div>
-        <div class="mt-1 text-[12px] ${chainOk ? "text-[#70ffba]" : "text-[#F59E0B]"}">${chainOk ? "Chain ID matches 5042." : "Chain not confirmed this session."}</div>
+        <div class="mt-1 text-[12px] ${chainOk ? "text-pos" : "text-[#F59E0B]"}">${chainOk ? "Chain ID matches 5042." : "Chain not confirmed this session."}</div>
         <div class="mt-2">${live.length ? live.map(row).join("") : `<div class="text-[12px] text-mute py-3">Not queried yet.</div>`}</div>
       </section>
       <section class="bg-[#0d0e11] rounded p-4">
@@ -2875,7 +2935,7 @@ function proofView() {
         </div>
         <div class="flex items-center gap-2">
           ${state.settlementContractAddress ? `
-            <span class="px-2.5 py-1 rounded bg-[#00E599]/15 text-[#00E599] border border-[#00E599]/30 text-[11px] font-mono flex items-center gap-1.5 font-semibold">
+            <span class="px-2.5 py-1 rounded bg-[#00E599]/15 text-pos border border-[#00E599]/30 text-[11px] font-mono flex items-center gap-1.5 font-semibold">
               <span class="w-2 h-2 rounded-full bg-[#00E599] animate-pulse"></span> DEPLOYED ON ARC
             </span>
           ` : `
@@ -2901,11 +2961,11 @@ function proofView() {
         <div class="bg-[#12151D] p-3 rounded border border-[#1F2430]/60">
           <div class="text-[10px] uppercase text-mute">Arc AMM Router</div>
           <div class="font-mono text-[11px] text-white mt-0.5 truncate" title="${ARC.router}">${shortAddr(ARC.router)}</div>
-          <div class="text-[10px] text-[#70ffba] mt-1">Uniswap V2 Compatible</div>
+          <div class="text-[10px] text-pos mt-1">Uniswap V2 Compatible</div>
         </div>
         <div class="bg-[#12151D] p-3 rounded border border-[#1F2430]/60">
           <div class="text-[10px] uppercase text-mute">Settlement Address</div>
-          <div class="font-mono text-[11px] ${state.settlementContractAddress ? "text-[#70ffba]" : "text-[#F59E0B]"} mt-0.5 truncate">
+          <div class="font-mono text-[11px] ${state.settlementContractAddress ? "text-pos" : "text-[#F59E0B]"} mt-0.5 truncate">
             ${state.settlementContractAddress ? shortAddr(state.settlementContractAddress) : "Not deployed yet"}
           </div>
           <div class="text-[10px] text-mute mt-1">
@@ -2917,7 +2977,7 @@ function proofView() {
       <div class="mt-4 p-3 rounded bg-[#12151D] border border-[#1F2430]/60 text-[11px] text-mute">
         <div class="flex items-center justify-between text-white font-semibold mb-1">
           <span>Deployment Options</span>
-          <span class="text-[10px] text-[#70ffba]">Zero AI Key Custody</span>
+          <span class="text-[10px] text-pos">Zero AI Key Custody</span>
         </div>
         <div class="space-y-1">
           <div>• <strong>Browser Wallet (1-Click):</strong> Connect MetaMask/Rabby on Arc Mainnet and click "Deploy Contract to Arc Mainnet". The wallet requests approval using native USDC for gas.</div>
@@ -2930,13 +2990,13 @@ function proofView() {
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1F2430]">
         <div>
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-[#00E599] text-[20px]">candlestick_chart</span>
+            <span class="material-symbols-outlined text-pos text-[20px]">candlestick_chart</span>
             <span class="font-display text-[15px] uppercase font-bold text-white tracking-wide">Live DEX Market Data Engine</span>
           </div>
           <p class="text-[12px] text-mute mt-0.5">Streaming institutional price feeds from Uniswap V3 on Ethereum & verified DEX oracles.</p>
         </div>
         <div class="flex items-center gap-2">
-          <span class="px-2.5 py-1 rounded bg-[#00E599]/15 text-[#00E599] border border-[#00E599]/30 text-[11px] font-mono flex items-center gap-1.5 font-semibold">
+          <span class="px-2.5 py-1 rounded bg-[#00E599]/15 text-pos border border-[#00E599]/30 text-[11px] font-mono flex items-center gap-1.5 font-semibold">
             <span class="w-2 h-2 rounded-full bg-[#00E599] ${state.marketFeedStatus?.live ? 'animate-pulse' : ''}"></span>
             ${state.marketFeedStatus?.live ? "LIVE DEX FEED ACTIVE" : "CONNECTING TO DEX"}
           </span>
@@ -2949,22 +3009,22 @@ function proofView() {
         <div class="bg-[#12151D] p-2.5 rounded">
           <div class="text-[10px] text-mute uppercase">ETH / USDC</div>
           <div class="font-mono text-white font-bold text-[14px] mt-0.5">${fmtUsd(PAIRS["ETH/USDC"].price)}</div>
-          <div class="text-[10px] ${PAIRS["ETH/USDC"].change >= 0 ? "text-[#70ffba]" : "text-[#ffb4ab]"}">${fmtPct(PAIRS["ETH/USDC"].change)} (24h)</div>
+          <div class="text-[10px] ${PAIRS["ETH/USDC"].change >= 0 ? "text-pos" : "text-neg"}">${fmtPct(PAIRS["ETH/USDC"].change)} (24h)</div>
         </div>
         <div class="bg-[#12151D] p-2.5 rounded">
           <div class="text-[10px] text-mute uppercase">BTC / USDC</div>
           <div class="font-mono text-white font-bold text-[14px] mt-0.5">${fmtUsd(PAIRS["BTC/USDC"].price)}</div>
-          <div class="text-[10px] ${PAIRS["BTC/USDC"].change >= 0 ? "text-[#70ffba]" : "text-[#ffb4ab]"}">${fmtPct(PAIRS["BTC/USDC"].change)} (24h)</div>
+          <div class="text-[10px] ${PAIRS["BTC/USDC"].change >= 0 ? "text-pos" : "text-neg"}">${fmtPct(PAIRS["BTC/USDC"].change)} (24h)</div>
         </div>
         <div class="bg-[#12151D] p-2.5 rounded">
           <div class="text-[10px] text-mute uppercase">EURC / USDC</div>
           <div class="font-mono text-white font-bold text-[14px] mt-0.5">${PAIRS["EURC/USDC"].price.toFixed(4)}</div>
-          <div class="text-[10px] ${PAIRS["EURC/USDC"].change >= 0 ? "text-[#70ffba]" : "text-[#ffb4ab]"}">${fmtPct(PAIRS["EURC/USDC"].change)} (24h)</div>
+          <div class="text-[10px] ${PAIRS["EURC/USDC"].change >= 0 ? "text-pos" : "text-neg"}">${fmtPct(PAIRS["EURC/USDC"].change)} (24h)</div>
         </div>
         <div class="bg-[#12151D] p-2.5 rounded">
           <div class="text-[10px] text-mute uppercase">USYC / USDC (NAV)</div>
           <div class="font-mono text-white font-bold text-[14px] mt-0.5">${PAIRS["USYC/USDC"].price.toFixed(4)}</div>
-          <div class="text-[10px] text-[#70ffba]">+5.10% APY Yield</div>
+          <div class="text-[10px] text-pos">+5.10% APY Yield</div>
         </div>
       </div>
     </section>
@@ -2978,7 +3038,7 @@ function proofView() {
     </section>
     <section class="mt-3 bg-[#0d0e11] rounded p-4">
       <div class="font-display text-[12px] uppercase text-[#F59E0B]">Known limitations</div>
-      <ul class="mt-2 space-y-1 text-[12px] text-[#b9cacb] list-disc pl-4">
+      <ul class="mt-2 space-y-1 text-[12px] text-sub list-disc pl-4">
         ${LIMITATIONS.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}
       </ul>
     </section>
@@ -3063,7 +3123,7 @@ function reviewModal() {
         <div class="flex justify-center -my-2 relative z-10"><div class="bg-[#292a2d] px-2 py-0.5 rounded-full tnum text-[11px] text-[#00dbe9]">1 ${pair.base} = ${fmtUsd(q.effective)}</div></div>
         <div class="bg-[#0d0e11] p-3 rounded">
           <div class="text-[10px] uppercase text-mute">Estimated receive</div>
-          <div class="font-display text-[22px] sm:text-[28px] text-[#70ffba]">${fmt(inAmt, isBuy ? 5 : 2)} <span class="text-white text-[14px]">${inSym}</span></div>
+          <div class="font-display text-[22px] sm:text-[28px] text-pos">${fmt(inAmt, isBuy ? 5 : 2)} <span class="text-white text-[14px]">${inSym}</span></div>
           <div class="mt-2 flex justify-between text-[11px] sm:text-[12px] bg-[#1b1b1f] px-2 py-1 rounded"><span class="text-mute">Guaranteed min</span><span class="tnum">${fmt(q.minReceived, isBuy ? 5 : 2)} ${inSym}</span></div>
         </div>
         ${(() => {
@@ -3076,7 +3136,7 @@ function reviewModal() {
             });
             if (jit.needed && jit.canCover) {
               return `
-              <div class="mt-3 bg-[#00f0ff]/10 border border-[#00f0ff]/30 p-2.5 rounded text-[12px] text-[#dbfcff]">
+              <div class="mt-3 bg-[#00f0ff]/10 border border-[#00f0ff]/30 p-2.5 rounded text-[12px] text-themed">
                 <div class="flex items-center gap-1.5 text-[#00f0ff] font-semibold text-[11px] uppercase">
                   <span class="material-symbols-outlined text-[16px]">swap_calls</span> Smart Treasury JIT Unwind Armed
                 </div>
@@ -3089,7 +3149,7 @@ function reviewModal() {
           return "";
         })()}
         <div class="mt-3 bg-[#1b1b1f] p-3 rounded text-[12px] grid grid-cols-2 gap-2">
-          <div><div class="text-mute text-[11px]">Price impact</div><div class="tnum text-[#70ffba]">${fmt(q.impact*100,2)}%</div></div>
+          <div><div class="text-mute text-[11px]">Price impact</div><div class="tnum text-pos">${fmt(q.impact*100,2)}%</div></div>
           <div><div class="text-mute text-[11px]">Route</div><div class="text-white text-[11px]">Interminal Settlement → Arc AMM</div></div>
           <div class="col-span-2 sm:col-span-1"><div class="text-mute text-[11px]">Settlement Contract</div><div class="text-[#00f0ff] font-mono text-[11px] truncate"><a href="${ARC.explorer}/address/${ARC.settlement}" target="_blank" class="hover:underline">${shortAddr(ARC.settlement)}</a></div></div>
           <div class="col-span-2 sm:col-span-1"><div class="text-mute text-[11px]">Network gas</div><div class="tnum text-white">${q.gasUsd} USDC</div></div>
@@ -3104,7 +3164,7 @@ function reviewModal() {
       <div class="lg:w-80 bg-[#0d0e11] rounded-lg p-4 text-[12px]">
         <div class="font-display text-[12px] text-[#00f0ff] uppercase mb-2">Pre-flight · AI + Risk</div>
         ${(() => { const t = analyzeTrade(q); const r = riskMetrics(); return `
-          <div class="space-y-2 text-[#b9cacb]">
+          <div class="space-y-2 text-sub">
             <div class="flex justify-between"><span>Ticket / NAV</span><span class="tnum text-white">${fmt(t.sizePct,2)}%</span></div>
             <div class="flex justify-between"><span>Impact</span><span class="tnum">${fmt(t.impact,2)}%</span></div>
             <div class="flex justify-between"><span>Concentration now</span><span class="tnum">${r.concentration}</span></div>
@@ -3123,12 +3183,12 @@ function executedModal() {
   <div class="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4">
     <div class="absolute inset-0 bg-[#0d0e11]/80 backdrop-blur-sm" data-act="close-tx"></div>
     <div class="relative bg-[#1f1f23] rounded-lg p-4 sm:p-6 w-full max-w-md mx-2">
-      <div class="font-display text-[16px] text-[#70ffba]">TICKET SIGNED</div>
+      <div class="font-display text-[16px] text-pos">TICKET SIGNED</div>
       <div class="mt-3 text-[14px]">${tx.label}</div>
-      <div class="mt-2 tnum text-[12px] space-y-1 text-[#b9cacb]">
+      <div class="mt-2 tnum text-[12px] space-y-1 text-sub">
         <div class="flex justify-between"><span>Quoted price</span><span class="text-white">${fmtUsd(tx.price)}</span></div>
         <div class="flex justify-between"><span>Network</span><span>Arc ${ARC.chainId}</span></div>
-        <div class="flex justify-between"><span>Status</span><span class="text-[#70ffba]">Wallet signed</span></div>
+        <div class="flex justify-between"><span>Status</span><span class="text-pos">Wallet signed</span></div>
         <div class="flex justify-between gap-2"><span>Signature</span><span class="text-[#00f0ff] font-mono text-[11px] truncate text-right">${typeof tx.hash === "string" && tx.hash.length > 20 ? tx.hash.slice(0, 10) + "…" + tx.hash.slice(-8) : tx.hash}</span></div>
       </div>
       <div class="mt-4 flex flex-col gap-2">
@@ -3165,7 +3225,7 @@ function searchModal() {
             </div>
             <div class="text-right tnum">
               <div class="font-semibold text-white">${k === "EURC/USDC" ? v.price.toFixed(4) : fmtUsd(v.price)}</div>
-              <div class="text-[11px] ${v.change >= 0 ? "text-[#70ffba]" : "text-[#ffb4ab]"}">${fmtPct(v.change)}</div>
+              <div class="text-[11px] ${v.change >= 0 ? "text-pos" : "text-neg"}">${fmtPct(v.change)}</div>
             </div>
           </button>
         `).join("") : `<div class="py-6 text-center text-mute text-[12px]">No matching Arc markets found</div>`}
@@ -3188,7 +3248,7 @@ function alertsPanel() {
     </div>
     ${state.alerts.map((a)=>`<div class="py-1.5 text-[12px] border-b border-[#1F2430]/60 flex justify-between items-center">
       <span>${escapeHtml(a.text)}</span>
-      <button data-alert-toggle="${a.id}" class="text-[10px] ${a.armed ? "text-[#70ffba]" : "text-mute hover:text-white"} font-semibold">${a.armed ? "ARMED" : "OFF"}</button>
+      <button data-alert-toggle="${a.id}" class="text-[10px] ${a.armed ? "text-pos" : "text-mute hover:text-white"} font-semibold">${a.armed ? "ARMED" : "OFF"}</button>
     </div>`).join("")}
     <div class="text-[11px] text-mute mt-2">In-app alerts persisted locally.</div>
   </div>`;
@@ -3211,7 +3271,7 @@ function receiptModal() {
           <div class="text-[11px] text-mute mt-0.5">Arc Mainnet (Chain 5042) · Tamper-Evident SHA-256 Digest</div>
         </div>
         <div class="flex items-center gap-2">
-          <span class="text-[10px] px-2 py-0.5 rounded ${isOk ? "bg-[#70ffba]/15 text-[#70ffba] font-bold border border-[#70ffba]/30" : "bg-[#ffb4ab]/15 text-[#ffb4ab] font-bold"}">
+          <span class="text-[10px] px-2 py-0.5 rounded ${isOk ? "bg-[#70ffba]/15 text-pos font-bold border border-[#70ffba]/30" : "bg-[#ffb4ab]/15 text-neg font-bold"}">
             ${isOk ? "✓ INTEGRITY VERIFIED" : "⚠ DIGEST MISMATCH"}
           </span>
           <button data-act="close-receipt" class="text-mute hover:text-white p-1"><span class="material-symbols-outlined text-[18px]">close</span></button>
@@ -3230,7 +3290,7 @@ function receiptModal() {
           <div class="text-[10px] uppercase text-mute mb-1">Execution Telemetry</div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <div><span class="text-mute text-[10px]">Market</span><div class="font-semibold text-white">${r.pair}</div></div>
-            <div><span class="text-mute text-[10px]">Effective Rate</span><div class="font-semibold text-[#70ffba]">${fmtUsd(r.effectivePrice)}</div></div>
+            <div><span class="text-mute text-[10px]">Effective Rate</span><div class="font-semibold text-pos">${fmtUsd(r.effectivePrice)}</div></div>
             <div><span class="text-mute text-[10px]">Impact</span><div class="text-white">${r.priceImpactPct}%</div></div>
             <div><span class="text-mute text-[10px]">Gas Token</span><div class="text-white">${r.gasUsd} USDC</div></div>
           </div>
@@ -3243,7 +3303,7 @@ function receiptModal() {
           </div>
           <div>
             <div class="text-[10px] uppercase text-mute">SHA-256 Canonical Integrity Digest</div>
-            <div class="font-mono text-[10px] text-[#70ffba] break-all bg-[#121316] p-1.5 rounded mt-0.5">${r.integrityDigest}</div>
+            <div class="font-mono text-[10px] text-pos break-all bg-[#121316] p-1.5 rounded mt-0.5">${r.integrityDigest}</div>
           </div>
         </div>
       </div>
@@ -3256,7 +3316,7 @@ function receiptModal() {
           <span class="material-symbols-outlined text-[16px]">download</span> Download (.json)
         </button>
         ${state.settlementContractAddress ? `
-          <button data-act="anchor-receipt" ${state.anchoringReceipt || r.onchainAnchored ? "disabled" : ""} class="flex-1 py-2 rounded ${r.onchainAnchored ? "bg-[#01e599]/20 text-[#70ffba] border border-[#01e599]/40" : "bg-[#01e599] text-[#003822] hover:bg-[#70ffba]"} disabled:opacity-60 font-display font-bold text-[12px] flex items-center justify-center gap-1.5">
+          <button data-act="anchor-receipt" ${state.anchoringReceipt || r.onchainAnchored ? "disabled" : ""} class="flex-1 py-2 rounded ${r.onchainAnchored ? "bg-[#01e599]/20 text-pos border border-[#01e599]/40" : "bg-[#01e599] text-[#003822] hover:bg-[#70ffba]"} disabled:opacity-60 font-display font-bold text-[12px] flex items-center justify-center gap-1.5">
             <span class="material-symbols-outlined text-[16px]">${state.anchoringReceipt ? "sync" : "anchor"}</span>
             ${state.anchoringReceipt ? "Anchoring..." : (r.onchainAnchored ? "✓ Anchored on Arc" : "Anchor to Arc Mainnet")}
           </button>
@@ -3321,7 +3381,7 @@ function mandateModal() {
           </div>
         </div>
 
-        <div class="p-3 bg-[#121316] rounded text-[11px] text-[#b9cacb] space-y-1">
+        <div class="p-3 bg-[#121316] rounded text-[11px] text-sub space-y-1">
           <div class="text-[#00f0ff] font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">lock</span> Cryptographic Boundary</div>
           <div>Agent can only execute within approved pairs (ETH/USDC, EURC/USDC, USYC/USDC). Any spend above the cap or expired timestamp will be rejected automatically.</div>
         </div>
@@ -3364,7 +3424,7 @@ function render() {
     activity: activityView,
     proof: proofView,
   }[state.view] || terminalView;
-  root.innerHTML = header() + body() + bottomNav();
+  root.innerHTML = header() + body() + footer() + bottomNav();
   const modalRoot = $("#modal-root");
   if (modalRoot) {
     modalRoot.innerHTML = reviewModal() + executedModal() + searchModal() + alertsPanel() + receiptModal() + mandateModal() + importTokenModal();

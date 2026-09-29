@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html class="dark" lang="en" id="html-root">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -13,33 +13,62 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
+    // Persist theme before paint to avoid flash
+    (function() {
+      const t = localStorage.getItem("interminal_theme") || "dark";
+      document.documentElement.classList.toggle("dark", t === "dark");
+    })();
+
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
           colors: {
-            paper:    "#0D111B",
-            snow:     "#121622",
-            mist:     "#1E2433",
-            ink:      "#F1F5F9",
-            smoke:    "#94A3B8",
-            fog:      "#64748B",
-            paid:     "#00E599",
-            refused:  "#FF3B69",
-            electric: "#0098F2",
-            hold:     "#F59E0B",
-            void:     "#08090C",
-            "t1":     "#0D0F14",
-            "t2":     "#12151D",
-            "t3":     "#181C26",
-            "line":   "#1F2430",
-            "line-active": "#2B3447",
-            cyan:     "#00F0FF",
-            "cyan-dim": "#00DBE9",
-            mint:     "#00E599",
-            danger:   "#FF3B57",
-            warn:     "#F59E0B",
-            mute:     "#94A3B8",
+            /* Dark mode surfaces */
+            "dm-bg":      "#0A0A0A",
+            "dm-surface": "#111111",
+            "dm-card":    "#1A1A1A",
+            "dm-border":  "#2A2A2A",
+            "dm-muted":   "#666666",
+            "dm-sub":     "#999999",
+            "dm-text":    "#F0F0F0",
+            /* Light mode surfaces */
+            "lm-bg":      "#FFFFFF",
+            "lm-surface": "#F8F8F8",
+            "lm-card":    "#F0F0F0",
+            "lm-border":  "#E0E0E0",
+            "lm-muted":   "#999999",
+            "lm-sub":     "#666666",
+            "lm-text":    "#0A0A0A",
+            /* Accent — same in both modes */
+            accent:       "#000000",
+            "accent-inv": "#FFFFFF",
+            positive:     "#16A34A",
+            negative:     "#DC2626",
+            warning:      "#D97706",
+            /* Legacy aliases kept for old code */
+            paper:    "#0A0A0A",
+            snow:     "#111111",
+            mist:     "#2A2A2A",
+            ink:      "#F0F0F0",
+            smoke:    "#999999",
+            fog:      "#666666",
+            paid:     "#16A34A",
+            refused:  "#DC2626",
+            electric: "#0A0A0A",
+            hold:     "#D97706",
+            void:     "#000000",
+            "t1":     "#0D0D0D",
+            "t2":     "#141414",
+            "t3":     "#1A1A1A",
+            "line":   "#2A2A2A",
+            "line-active": "#3A3A3A",
+            cyan:     "#E0E0E0",
+            "cyan-dim": "#C0C0C0",
+            mint:     "#16A34A",
+            danger:   "#DC2626",
+            warn:     "#D97706",
+            mute:     "#999999",
           },
           fontFamily: {
             display: ["Manrope", "sans-serif"],
@@ -52,32 +81,87 @@
             card:  "12px",
           },
           boxShadow: {
-            invoice: "0 4px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.04) inset",
+            invoice: "0 2px 20px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.06) inset",
+            "invoice-lm": "0 2px 20px rgba(0,0,0,0.08)",
           },
         }
       }
     };
   </script>
   <style>
-    :root { color-scheme: dark; }
-    html, body { margin: 0; background: #0D111B; }
-    body { font-family: "IBM Plex Sans", sans-serif; overscroll-behavior: none; }
+    /* ── CSS variables for dark/light theming ────────────────── */
+    :root {
+      --bg:      #FFFFFF;
+      --surface: #F8F8F8;
+      --card:    #F0F0F0;
+      --border:  #E0E0E0;
+      --text:    #0A0A0A;
+      --sub:     #666666;
+      --muted:   #999999;
+      --accent:  #000000;
+      --acc-inv: #FFFFFF;
+      --pos:     #16A34A;
+      --neg:     #DC2626;
+      --warn:    #D97706;
+    }
+    .dark {
+      --bg:      #0A0A0A;
+      --surface: #111111;
+      --card:    #1A1A1A;
+      --border:  #2A2A2A;
+      --text:    #F0F0F0;
+      --sub:     #999999;
+      --muted:   #666666;
+      --accent:  #FFFFFF;
+      --acc-inv: #0A0A0A;
+      --pos:     #22C55E;
+      --neg:     #EF4444;
+      --warn:    #F59E0B;
+    }
+
+    html, body { margin: 0; background: var(--bg); color: var(--text); }
+    body { font-family: "IBM Plex Sans", sans-serif; overscroll-behavior: none; transition: background 0.2s, color 0.2s; }
     .font-display  { font-family: Manrope, sans-serif; }
     .font-mono-num { font-family: "IBM Plex Mono", monospace; }
     .tnum { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "zero" 1; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-thumb { background: #1E2433; border-radius: 3px; }
+
+    /* Theme-aware utility classes */
+    .bg-themed        { background: var(--bg); }
+    .surface-themed   { background: var(--surface); }
+    .card-themed      { background: var(--card); }
+    .border-themed    { border-color: var(--border); }
+    .text-themed      { color: var(--text); }
+    .text-sub         { color: var(--sub); }
+    .text-muted       { color: var(--muted); }
+
+    /* Status pill badges — same shape, theme-aware border */
+    .badge-settled  { background:rgba(22,163,74,0.12);  border:1px solid rgba(22,163,74,0.3);  color:var(--pos); }
+    .badge-anchored { background:rgba(10,10,10,0.08);   border:1px solid var(--border);         color:var(--sub); }
+    .badge-refused  { background:rgba(220,38,38,0.12);  border:1px solid rgba(220,38,38,0.3);   color:var(--neg); }
+    .badge-held     { background:rgba(217,119,6,0.12);  border:1px solid rgba(217,119,6,0.3);   color:var(--warn); }
+    .badge-pending  { background:rgba(153,153,153,0.12);border:1px solid var(--border);          color:var(--muted); }
+    .dark .badge-anchored { background:rgba(255,255,255,0.06); }
+
+    /* Header pill card */
+    .pill-bar { background: var(--surface); border: 1px solid var(--border); }
+    .dark .pill-bar { background: rgba(17,17,17,0.95); }
+
+    /* Nav active state */
+    .pill-nav-active { background: var(--card); color: var(--text); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    .glow-paid    { box-shadow: 0 0 10px 2px rgba(0,229,153,0.18); }
-    .glow-electric{ box-shadow: 0 0 10px 2px rgba(0,152,242,0.18); }
-    .glow-refused { box-shadow: 0 0 10px 2px rgba(255,59,105,0.18); }
-    .badge-settled  { background:rgba(0,229,153,0.12); border:1px solid rgba(0,229,153,0.25); color:#00E599; }
-    .badge-anchored { background:rgba(0,152,242,0.12); border:1px solid rgba(0,152,242,0.25); color:#0098F2; }
-    .badge-refused  { background:rgba(255,59,105,0.12); border:1px solid rgba(255,59,105,0.25); color:#FF3B69; }
-    .badge-held     { background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.25); color:#F59E0B; }
-    .badge-pending  { background:rgba(100,116,139,0.12); border:1px solid rgba(100,116,139,0.25); color:#94A3B8; }
-    .keyline     { border-left: 2px solid #00F0FF; }
-    .keyline-paid{ border-left: 2px solid #00E599; }
+
+    /* Positive / negative */
+    .text-pos { color: var(--pos); }
+    .text-neg { color: var(--neg); }
+
+    /* Card hover */
+    .card-hover { transition: border-color 0.15s, box-shadow 0.15s; }
+    .card-hover:hover { border-color: var(--sub); box-shadow: 0 0 0 1px rgba(128,128,128,0.12); }
+
     kbd { font-family: "IBM Plex Mono", monospace; }
     .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20; vertical-align: middle; }
     canvas { display: block; }
@@ -86,16 +170,15 @@
     #toast-stack { pointer-events: none; }
     #toast-stack > * { pointer-events: auto; }
     .safe-bottom { padding-bottom: max(0.375rem, env(safe-area-inset-bottom, 0px)); }
-    .pill-nav-active { background:#1E2433; color:#F1F5F9; }
-    .card-hover { transition: border-color 0.15s, box-shadow 0.15s; }
-    .card-hover:hover { border-color: rgba(0,152,242,0.35); box-shadow: 0 0 0 1px rgba(0,152,242,0.12); }
+    .keyline     { border-left: 2px solid var(--sub); }
+    .keyline-pos { border-left: 2px solid var(--pos); }
   </style>
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
-<body class="bg-paper text-ink antialiased min-h-screen">
+<body class="bg-themed text-themed antialiased min-h-screen">
   <div id="app"></div>
   <div id="modal-root"></div>
-  <div id="toast-stack" class="fixed bottom-16 sm:bottom-4 right-2 sm:right-4 left-2 sm:left-auto z-[80] flex flex-col items-center sm:items-end gap-2"></div>
+  <div id="toast-stack" class="fixed bottom-20 sm:bottom-4 right-2 sm:right-4 left-2 sm:left-auto z-[80] flex flex-col items-center sm:items-end gap-2"></div>
   <script src="./contractArtifact.js"></script>
   <script src="./app.js"></script>
 </body>
