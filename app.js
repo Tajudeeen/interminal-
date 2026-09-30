@@ -1913,14 +1913,11 @@ function drawSpark(canvas, values, color) {
 }
 
 /* ---------- render ---------- */
-function logoSvg(h = 32) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" fill="none" style="height:${h}px;width:auto">
-    <rect x="2" y="6" width="28" height="28" rx="6" fill="#0D0F14" stroke="#1F2430" stroke-width="1.5"/>
-    <path d="M 8 26 C 14 12, 22 12, 24 16 C 26 20, 24 24, 20 25 C 16 26, 14 20, 22 14" stroke="#00F0FF" stroke-width="2" stroke-linecap="round"/>
-    <circle cx="22" cy="14" r="2.5" fill="#00E599"/>
-    <text x="38" y="24" fill="#F1F5F9" font-family="Manrope,sans-serif" font-size="16" font-weight="800" letter-spacing="0.12em">INTERMINAL</text>
-    <rect x="136" y="11" width="18" height="15" rx="3" fill="#00F0FF" fill-opacity="0.12" stroke="#00F0FF" stroke-opacity="0.3" stroke-width="0.75"/>
-    <text x="145" y="22" fill="#00F0FF" font-family="monospace" font-size="8.5" font-weight="700" text-anchor="middle">ARC</text>
+function logoSvg(h = 26) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" style="height:${h}px;width:${h}px" class="shrink-0">
+    <rect x="2" y="2" width="28" height="28" rx="8" fill="var(--card)" stroke="var(--border)" stroke-width="1.5"/>
+    <path d="M 8 22 C 14 8, 22 8, 24 12 C 26 16, 24 20, 20 21 C 16 22, 14 16, 22 10" stroke="var(--text)" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="22" cy="10" r="2.5" fill="var(--pos)"/>
   </svg>`;
 }
 
@@ -1971,9 +1968,10 @@ function bottomNav() {
           <span class="text-[9px] font-display tracking-tight">${label}</span>
         </button>
       `).join("")}
-      <button data-act="toggle-theme" class="flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 rounded-card text-muted hover:text-themed transition-colors">
-        <span class="material-symbols-outlined text-[20px]">${state.theme === "dark" ? "light_mode" : "dark_mode"}</span>
-        <span class="text-[9px] font-display tracking-tight">${state.theme === "dark" ? "Light" : "Dark"}</span>
+      <button data-act="alerts" class="relative flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 rounded-card text-muted hover:text-themed transition-colors">
+        <span class="material-symbols-outlined text-[20px]">notifications</span>
+        <span class="text-[9px] font-display tracking-tight">Alerts</span>
+        ${state.alerts.length ? `<span class="absolute top-1 right-2.5 h-3.5 w-3.5 rounded-full bg-red-600 text-[8px] flex items-center justify-center text-white font-bold">${state.alerts.length}</span>` : ""}
       </button>
     </div>
   </nav>`;
@@ -1999,9 +1997,8 @@ function header() {
     <div class="max-w-[1080px] mx-auto pointer-events-auto">
       <div class="pill-bar flex items-center justify-between gap-2 rounded-pill px-3 py-2" style="backdrop-filter:blur(12px)">
         <!-- Logo + status -->
-        <div class="flex items-center gap-2 shrink-0">
-          ${logoSvg(22)}
-          <span class="font-display font-bold text-[13px] tracking-tight text-themed hidden sm:inline ml-1">INTERMINAL</span>
+        <div class="flex items-center gap-2 shrink-0 cursor-pointer" data-nav="landing" title="Interminal · Arc Trading Desk">
+          ${logoSvg(26)}
         </div>
 
         <!-- Pill navigation -->
@@ -2032,21 +2029,14 @@ function header() {
             <span class="font-mono font-bold text-themed tnum">${fmt(state.nativeGasBalance, 3)}</span>
           </button>
 
-          <button data-act="import-token" class="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-pill card-themed border border-themed text-sub hover:text-themed text-[11px] font-display transition-colors" title="Import Arc ERC-20">
-            <span class="material-symbols-outlined text-[14px]">add_circle</span>
-            <span class="hidden lg:inline">Import</span>
-          </button>
+          
 
           <!-- Search -->
           <button data-act="search" class="p-1.5 rounded-pill card-themed border border-themed text-sub hover:text-themed transition-colors" title="Search (Ctrl+K)">
             <span class="material-symbols-outlined text-[17px]">search</span>
           </button>
 
-          <!-- Alerts -->
-          <button data-act="alerts" class="relative p-1.5 rounded-pill card-themed border border-themed text-sub hover:text-themed transition-colors">
-            <span class="material-symbols-outlined text-[17px]">notifications</span>
-            ${state.alerts.length ? `<span class="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-red-600 text-[8px] flex items-center justify-center text-themed font-bold">${state.alerts.length}</span>` : ""}
-          </button>
+          
 
           <!-- Theme toggle -->
           <button data-act="toggle-theme" class="p-1.5 rounded-pill card-themed border border-themed text-sub hover:text-themed transition-colors" title="${isDark ? 'Switch to light mode' : 'Switch to dark mode'}">
