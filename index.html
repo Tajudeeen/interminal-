@@ -125,8 +125,8 @@
       --warn:    #F59E0B;
     }
 
-    html, body { margin: 0; background: var(--bg); color: var(--text); overflow-x: hidden; width: 100%; max-width: 100vw; }
-    body { font-family: "IBM Plex Sans", sans-serif; overscroll-behavior: none; transition: background 0.2s, color 0.2s; }
+    html { margin: 0; padding: 0; background: var(--bg); color: var(--text); overflow-x: hidden; overflow-y: auto; }
+    body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: "IBM Plex Sans", sans-serif; min-height: 100vh; overflow-x: hidden; transition: background 0.2s, color 0.2s; }
     .font-display  { font-family: Manrope, sans-serif; }
     .font-mono-num { font-family: "IBM Plex Mono", monospace; }
     .tnum { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "zero" 1; }

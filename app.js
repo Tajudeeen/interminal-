@@ -2067,7 +2067,7 @@ function landing() {
   const detected = providerName(eth);
   const isDark = state.theme === "dark";
   return `
-  <div class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4 pt-16 pb-8">
+  <div class="min-h-screen flex flex-col items-center justify-center relative px-4 pt-16 pb-8">
     <!-- Grid background -->
     <div class="absolute inset-0 pointer-events-none opacity-[0.04]" style="background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:48px 48px"></div>
 
@@ -2761,7 +2761,7 @@ function marketsView() {
                   <td class="hidden lg:table-cell"><span class="px-2 py-0.5 rounded-pill text-[10px] font-mono ${catColor}">${catLabel}</span></td>
                   <td class="pr-4">
                     <div class="flex items-center gap-1.5">
-                      <button data-watch="${k}" class="text-[14px] ${state.watchlist.includes(k)?"text-themed font-semibold":"text-muted hover:text-sub"}">${state.watchlist.includes(k)?"★":"☆"}</button>
+                      <button data-watch="${k}" class="flex items-center text-[15px] ${state.watchlist.includes(k)?"text-themed font-semibold":"text-muted hover:text-sub"}" title="${state.watchlist.includes(k)?"Remove from watchlist":"Add to watchlist"}"><span class="material-symbols-outlined text-[16px]">${state.watchlist.includes(k)?"star":"star_outline"}</span></button>
                       <button data-trade="${k}" class="px-2.5 py-0.5 rounded-pill bg-electric/15 border border-electric/35 text-themed font-semibold text-[11px] font-display font-semibold hover:bg-electric/25 transition">Trade</button>
                     </div>
                   </td>
@@ -3656,7 +3656,7 @@ function receiptModal() {
         </div>
         <div class="flex items-center gap-2">
           <span class="text-[10px] px-2 py-0.5 rounded ${isOk ? "bg-[#70ffba]/15 text-pos font-bold border border-[#70ffba]/30" : "bg-[#ffb4ab]/15 text-neg font-bold"}">
-            ${isOk ? "✓ INTEGRITY VERIFIED" : "⚠ DIGEST MISMATCH"}
+            ${isOk ? "INTEGRITY VERIFIED" : "DIGEST MISMATCH"}
           </span>
           <button data-act="close-receipt" class="text-muted hover:text-themed p-1"><span class="material-symbols-outlined text-[18px]">close</span></button>
         </div>
@@ -3702,7 +3702,7 @@ function receiptModal() {
         ${state.settlementContractAddress ? `
           <button data-act="anchor-receipt" ${state.anchoringReceipt || r.onchainAnchored ? "disabled" : ""} class="flex-1 py-2 rounded ${r.onchainAnchored ? "bg-[#01e599]/20 text-pos border border-[#01e599]/40" : "bg-[#01e599] text-[#003822] hover:bg-[#70ffba]"} disabled:opacity-60 font-display font-bold text-[12px] flex items-center justify-center gap-1.5">
             <span class="material-symbols-outlined text-[16px]">${state.anchoringReceipt ? "sync" : "anchor"}</span>
-            ${state.anchoringReceipt ? "Anchoring..." : (r.onchainAnchored ? "✓ Anchored on Arc" : "Anchor to Arc Mainnet")}
+            ${state.anchoringReceipt ? "Anchoring..." : (r.onchainAnchored ? "Anchored on Arc" : "Anchor to Arc Mainnet")}
           </button>
         ` : `
           <button data-act="deploy-settlement" class="flex-1 py-2 rounded bg-[#00f0ff] text-themed font-bold hover:bg-[#38bdf8] font-display font-bold text-[12px] flex items-center justify-center gap-1.5">
