@@ -1416,6 +1416,14 @@ const state = {
   importTokenError: "",
   marketCat: "all",
   theme: (typeof localStorage !== "undefined" && localStorage.getItem("interminal_theme")) || "dark",
+  orderType: "market", // "market" | "dca"
+  dcaSpendTotal: 100,
+  dcaSliceSize: 20,
+  dcaFreqSec: 60, // 60s for demo, user selectable
+  dcaOrders: [],
+  nativeGasBalance: 0.125,
+  gasTankModalOpen: false,
+  gasRefueling: false,
 };
 
 function applyTheme(t) {
@@ -2017,6 +2025,13 @@ function header() {
           </div>
 
           <!-- Import token -->
+          <!-- Gas Tank Pill -->
+          <button data-act="open-gas-tank" class="flex items-center gap-1 px-2.5 py-1 rounded-pill card-themed border border-themed text-[11px] hover:opacity-80 transition-colors" title="Arc Dual-USDC Gas Tank">
+            <span class="w-1.5 h-1.5 rounded-full ${state.nativeGasBalance >= 0.02 ? 'bg-green-500' : 'bg-amber-500'} shrink-0"></span>
+            <span class="font-mono text-[10px] text-muted hidden sm:inline">GAS</span>
+            <span class="font-mono font-bold text-themed tnum">${fmt(state.nativeGasBalance, 3)}</span>
+          </button>
+
           <button data-act="import-token" class="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-pill card-themed border border-themed text-sub hover:text-themed text-[11px] font-display transition-colors" title="Import Arc ERC-20">
             <span class="material-symbols-outlined text-[14px]">add_circle</span>
             <span class="hidden lg:inline">Import</span>
@@ -2234,6 +2249,226 @@ function updateOrderPreview() {
   if (slipVal) slipVal.textContent = state.slippage + "%";
 }
 
+
+/* ---------- Feature 4: Autonomous DCA / TWAP Engine (EIP-712 Mandates) ---------- */
+function createDcaPlan({ pair, totalBudget, sliceAmount, intervalSec = 60, maxSlippageBps = 30 }) {
+  const p = PAIRS[assertPair(pair)];
+  const budget = Number(totalBudget);
+  const slice = Number(sliceAmount);
+  if (!Number.isFinite(budget) || budget <= 0) throw new Error("Invalid total budget");
+  if (!Number.isFinite(slice) || slice <= 0 || slice > budget) throw new Error("Slice size must be positive and <= total budget");
+  const totalSlices = Math.max(1, Math.floor(budget / slice));
+  
+  // Create underlying EIP-712 mandate descriptor
+  const agentAddr = ARC.settlement;
+  const traderAddr = state.address || "0x89205A3A3b2A69De6Dbf7f01ED13B2108B2c43e7";
+  const mandate = createAgentMandateDescriptor({
+    delegator: normalizeAddress(traderAddr),
+    agent: normalizeAddress(agentAddr),
+    maxSpendUsdc: budget,
+    maxSlippageBps,
+    allowedPairs: [pair],
+    ttlSeconds: Math.max(3600, totalSlices * intervalSec * 2),
+  });
+
+  return {
+    id: "dca-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+    pair,
+    totalBudget: budget,
+    sliceAmount: slice,
+    intervalSec: Number(intervalSec),
+    maxSlippageBps,
+    totalSlices,
+    slicesExecuted: 0,
+    totalSpent: 0,
+    totalReceived: 0,
+    avgFillPrice: 0,
+    status: "active", // "active" | "paused" | "completed" | "cancelled"
+    createdAt: Date.now(),
+    nextRunAt: Date.now() + 1000,
+    mandate,
+    history: [],
+  };
+}
+
+function executeDcaSlice(order) {
+  if (order.status !== "active") return false;
+  const pair = PAIRS[order.pair];
+  if (!pair) return false;
+  
+  // 1. Verify bounds against EIP-712 mandate descriptor
+  const check = validateAgentExecution(order.mandate, {
+    pair: order.pair,
+    amountUsdc: order.sliceAmount,
+    slippageBps: order.maxSlippageBps,
+    currentTime: Math.floor(Date.now() / 1000),
+  }, false);
+  if (!check.valid) {
+    order.status = "paused";
+    order.error = check.reason;
+    toast("DCA Slice Paused", check.reason, "warn");
+    return false;
+  }
+
+  // 2. Quote and execute slice
+  const quote = quoteTrade({
+    side: "buy",
+    amountUsd: order.sliceAmount,
+    price: pair.price,
+    slippageBps: order.maxSlippageBps,
+  });
+
+  const received = quote.received;
+  order.slicesExecuted += 1;
+  order.totalSpent = Math.round((order.totalSpent + order.sliceAmount) * 100) / 100;
+  order.totalReceived += received;
+  order.avgFillPrice = order.totalReceived > 0 ? order.totalSpent / order.totalReceived : pair.price;
+  order.mandate.remainingSpend = check.newRemainingSpend;
+
+  // Deduct from balance
+  if (state.balances.USDC >= order.sliceAmount) {
+    state.balances.USDC -= order.sliceAmount;
+  }
+  const base = pair.base;
+  state.balances[base] = (state.balances[base] || 0) + received;
+
+  // 3. Generate cryptographic receipt
+  const receipt = generateTradeReceipt({
+    txHash: "0x" + sha256Hex(order.id + "-" + order.slicesExecuted + "-" + Date.now()) + "00",
+    trader: order.mandate.delegator,
+    pair: order.pair,
+    side: "buy",
+    amount: order.sliceAmount,
+    quote,
+    blockNumber: state.block,
+  });
+
+  order.history.unshift({
+    slice: order.slicesExecuted,
+    ts: Date.now(),
+    amount: order.sliceAmount,
+    received,
+    price: quote.effective,
+    receiptId: receipt.receiptId,
+  });
+
+  state.activity.unshift({
+    ts: Date.now(),
+    type: "trade",
+    label: `DCA Slice #${order.slicesExecuted}/${order.totalSlices} (${order.pair})`,
+    detail: `Accumulated ${fmt(received, 4)} ${base} @ ${fmtUsd(quote.effective)}`,
+    amount: order.sliceAmount,
+    status: "settled",
+    receipt,
+  });
+
+  if (order.slicesExecuted >= order.totalSlices || order.totalSpent >= order.totalBudget) {
+    order.status = "completed";
+    toast("DCA Plan Complete!", `Filled ${order.totalSlices} slices of ${order.pair}. Total ${fmt(order.totalReceived, 4)} ${base} accumulated @ avg ${fmtUsd(order.avgFillPrice)}.`, "ok");
+  } else {
+    order.nextRunAt = Date.now() + order.intervalSec * 1000;
+  }
+  return true;
+}
+
+/* ---------- Feature 5: Arc Dual-USDC Gas Tank & Wrap Controller ---------- */
+function getGasRunway(nativeBalance) {
+  const avgGasPerTx = 0.0012; // 0.0012 USDC on Arc L1
+  return Math.floor(Math.max(0, nativeBalance) / avgGasPerTx);
+}
+
+function refuelNativeGas(amountUsdc) {
+  const amt = Number(amountUsdc);
+  if (!Number.isFinite(amt) || amt <= 0) throw new Error("Invalid refuel amount");
+  const tradingUsdc = state.balances.USDC || 0;
+  if (tradingUsdc < amt) throw new Error("Insufficient trading USDC balance to wrap into native gas");
+  state.balances.USDC -= amt;
+  state.nativeGasBalance = Math.round((state.nativeGasBalance + amt) * 10000) / 10000;
+  state.activity.unshift({
+    ts: Date.now(),
+    type: "wrap",
+    label: "Native Gas Refueled",
+    detail: `Wrapped ${fmtUsd(amt)} ERC-20 USDC into 18-decimal Native Gas USDC (+~${getGasRunway(amt)} trades)`,
+    amount: amt,
+    status: "settled",
+  });
+  savePersistedState();
+  toast("Gas Refueled!", `+${fmt(amt, 2)} USDC added to native gas tank (~+${getGasRunway(amt)} trades).`, "ok");
+  render();
+}
+
+function gasTankModal() {
+  if (!state.gasTankModalOpen) return "";
+  const runway = getGasRunway(state.nativeGasBalance);
+  const tradingUsdc = state.balances.USDC || 0;
+  const isHealthy = state.nativeGasBalance >= 0.02;
+
+  return `
+  <div class="fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-4">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-md" data-act="close-gas-tank"></div>
+    <div class="relative z-10 w-full max-w-md card-themed border border-themed rounded-panel p-5 shadow-2xl">
+      <div class="flex items-center justify-between mb-4 pb-3 border-b border-themed">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full ${isHealthy ? 'bg-green-500 animate-pulse' : 'bg-amber-500'}"></span>
+          <div>
+            <div class="font-display font-bold text-[15px] text-themed">Arc Dual-USDC Gas Tank</div>
+            <div class="font-mono text-[10px] text-muted">18-decimal Native L1 Gas vs. 6-decimal Trading USDC</div>
+          </div>
+        </div>
+        <button data-act="close-gas-tank" class="p-1 rounded-full hover:card-themed text-muted hover:text-themed">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+
+      <!-- Fuel gauge card -->
+      <div class="surface-themed border border-themed rounded-card p-4 mb-4">
+        <div class="flex justify-between items-baseline mb-2">
+          <span class="font-mono text-[11px] text-muted">Native Gas Balance</span>
+          <span class="font-mono font-bold text-[18px] text-themed">${fmt(state.nativeGasBalance, 4)} <span class="text-[12px] text-muted">USDC</span></span>
+        </div>
+        <div class="flex justify-between items-center text-[11px] font-mono text-muted mb-3">
+          <span>Estimated Runway</span>
+          <span class="font-semibold ${isHealthy ? 'text-pos' : 'text-warn'}">~${runway} Transactions</span>
+        </div>
+        <div class="h-2 bg-themed/10 rounded-full overflow-hidden">
+          <div class="h-full rounded-full transition-all ${isHealthy ? 'bg-green-500' : 'bg-amber-500'}" style="width:${Math.min(100, Math.max(8, runway / 3))}%"></div>
+        </div>
+        <div class="flex justify-between text-[10px] font-mono text-muted mt-2">
+          <span>Avg Arc Gas: ~0.0012 USDC</span>
+          <span>Trading Bal: ${fmtUsd(tradingUsdc)}</span>
+        </div>
+      </div>
+
+      <!-- Fast Refuel presets -->
+      <div class="space-y-3">
+        <div class="font-mono text-[10px] uppercase text-muted tracking-wider">Fast Refuel from Trading USDC</div>
+        <div class="grid grid-cols-3 gap-2">
+          
+            <button data-refuel="0.1" class="card-themed border border-themed hover:border-themed/80 rounded-card p-2 text-center transition-all">
+              <div class="font-mono font-bold text-[13px] text-themed">+0.10 USDC</div>
+              <div class="font-mono text-[9px] text-muted mt-0.5">~80 txs</div>
+            </button>
+          
+            <button data-refuel="0.25" class="card-themed border border-themed hover:border-themed/80 rounded-card p-2 text-center transition-all">
+              <div class="font-mono font-bold text-[13px] text-themed">+0.25 USDC</div>
+              <div class="font-mono text-[9px] text-muted mt-0.5">~200 txs</div>
+            </button>
+          
+            <button data-refuel="1" class="card-themed border border-themed hover:border-themed/80 rounded-card p-2 text-center transition-all">
+              <div class="font-mono font-bold text-[13px] text-themed">+1.00 USDC</div>
+              <div class="font-mono text-[9px] text-muted mt-0.5">~800 txs</div>
+            </button>
+          
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-themed text-[11px] text-muted leading-relaxed">
+          <strong class="text-themed font-semibold">Why this matters on Arc:</strong> Arc uses USDC natively for gas (18 decimals), eliminating secondary tokens like ETH or MATIC. You only ever need USDC.
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function terminalView() {
   const pair = PAIRS[state.pair];
   const ind = state.indicators || {};
@@ -2344,9 +2579,58 @@ function terminalView() {
 
       <aside class="lg:col-span-4 surface-themed border border-themed rounded p-3 flex flex-col gap-3">
         <div class="flex items-center justify-between">
-          <span class="font-display text-[13px] uppercase tracking-wide">Order panel</span>
+          <div class="flex items-center gap-1 bg-themed/10 p-0.5 rounded-card border border-themed">
+            <button data-order-type="market" class="px-2.5 py-0.5 text-[11px] font-display font-semibold rounded ${state.orderType !== 'dca' ? 'bg-themed text-themed' : 'text-muted hover:text-themed'}" style="${state.orderType !== 'dca' ? 'background:var(--text);color:var(--bg)' : ''}">Instant</button>
+            <button data-order-type="dca" class="px-2.5 py-0.5 text-[11px] font-display font-semibold rounded ${state.orderType === 'dca' ? 'bg-themed text-themed' : 'text-muted hover:text-themed'}" style="${state.orderType === 'dca' ? 'background:var(--text);color:var(--bg)' : ''}">DCA / TWAP</button>
+          </div>
           <span class="tnum text-[11px] text-muted">NAV ${fmtUsd(p.total)}</span>
         </div>
+
+        ${state.orderType === "dca" ? `
+        <!-- DCA / TWAP Mode -->
+        <div class="space-y-3 card-themed border border-themed rounded p-3">
+          <div class="flex items-center justify-between">
+            <span class="font-display font-bold text-[12px] text-themed">Autonomous DCA Mandate</span>
+            <span class="font-mono text-[9px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 font-semibold">EIP-712 Bounded</span>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-[11px] text-muted mb-1">
+              <span>Total Budget (USDC)</span>
+              <span>Bal ${fmt(state.balances.USDC)} USDC</span>
+            </div>
+            <input id="dca-total-in" type="number" value="${state.dcaSpendTotal}" class="w-full bg-themed/10 border border-themed rounded px-2.5 py-1.5 font-mono text-[13px] text-themed text-right outline-none" />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <div class="text-[10px] text-muted mb-1">Slice Size (USDC)</div>
+              <input id="dca-slice-in" type="number" value="${state.dcaSliceSize}" class="w-full bg-themed/10 border border-themed rounded px-2 py-1 font-mono text-[12px] text-themed text-right outline-none" />
+            </div>
+            <div>
+              <div class="text-[10px] text-muted mb-1">Frequency</div>
+              <select id="dca-freq-sel" class="w-full bg-themed/10 border border-themed rounded px-1.5 py-1 font-mono text-[11px] text-themed outline-none">
+                <option value="15" ${state.dcaFreqSec === 15 ? "selected" : ""}>Every 15s (Test)</option>
+                <option value="60" ${state.dcaFreqSec === 60 ? "selected" : ""}>Every 1 min</option>
+                <option value="900" ${state.dcaFreqSec === 900 ? "selected" : ""}>Every 15 min</option>
+                <option value="3600" ${state.dcaFreqSec === 3600 ? "selected" : ""}>Every 1 hour</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="surface-themed border border-themed rounded p-2.5 font-mono text-[11px] space-y-1">
+            <div class="flex justify-between"><span class="text-muted">Total Slices</span><span class="font-bold text-themed">${Math.max(1, Math.floor(state.dcaSpendTotal / state.dcaSliceSize))} executions</span></div>
+            <div class="flex justify-between"><span class="text-muted">Target Asset</span><span class="font-bold text-themed">${pair.base}</span></div>
+            <div class="flex justify-between"><span class="text-muted">Max Slippage</span><span class="text-pos">0.30%</span></div>
+            <div class="flex justify-between"><span class="text-muted">Key Custody</span><span class="text-pos">Zero (EIP-712 Permit)</span></div>
+          </div>
+
+          <button data-act="start-dca" class="w-full py-2.5 rounded-pill font-display font-bold text-[13px] transition flex items-center justify-center gap-1.5" style="background:var(--text);color:var(--bg)">
+            <span class="material-symbols-outlined text-[16px]">smart_toy</span> Authorize DCA Mandate
+          </button>
+        </div>
+        ` : `
+        <!-- Instant Market Mode -->
         <div class="grid grid-cols-2 p-0.5 card-themed rounded">
           <button data-side="buy" class="py-1.5 text-[13px] font-display font-semibold rounded ${state.side==="buy"?"bg-[#00E599] text-[#08090C]":"text-muted"}">Buy</button>
           <button data-side="sell" class="py-1.5 text-[13px] font-display font-semibold rounded ${state.side==="sell"?"bg-[#FF3B57] text-themed":"text-muted"}">Sell</button>
@@ -2367,8 +2651,42 @@ function terminalView() {
         <div id="order-preview" class="card-themed rounded p-2 tnum text-[12px] space-y-1">
           ${renderOrderPreviewContent()}
         </div>
-        <button data-act="review" class="w-full py-2.5 rounded ${state.side==="buy"?"bg-[#00E599] text-[#08090C]":"bg-[#FF3B57] text-themed"} font-display font-bold text-[13px]">Review trade</button>
+        <button data-act="review" class="w-full py-2.5 rounded ${state.side==="buy"?"bg-green-500 text-white":"bg-red-500 text-white"} font-display font-bold text-[13px]">Review trade</button>
         <div class="text-[10px] text-muted leading-relaxed">AI recommends. Trading engine validates. Wallet authorizes. Arc executes. No private keys leave the wallet.</div>
+        ` }
+
+        ${state.dcaOrders && state.dcaOrders.length ? `
+          <!-- Active DCA Plans Widget -->
+          <div class="mt-2 card-themed border border-themed rounded p-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-display font-bold text-[12px] text-themed">Active DCA Bot Plans</span>
+              <span class="font-mono text-[10px] text-muted">${state.dcaOrders.filter(o => o.status === "active").length} Running</span>
+            </div>
+            <div class="space-y-2 max-h-48 overflow-y-auto">
+              ${state.dcaOrders.map(o => `
+                <div class="surface-themed border border-themed rounded p-2 text-[11px] font-mono">
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="font-bold text-themed">${o.pair}</span>
+                    <span class="${o.status === 'completed' ? 'text-pos' : o.status === 'active' ? 'text-blue-400' : 'text-muted'} font-semibold uppercase text-[9px]">${o.status}</span>
+                  </div>
+                  <div class="flex justify-between text-[10px] text-muted mb-1">
+                    <span>Progress: ${o.slicesExecuted}/${o.totalSlices} slices</span>
+                    <span>Spent: ${fmt(o.totalSpent, 2)} / ${fmt(o.totalBudget, 2)}</span>
+                  </div>
+                  <div class="h-1.5 bg-themed/10 rounded-full overflow-hidden">
+                    <div class="h-full bg-blue-500 transition-all" style="width:${Math.min(100, (o.slicesExecuted / o.totalSlices) * 100)}%"></div>
+                  </div>
+                  ${o.status === "active" ? `
+                    <div class="flex justify-between items-center mt-2 text-[9px]">
+                      <span class="text-muted">Next fill in ~${Math.max(0, Math.ceil((o.nextRunAt - Date.now()) / 1000))}s</span>
+                      <button data-cancel-dca="${o.id}" class="text-red-400 hover:underline">Cancel</button>
+                    </div>
+                  ` : ""}
+                </div>
+              `).join("")}
+            </div>
+          </div>
+        ` : ""}
       </aside>
     </div>
   </main>`;
@@ -3503,7 +3821,7 @@ function render() {
   root.innerHTML = header() + body() + footer() + bottomNav();
   const modalRoot = $("#modal-root");
   if (modalRoot) {
-    modalRoot.innerHTML = reviewModal() + executedModal() + searchModal() + alertsPanel() + receiptModal() + mandateModal() + importTokenModal();
+    modalRoot.innerHTML = reviewModal() + executedModal() + searchModal() + alertsPanel() + receiptModal() + mandateModal() + importTokenModal() + gasTankModal();
   }
   bind();
 
@@ -3803,6 +4121,24 @@ function bind() {
     if (a === "search") { state.searchOpen = true; render(); }
     if (a === "close-search") { state.searchOpen = false; render(); }
     if (a === "alerts") { state.alertsOpen = !state.alertsOpen; render(); }
+    if (a === "open-gas-tank") { state.gasTankModalOpen = true; render(); return; }
+    if (a === "close-gas-tank") { state.gasTankModalOpen = false; render(); return; }
+    if (a === "start-dca") {
+      try {
+        const order = createDcaPlan({
+          pair: state.pair,
+          totalBudget: state.dcaSpendTotal,
+          sliceAmount: state.dcaSliceSize,
+          intervalSec: state.dcaFreqSec,
+        });
+        state.dcaOrders.unshift(order);
+        toast("DCA Mandate Authorized", `Autonomous bot armed for ${order.totalSlices} slices of ${order.pair} under EIP-712 permit.`, "ok");
+        render();
+      } catch (err) {
+        toast("DCA Authorization Failed", err.message || String(err), "err");
+      }
+      return;
+    }
     if (a === "toggle-theme") { applyTheme(state.theme === "dark" ? "light" : "dark"); render(); return; }
     if (a === "import-token" || a === "import-token-btn") { state.importTokenOpen = true; state.importTokenError = ""; render(); return; }
     if (a === "close-import") { state.importTokenOpen = false; state.importTokenError = ""; render(); return; }
@@ -4157,6 +4493,39 @@ function bind() {
     loadMarket();
     render();
   }));
+  document.querySelectorAll("[data-order-type]").forEach((el) => el.addEventListener("click", () => {
+    state.orderType = el.dataset.orderType;
+    render();
+  }));
+  document.querySelectorAll("[data-refuel]").forEach((el) => el.addEventListener("click", () => {
+    try {
+      refuelNativeGas(Number(el.dataset.refuel));
+    } catch (err) {
+      toast("Refuel Failed", err.message || String(err), "err");
+    }
+  }));
+  document.querySelectorAll("[data-cancel-dca]").forEach((el) => el.addEventListener("click", () => {
+    const id = el.dataset.cancelDca;
+    const order = state.dcaOrders.find(o => o.id === id);
+    if (order) {
+      order.status = "cancelled";
+      toast("DCA Plan Cancelled", "Autonomous bot stopped. Remaining budget retained in wallet.", "info");
+      render();
+    }
+  }));
+  const dcaTotalIn = $("#dca-total-in");
+  if (dcaTotalIn) dcaTotalIn.addEventListener("input", (e) => {
+    state.dcaSpendTotal = Number(e.target.value) || 100;
+  });
+  const dcaSliceIn = $("#dca-slice-in");
+  if (dcaSliceIn) dcaSliceIn.addEventListener("input", (e) => {
+    state.dcaSliceSize = Number(e.target.value) || 20;
+  });
+  const dcaFreqSel = $("#dca-freq-sel");
+  if (dcaFreqSel) dcaFreqSel.addEventListener("change", (e) => {
+    state.dcaFreqSec = Number(e.target.value) || 60;
+  });
+
   document.querySelectorAll("[data-cat]").forEach((el) => el.addEventListener("click", () => {
     state.marketCat = el.dataset.cat;
     render();
@@ -4235,6 +4604,16 @@ if (typeof document !== "undefined") {
   setInterval(() => {
     if (document.hidden) return;
     if (state.connected) loadChainHead();
+    // Autonomous DCA / TWAP engine execution runner
+    if (state.dcaOrders && state.dcaOrders.length) {
+      state.dcaOrders.forEach((order) => {
+        if (order.status === "active" && Date.now() >= order.nextRunAt) {
+          executeDcaSlice(order);
+          render();
+        }
+      });
+    }
+
     // Synchronize active candle with verified live pair price — no artificial random jitter
     if (state.view === "terminal" && $("#main-chart") && state.candles?.length && PAIRS[state.pair]) {
       const livePrice = PAIRS[state.pair].price;
