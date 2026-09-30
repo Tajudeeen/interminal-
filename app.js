@@ -1925,7 +1925,7 @@ function footer() {
   const year = new Date().getFullYear();
   return `
   <footer class="w-full border-t border-themed card-themed mt-10 mb-16 md:mb-0 transition-colors">
-    <div class="max-w-[1080px] mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-5 sm:py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
       <div class="flex items-center gap-3">
         ${logoSvg(22)}
         <div>
@@ -1961,17 +1961,17 @@ function bottomNav() {
   ];
   return `
   <nav class="fixed bottom-0 left-0 right-0 z-50 md:hidden safe-bottom pill-bar shadow-xl transition-colors">
-    <div class="flex items-center justify-around px-1 py-1.5">
+    <div class="flex items-center justify-around px-0.5 sm:px-1 py-1 sm:py-1.5">
       ${nav.map(({ id, icon, label }) => `
-        <button data-nav="${id}" class="flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 rounded-card transition-colors ${state.view === id ? 'text-themed font-bold' : 'text-muted hover:text-themed'}">
-          <span class="material-symbols-outlined text-[20px]">${icon}</span>
-          <span class="text-[9px] font-display tracking-tight">${label}</span>
+        <button data-nav="${id}" class="flex flex-col items-center justify-center gap-0.5 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-card transition-colors ${state.view === id ? 'text-themed font-bold' : 'text-muted hover:text-themed'}">
+          <span class="material-symbols-outlined text-[19px] sm:text-[20px]">${icon}</span>
+          <span class="text-[8.5px] sm:text-[9px] font-display tracking-tight">${label}</span>
         </button>
       `).join("")}
-      <button data-act="alerts" class="relative flex flex-col items-center justify-center gap-0.5 px-2.5 py-1 rounded-card text-muted hover:text-themed transition-colors">
-        <span class="material-symbols-outlined text-[20px]">notifications</span>
-        <span class="text-[9px] font-display tracking-tight">Alerts</span>
-        ${state.alerts.length ? `<span class="absolute top-1 right-2.5 h-3.5 w-3.5 rounded-full bg-red-600 text-[8px] flex items-center justify-center text-white font-bold">${state.alerts.length}</span>` : ""}
+      <button data-act="alerts" class="relative flex flex-col items-center justify-center gap-0.5 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-card text-muted hover:text-themed transition-colors">
+        <span class="material-symbols-outlined text-[19px] sm:text-[20px]">notifications</span>
+        <span class="text-[8.5px] sm:text-[9px] font-display tracking-tight">Alerts</span>
+        ${state.alerts.length ? `<span class="absolute top-0.5 sm:top-1 right-1.5 sm:right-2.5 h-3.5 w-3.5 rounded-full bg-red-600 text-[8px] flex items-center justify-center text-white font-bold">${state.alerts.length}</span>` : ""}
       </button>
     </div>
   </nav>`;
@@ -1993,24 +1993,25 @@ function header() {
   const statusColor = state.livePortfolio ? "text-pos" : "text-sub";
 
   return `
-  <header class="fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 pt-3 pointer-events-none">
-    <div class="max-w-[1080px] mx-auto pointer-events-auto">
-      <div class="pill-bar flex items-center justify-between gap-2 rounded-pill px-3 py-2" style="backdrop-filter:blur(12px)">
+  <header class="fixed top-0 left-0 right-0 z-50 px-2 sm:px-4 pt-2 sm:pt-3 pointer-events-none">
+    <div class="max-w-7xl mx-auto pointer-events-auto">
+      <div class="pill-bar flex items-center justify-between gap-1.5 sm:gap-2 rounded-pill px-2.5 sm:px-3 py-1.5 sm:py-2" style="backdrop-filter:blur(12px)">
         <!-- Logo + status -->
-        <div class="flex items-center gap-2 shrink-0 cursor-pointer" data-nav="landing" title="Interminal · Arc Trading Desk">
-          ${logoSvg(26)}
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 cursor-pointer" data-nav="landing" title="Interminal · Arc Trading Desk">
+          ${logoSvg(24)}
+          <span class="hidden lg:inline font-mono text-[11px] font-bold tracking-wider text-themed">INTERMINAL</span>
         </div>
 
-        <!-- Pill navigation -->
-        <nav class="hidden md:flex items-center gap-0.5 card-themed rounded-pill px-1 py-1 border border-themed">
+        <!-- Pill navigation (desktop & tablet) -->
+        <nav class="hidden md:flex items-center gap-0.5 card-themed rounded-pill px-1 py-0.5 sm:py-1 border border-themed">
           ${navItems.map(({ id, label }) => `
-            <button data-nav="${id}" class="px-3 py-1 text-[12px] font-display font-semibold rounded-pill transition-all ${state.view === id ? 'pill-nav-active shadow-sm' : 'text-muted hover:text-themed hover:bg-themed/50'}">${label}</button>
+            <button data-nav="${id}" class="px-2 lg:px-3 py-0.5 lg:py-1 text-[11px] lg:text-[12px] font-display font-semibold rounded-pill transition-all ${state.view === id ? 'pill-nav-active shadow-sm' : 'text-muted hover:text-themed hover:bg-themed/50'}">${label}</button>
           `).join("")}
         </nav>
 
         <!-- Right cluster -->
-        <div class="flex items-center gap-1.5 shrink-0">
-          <!-- Live ticker -->
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <!-- Live ticker (xl screens) -->
           <div class="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-pill card-themed border border-themed tnum text-[11px]">
             <span class="text-muted">ETH</span>
             <span class="font-mono font-semibold">${fmtUsd(PAIRS["ETH/USDC"].price)}</span>
@@ -2021,44 +2022,39 @@ function header() {
             <span class="${PAIRS["ARC/USDC"].change >= 0 ? 'text-pos' : 'text-neg'}">${fmtPct(PAIRS["ARC/USDC"].change)}</span>
           </div>
 
-          <!-- Import token -->
           <!-- Gas Tank Pill -->
-          <button data-act="open-gas-tank" class="flex items-center gap-1 px-2.5 py-1 rounded-pill card-themed border border-themed text-[11px] hover:opacity-80 transition-colors" title="Arc Dual-USDC Gas Tank">
+          <button data-act="open-gas-tank" class="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-pill card-themed border border-themed text-[10px] sm:text-[11px] hover:opacity-80 transition-colors" title="Arc Dual-USDC Gas Tank">
             <span class="w-1.5 h-1.5 rounded-full ${state.nativeGasBalance >= 0.02 ? 'bg-green-500' : 'bg-amber-500'} shrink-0"></span>
             <span class="font-mono text-[10px] text-muted hidden sm:inline">GAS</span>
             <span class="font-mono font-bold text-themed tnum">${fmt(state.nativeGasBalance, 3)}</span>
           </button>
 
-          
-
           <!-- Search -->
-          <button data-act="search" class="p-1.5 rounded-pill card-themed border border-themed text-sub hover:text-themed transition-colors" title="Search (Ctrl+K)">
-            <span class="material-symbols-outlined text-[17px]">search</span>
+          <button data-act="search" class="p-1 sm:p-1.5 rounded-pill card-themed border border-themed text-sub hover:text-themed transition-colors" title="Search (Ctrl+K)">
+            <span class="material-symbols-outlined text-[16px] sm:text-[17px]">search</span>
           </button>
 
-          
-
           <!-- Theme toggle -->
-          <button data-act="toggle-theme" class="p-1.5 rounded-pill card-themed border border-themed text-sub hover:text-themed transition-colors" title="${isDark ? 'Switch to light mode' : 'Switch to dark mode'}">
-            <span class="material-symbols-outlined text-[17px]">${isDark ? 'light_mode' : 'dark_mode'}</span>
+          <button data-act="toggle-theme" class="p-1 sm:p-1.5 rounded-pill card-themed border border-themed text-sub hover:text-themed transition-colors" title="${isDark ? 'Switch to light mode' : 'Switch to dark mode'}">
+            <span class="material-symbols-outlined text-[16px] sm:text-[17px]">${isDark ? 'light_mode' : 'dark_mode'}</span>
           </button>
 
           <!-- Wallet pill -->
-          <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-pill card-themed border border-themed text-[11px]">
+          <div class="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-pill card-themed border border-themed text-[10px] sm:text-[11px]">
             <span class="w-1.5 h-1.5 rounded-full ${state.livePortfolio ? 'bg-green-500 animate-pulse' : 'bg-gray-500'} shrink-0"></span>
             <span class="hidden sm:inline font-mono text-[10px] text-sub uppercase">${state.livePortfolio ? "Live" : "Demo"}</span>
-            <a class="font-mono text-[10px] hover:underline truncate max-w-[72px]" href="${ARC.explorer}/address/${state.address}" target="_blank" rel="noreferrer">${shortAddr(state.address)}</a>
-            ${state.livePortfolio ? `<span class="hidden sm:inline font-mono text-muted text-[10px] tnum">${fmtUsd(p.total)}</span>` : ""}
+            <a class="font-mono text-[10px] hover:underline truncate max-w-[54px] sm:max-w-[72px]" href="${ARC.explorer}/address/${state.address}" target="_blank" rel="noreferrer">${shortAddr(state.address)}</a>
+            ${state.livePortfolio ? `<span class="hidden md:inline font-mono text-muted text-[10px] tnum">${fmtUsd(p.total)}</span>` : ""}
           </div>
 
           ${!state.livePortfolio ? `
-            <button data-act="connect" class="hidden sm:flex items-center gap-1 px-3 py-1 rounded-pill text-[11px] font-display font-bold transition-colors" style="background:var(--text);color:var(--bg)">
-              <span class="material-symbols-outlined text-[14px]">account_balance_wallet</span> Connect
+            <button data-act="connect" class="hidden sm:flex items-center gap-1 px-2.5 sm:px-3 py-1 rounded-pill text-[10px] sm:text-[11px] font-display font-bold transition-colors" style="background:var(--text);color:var(--bg)">
+              <span class="material-symbols-outlined text-[13px] sm:text-[14px]">account_balance_wallet</span> Connect
             </button>
           ` : ""}
 
-          <button data-act="disconnect" class="w-7 h-7 rounded-full card-themed border border-themed text-sub flex items-center justify-center shrink-0 hover:text-themed transition-colors">
-            <span class="material-symbols-outlined text-[16px]">person</span>
+          <button data-act="disconnect" class="w-6 h-6 sm:w-7 sm:h-7 rounded-full card-themed border border-themed text-sub flex items-center justify-center shrink-0 hover:text-themed transition-colors" title="Wallet Profile">
+            <span class="material-symbols-outlined text-[14px] sm:text-[16px]">person</span>
           </button>
         </div>
       </div>
@@ -2396,7 +2392,7 @@ function gasTankModal() {
   return `
   <div class="fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-4">
     <div class="absolute inset-0 bg-black/80 backdrop-blur-md" data-act="close-gas-tank"></div>
-    <div class="relative z-10 w-full max-w-md card-themed border border-themed rounded-panel p-5 shadow-2xl">
+    <div class="relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto card-themed border border-themed rounded-panel p-4 sm:p-5 shadow-2xl">
       <div class="flex items-center justify-between mb-4 pb-3 border-b border-themed">
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full ${isHealthy ? 'bg-green-500 animate-pulse' : 'bg-amber-500'}"></span>
@@ -2468,11 +2464,11 @@ function terminalView() {
   const receivedAmt = state.side === "buy" ? quote.received : state.amount * (1 - quote.impact);
   const a = state.analysis;
   return `
-  <main class="pt-20 sm:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4">
-    <section class="px-2 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 sm:gap-3 border-b border-themed surface-themed border border-themed">
-      <div class="flex items-center gap-2 sm:gap-6 flex-wrap">
+  <main class="pt-16 sm:pt-20 lg:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4 max-w-7xl mx-auto">
+    <section class="px-2 sm:px-4 py-2 flex flex-wrap items-center justify-between gap-2 sm:gap-3 border-b border-themed surface-themed border border-themed rounded-t">
+      <div class="flex items-center gap-2 sm:gap-4 md:gap-6 flex-wrap">
         <div class="relative">
-          <button data-act="pair-menu" class="flex items-center gap-2 card-themed border border-themed hover:card-themed border border-themed px-2.5 sm:px-3 py-1.5 rounded">
+          <button data-act="pair-menu" class="flex items-center gap-2 card-themed border border-themed hover:card-themed px-2.5 sm:px-3 py-1.5 rounded">
             <span class="w-6 h-6 rounded-full bg-[#00f0ff]/15 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[15px] text-themed font-semibold">currency_exchange</span></span>
             <div class="text-left">
               <div class="flex items-center gap-1.5">
@@ -2480,10 +2476,10 @@ function terminalView() {
                 <span class="text-[10px] px-1 bg-[#00f0ff]/15 text-themed font-semibold rounded">${state.pair==="EURC/USDC"?"FX SPOT":"ARC SPOT"}</span>
                 <span class="material-symbols-outlined text-[14px] text-muted">expand_more</span>
               </div>
-              <div class="text-[10px] uppercase tracking-wider text-muted">Arc Native Liquidity Hub</div>
+              <div class="text-[9px] sm:text-[10px] uppercase tracking-wider text-muted truncate max-w-[120px] sm:max-w-none">Arc Native Liquidity Hub</div>
             </div>
           </button>
-          <div id="pair-dd" class="hidden absolute left-0 top-full mt-1 w-72 card-themed border border-themed rounded shadow-xl py-1 z-50">
+          <div id="pair-dd" class="hidden absolute left-0 top-full mt-1 w-72 max-w-[calc(100vw-2rem)] card-themed border border-themed rounded shadow-xl py-1 z-50">
             <div class="px-3 py-1 text-[10px] uppercase text-muted">Switch Arc Market</div>
             ${Object.entries(PAIRS).map(([k, v]) => `
               <button data-pair="${k}" class="w-full flex items-center justify-between px-3 py-1.5 tnum text-[12px] hover:card-themed border border-themed ${k===state.pair?"text-themed font-semibold card-themed border border-themed":""}">
@@ -2492,18 +2488,18 @@ function terminalView() {
           </div>
         </div>
         <div class="flex items-baseline gap-2">
-          <span class="tnum text-[18px] sm:text-[22px] font-bold text-themed font-semibold">${state.pair==="EURC/USDC" ? pair.price.toFixed(4) : fmtUsd(pair.price)}</span>
+          <span class="tnum text-[17px] sm:text-[22px] font-bold text-themed font-semibold">${state.pair==="EURC/USDC" ? pair.price.toFixed(4) : fmtUsd(pair.price)}</span>
           <span class="tnum text-[11px] sm:text-[12px] ${pair.change>=0?"text-pos":"text-neg"}">${fmtPct(pair.change)} <span class="text-muted hidden sm:inline">(${pair.change>=0?"+":""}${fmtUsd(pair.price*pair.change/100)})</span></span>
         </div>
-        <div class="hidden xl:flex items-center gap-6 tnum text-[12px]">
-          <div><div class="text-[10px] uppercase text-muted">24h High</div><div>${state.pair==="EURC/USDC"?pair.high.toFixed(4):fmtUsd(pair.high)}</div></div>
-          <div><div class="text-[10px] uppercase text-muted">24h Low</div><div>${state.pair==="EURC/USDC"?pair.low.toFixed(4):fmtUsd(pair.low)}</div></div>
+        <div class="hidden md:flex items-center gap-3 lg:gap-6 tnum text-[11px] lg:text-[12px]">
+          <div class="hidden xl:block"><div class="text-[10px] uppercase text-muted">24h High</div><div>${state.pair==="EURC/USDC"?pair.high.toFixed(4):fmtUsd(pair.high)}</div></div>
+          <div class="hidden xl:block"><div class="text-[10px] uppercase text-muted">24h Low</div><div>${state.pair==="EURC/USDC"?pair.low.toFixed(4):fmtUsd(pair.low)}</div></div>
           <div><div class="text-[10px] uppercase text-muted">24h Volume</div><div>${fmtUsd(pair.vol/1e6)}M USDC</div></div>
           <div><div class="text-[10px] uppercase text-muted">Arc Liquidity</div><div class="text-themed">${fmtUsd(pair.tvl/1e6)}M</div></div>
         </div>
       </div>
-      <div class="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-muted">
-        <span class="w-1.5 h-1.5 rounded-full bg-[#01e599]"></span> Oracle: <span class="text-themed font-semibold font-mono">${state.pair==="EURC/USDC"?"ECB Implied · Pyth V2":"Pyth V2 · Sub-sec"}</span>
+      <div class="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-muted ml-auto sm:ml-0">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#01e599]"></span> Oracle: <span class="text-themed font-semibold font-mono">${state.pair==="EURC/USDC"?"ECB · Pyth":"Pyth V2"}</span>
       </div>
     </section>
 
@@ -2524,8 +2520,8 @@ function terminalView() {
       </div>`;
     })() : ""}
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-1 p-1">
-      <section class="lg:col-span-8 surface-themed border border-themed rounded overflow-hidden flex flex-col">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-2 p-1">
+      <section class="md:col-span-7 lg:col-span-8 surface-themed border border-themed rounded overflow-hidden flex flex-col">
         <div class="px-2 sm:px-3 py-1.5 card-themed border border-themed flex flex-wrap items-center justify-between gap-2 border-b border-themed/40">
           <div class="flex items-center gap-1 overflow-x-auto max-w-full pb-0.5 sm:pb-0">
             ${["1m","5m","15m","1h","4h","1D"].map((tf) => `<button data-tf="${tf}" class="px-2 py-0.5 text-[11px] rounded ${state.timeframe===tf?"bg-[#00f0ff] text-themed font-bold font-bold":"text-muted hover:text-themed"}">${tf}</button>`).join("")}
@@ -2544,7 +2540,7 @@ function terminalView() {
           <span class="text-muted">RSI (14): <span class="text-pos font-semibold">${fmt(ind.rsi,2)}</span></span>
           <span class="text-muted">MACD hist: <span class="${ind.macdHist>=0?"text-pos":"text-neg"}">${fmt(ind.macdHist,2)}</span></span>
         </div>
-        <div class="relative h-[280px] sm:h-[350px] lg:h-[420px]">
+        <div class="relative h-[260px] sm:h-[340px] md:h-[380px] lg:h-[430px]">
           <canvas id="main-chart" class="absolute inset-0 w-full h-full"></canvas>
         </div>
         <div class="px-3 py-2 border-t border-themed surface-themed border border-themed">
@@ -2567,7 +2563,7 @@ function terminalView() {
         </div>
       </section>
 
-      <aside class="lg:col-span-4 surface-themed border border-themed rounded p-3 flex flex-col gap-3">
+      <aside class="md:col-span-5 lg:col-span-4 surface-themed border border-themed rounded p-2.5 sm:p-3 flex flex-col gap-2.5 sm:gap-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-1 bg-themed/10 p-0.5 rounded-card border border-themed">
             <button data-order-type="market" class="px-2.5 py-0.5 text-[11px] font-display font-semibold rounded ${state.orderType !== 'dca' ? 'bg-themed text-themed' : 'text-muted hover:text-themed'}" style="${state.orderType !== 'dca' ? 'background:var(--text);color:var(--bg)' : ''}">Instant</button>
@@ -2695,9 +2691,9 @@ function marketsView() {
   ];
   const filtered = Object.entries(allPairs).filter(([, v]) => cat === "all" || v.cat === cat);
   return `
-  <main class="pt-20 pb-20 md:pb-4 min-h-screen">
+  <main class="pt-16 sm:pt-20 lg:pt-24 pb-24 md:pb-8 min-h-screen max-w-7xl mx-auto px-2 sm:px-4">
     <!-- Macro stats strip -->
-    <div class="px-3 sm:px-5 pt-3 pb-0 grid grid-cols-2 sm:grid-cols-5 gap-2">
+    <div class="px-1 sm:px-2 pt-2 pb-0 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
       ${[
         ["Arc Ecosystem TVL", "$248.65M", "+4.12%", "text-pos"],
         ["24h Aggregate Vol",  "$142.80M", "+12.4%",  "text-pos"],
@@ -2705,7 +2701,7 @@ function marketsView() {
         ["Market Regime",     "68/100",   "Expansion","text-pos"],
         ["Cross-Pool Depth",  "$84.20M",  "Native L1","text-muted"],
       ].map(([l,v,s,sc], idx) => `
-        <div class="card-themed border border-themed rounded-card p-3 card-hover ${idx===4?"col-span-2 sm:col-span-1":""}">
+        <div class="card-themed border border-themed rounded-card p-3 card-hover ${idx===4?"col-span-2 sm:col-span-1 lg:col-span-1":""}">
           <div class="text-muted font-mono text-[10px] uppercase tracking-wider">${l}</div>
           <div class="font-display font-bold text-[20px] mt-1">${v}</div>
           <div class="font-mono text-[10px] ${sc} mt-0.5">${s}</div>
@@ -2714,7 +2710,7 @@ function marketsView() {
     </div>
 
     <!-- Category filter tabs -->
-    <div class="px-3 sm:px-5 mt-4 flex items-center gap-2 overflow-x-auto pb-1">
+    <div class="px-1 sm:px-2 mt-3 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
       ${cats.map(({ id, label }) => `
         <button data-cat="${id}" class="shrink-0 px-3 py-1.5 rounded-pill text-[12px] font-display font-semibold transition-colors ${cat === id ? 'bg-electric/20 border border-electric/40 text-themed font-semibold' : 'card-themed border border-themed text-sub hover:text-themed hover:border-smoke'}">${label}</button>
       `).join("")}
@@ -2723,20 +2719,23 @@ function marketsView() {
       </button>
     </div>
 
-    <div class="px-3 sm:px-5 mt-4 pb-6 grid grid-cols-1 xl:grid-cols-12 gap-3">
+    <div class="px-1 sm:px-2 mt-3 pb-6 grid grid-cols-1 lg:grid-cols-12 gap-3">
       <!-- Pairs table -->
-      <div class="xl:col-span-8 card-themed border border-themed rounded-panel overflow-hidden">
+      <div class="lg:col-span-8 card-themed border border-themed rounded-panel overflow-hidden">
         <div class="px-4 py-3 flex items-center justify-between border-b border-themed">
           <span class="font-display font-semibold text-[13px]">Arc Verified Markets</span>
           <span class="font-mono text-[11px] text-muted">${filtered.length} pairs</span>
         </div>
         <div class="overflow-x-auto">
-          <table class="w-full text-left tnum text-[12px] min-w-[560px]">
+          <table class="w-full text-left tnum text-[12px]">
             <thead>
               <tr class="border-b border-themed text-[10px] uppercase font-mono text-muted">
-                <th class="px-4 py-2 font-medium">Pair</th>
-                <th>Last</th><th>24h Chg</th><th>Volume</th><th>TVL</th>
-                <th>Category</th><th class="pr-4"></th>
+                <th class="px-3 sm:px-4 py-2 font-medium">Pair</th>
+                <th>Last</th><th>24h Chg</th>
+                <th class="hidden sm:table-cell">Volume</th>
+                <th class="hidden md:table-cell">TVL</th>
+                <th class="hidden lg:table-cell">Category</th>
+                <th class="pr-3 sm:pr-4"></th>
               </tr>
             </thead>
             <tbody>
@@ -2757,9 +2756,9 @@ function marketsView() {
                   </td>
                   <td class="font-mono font-semibold">${k==="EURC/USDC"?v.price.toFixed(4):fmtUsd(v.price)}</td>
                   <td class="font-mono ${isUp?"text-pos":"text-neg"}">${fmtPct(v.change)}</td>
-                  <td class="font-mono text-sub">${fmtUsd(v.vol/1e6)}M</td>
-                  <td class="font-mono text-sub">${fmtUsd(v.tvl/1e6)}M</td>
-                  <td><span class="px-2 py-0.5 rounded-pill text-[10px] font-mono ${catColor}">${catLabel}</span></td>
+                  <td class="font-mono text-sub hidden sm:table-cell">${fmtUsd(v.vol/1e6)}M</td>
+                  <td class="font-mono text-sub hidden md:table-cell">${fmtUsd(v.tvl/1e6)}M</td>
+                  <td class="hidden lg:table-cell"><span class="px-2 py-0.5 rounded-pill text-[10px] font-mono ${catColor}">${catLabel}</span></td>
                   <td class="pr-4">
                     <div class="flex items-center gap-1.5">
                       <button data-watch="${k}" class="text-[14px] ${state.watchlist.includes(k)?"text-themed font-semibold":"text-muted hover:text-sub"}">${state.watchlist.includes(k)?"★":"☆"}</button>
@@ -2774,7 +2773,7 @@ function marketsView() {
       </div>
 
       <!-- Right column: watchlist + custom import card -->
-      <div class="xl:col-span-4 flex flex-col gap-3">
+      <div class="lg:col-span-4 flex flex-col gap-3">
         <div class="card-themed border border-themed rounded-panel p-4">
           <div class="font-display font-semibold text-[13px] mb-3">Watchlist</div>
           ${state.watchlist.map((k) => {
@@ -2817,7 +2816,7 @@ function portfolioView() {
   const curve = Array.from({ length: 36 }, (_, i) => 11000 + i * 40 + Math.sin(i / 3) * 180);
   curve[curve.length - 1] = p.total;
   return `
-  <main class="pt-20 sm:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4 py-4">
+  <main class="pt-16 sm:pt-20 lg:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4 py-4 max-w-7xl mx-auto">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 card-themed border border-themed p-3 sm:p-4 rounded">
       <div>
         <div class="text-[10px] uppercase tracking-wider text-muted">Total Portfolio Valuation <span class="ml-1 px-1 card-themed rounded">LIVE</span></div>
@@ -2836,12 +2835,12 @@ function portfolioView() {
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 mt-3">
-      <div class="lg:col-span-7 card-themed border border-themed rounded p-3">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 mt-3">
+      <div class="md:col-span-7 card-themed border border-themed rounded p-3">
         <div class="flex justify-between mb-2"><span class="font-display text-[15px]">Equity Performance Curve</span><span class="text-[11px] text-muted">Arc-AMM Fed</span></div>
         <canvas id="nav-chart" class="w-full h-56"></canvas>
       </div>
-      <div class="lg:col-span-5 card-themed border border-themed rounded p-3">
+      <div class="md:col-span-5 card-themed border border-themed rounded p-3">
         <div class="font-display text-[15px] mb-2">Deterministic Risk Matrix</div>
         <div class="space-y-2 text-[12px]">
           ${[
@@ -2915,19 +2914,19 @@ function portfolioView() {
     <div class="mt-3 surface-themed border border-themed rounded overflow-hidden">
       <div class="px-3 py-2 font-display text-[13px] border-b border-themed">Asset Holdings & Exposure</div>
       <div class="overflow-x-auto">
-        <table class="w-full text-left tnum text-[12px] min-w-[560px]">
+        <table class="w-full text-left tnum text-[12px]">
           <thead class="text-[10px] uppercase text-muted"><tr class="border-b border-themed">
-            <th class="px-3 py-2">Asset</th><th>Price</th><th>Qty</th><th>Value</th><th>24h</th><th>Allocation</th><th></th>
+            <th class="px-3 py-2">Asset</th><th>Price</th><th class="hidden sm:table-cell">Qty</th><th>Value</th><th>24h</th><th class="hidden md:table-cell">Allocation</th><th></th>
           </tr></thead>
           <tbody>
             ${p.rows.map((r) => `
               <tr class="border-b border-themed/50">
                 <td class="px-3 py-2"><div class="font-display">${TOKEN_META[r.sym]?.name || r.sym}</div><div class="text-muted text-[10px]">${r.sym}</div></td>
                 <td>${fmtUsd(r.px)}</td>
-                <td>${fmt(r.qty,4)}</td>
+                <td class="hidden sm:table-cell">${fmt(r.qty,4)}</td>
                 <td>${fmtUsd(r.value)}</td>
                 <td class="${r.chg>=0?"text-pos":"text-neg"}">${fmtPct(r.chg)}</td>
-                <td>
+                <td class="hidden md:table-cell">
                   <div class="flex items-center gap-2"><div class="w-20 h-1 card-themed border border-themed rounded overflow-hidden"><div class="h-full bg-[#00f0ff]" style="width:${r.alloc}%"></div></div>${fmt(r.alloc,1)}%</div>
                 </td>
                 <td>${r.sym==="WETH"?`<button data-trade="ETH/USDC" class="px-2 py-0.5 rounded card-themed border border-themed text-[11px]">Trade</button>`:r.sym==="cirBTC"?`<button data-trade="BTC/USDC" class="px-2 py-0.5 rounded card-themed border border-themed text-[11px]">Trade</button>`:PAIRS[r.sym+"/USDC"]?`<button data-trade="${r.sym}/USDC" class="px-2 py-0.5 rounded card-themed border border-themed text-[11px]">Trade</button>`:""}</td>
@@ -2952,7 +2951,7 @@ function aiView() {
   const p = analyzePortfolio();
   const w = analyzeWallet();
   return `
-  <main class="pt-20 sm:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4">
+  <main class="pt-16 sm:pt-20 lg:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4 max-w-7xl mx-auto">
     <div class="px-3 sm:px-4 py-2 surface-themed border border-themed flex flex-wrap items-center justify-between gap-2 border-b border-themed">
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-[#00f0ff] shadow-[0_0_8px_rgba(0,240,255,0.6)]"></span>
@@ -2961,32 +2960,32 @@ function aiView() {
       </div>
       <div class="text-[10px] sm:text-[11px] text-muted">ARC DUAL-KERNEL: DETERMINISTIC DATA ENGINE → VERIFIABLE AI SYNTHESIS</div>
     </div>
-    <div class="p-2 sm:p-3 grid grid-cols-1 xl:grid-cols-12 gap-3">
-      <div class="xl:col-span-3 flex flex-col gap-2">
+    <div class="p-1 sm:p-3 grid grid-cols-1 lg:grid-cols-12 gap-3">
+      <div class="lg:col-span-4 xl:col-span-3 flex flex-col gap-2">
         <div class="surface-themed border border-themed rounded p-3">
           <div class="text-[10px] uppercase text-muted mb-2">Analysis Matrix</div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-1">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-1">
             ${cores.map(([id,ic,t,s]) => `
               <button data-core="${id}" class="w-full text-left p-2 rounded flex items-center gap-2 ${state.aiCore===id?"card-themed border border-themed":"card-themed border border-themed hover:card-themed border border-themed"}">
                 <span class="material-symbols-outlined text-[18px] shrink-0 ${state.aiCore===id?"text-themed font-semibold":"text-muted"}">${ic}</span>
-                <div class="min-w-0"><div class="font-display text-[13px] truncate ${state.aiCore===id?"text-themed font-semibold":""}">${t}</div><div class="text-[11px] text-muted truncate">${s}</div></div>
+                <div class="min-w-0"><div class="font-display text-[12px] sm:text-[13px] truncate ${state.aiCore===id?"text-themed font-semibold":""}">${t}</div><div class="text-[10px] sm:text-[11px] text-muted truncate hidden sm:block">${s}</div></div>
               </button>`).join("")}
           </div>
         </div>
         <div class="surface-themed border border-themed rounded p-3">
           <div class="text-[10px] uppercase text-muted mb-2">Fast Telemetry Dispatch</div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-1">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-1">
             ${[
               ["Analyze ETH 4H setup","ai-analyze"],
               ["Analyze EURC/USDC FX setup","ai-fx"],
               ["Audit idle cash & USYC yield","ai-treasury"],
               ["Issue 4h Agent Mandate ($250)","ai-mandate-quick"],
               ["Audit wallet activity","ai-wallet"],
-            ].map(([q,act]) => `<button data-act="${act}" class="w-full text-left px-2 py-1.5 rounded card-themed border border-themed text-[12px] hover:card-themed border border-themed flex justify-between items-center">${q}<span class="material-symbols-outlined text-[14px] text-themed font-semibold shrink-0">arrow_forward</span></button>`).join("")}
+            ].map(([q,act]) => `<button data-act="${act}" class="w-full text-left px-2 py-1.5 rounded card-themed border border-themed text-[11px] sm:text-[12px] hover:card-themed flex justify-between items-center">${q}<span class="material-symbols-outlined text-[14px] text-themed font-semibold shrink-0">arrow_forward</span></button>`).join("")}
           </div>
         </div>
       </div>
-      <div class="xl:col-span-9 surface-themed border border-themed rounded p-3 sm:p-4">
+      <div class="lg:col-span-8 xl:col-span-9 surface-themed border border-themed rounded p-3 sm:p-4">
         ${state.aiCore === "market" && a ? `
           <div class="font-display text-[18px] text-themed font-semibold">${a.trend.toUpperCase()} STRUCTURE</div>
           <p class="mt-2 text-[14px]">${a.setup}</p>
@@ -3194,14 +3193,14 @@ function activityView() {
     return `<span class="${cls} px-2 py-0.5 rounded-pill font-mono text-[10px]">${s}</span>`;
   }
   return `
-  <main class="pt-20 pb-20 md:pb-4 min-h-screen">
-    <div class="px-3 sm:px-5 py-4">
-      <div class="flex items-center justify-between mb-4">
+  <main class="pt-16 sm:pt-20 lg:pt-24 pb-24 md:pb-8 min-h-screen max-w-7xl mx-auto px-2 sm:px-4">
+    <div class="px-1 sm:px-3 py-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <h2 class="font-display font-bold text-[20px]">Activity Ledger</h2>
+          <h2 class="font-display font-bold text-[18px] sm:text-[20px]">Activity Ledger</h2>
           <p class="font-mono text-[11px] text-muted mt-0.5">Signed tickets · EIP-712 receipts · Mandate executions</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
           <span class="badge-settled px-2.5 py-1 rounded-pill font-mono text-[11px]">settled</span>
           <span class="badge-anchored px-2.5 py-1 rounded-pill font-mono text-[11px]">anchored</span>
           <span class="badge-refused px-2.5 py-1 rounded-pill font-mono text-[11px]">refused</span>
@@ -3289,7 +3288,7 @@ function proofView() {
       <span class="text-[12px] text-themed">${escapeHtml(r.detail)}</span>
     </div>`;
   return `
-  <main class="pt-20 sm:pt-24 pb-24 md:pb-8 min-h-screen px-3 sm:px-4 py-4 max-w-5xl mx-auto">
+  <main class="pt-16 sm:pt-20 lg:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4 py-4 max-w-7xl mx-auto">
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
       <div>
         <div class="font-display text-[16px]">Proof · re-query, do not screenshot</div>
@@ -3437,7 +3436,7 @@ function importTokenModal() {
   return `
   <div class="fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-4">
     <div class="absolute inset-0 surface-themed/85 backdrop-blur-md" data-act="close-import"></div>
-    <div class="relative z-10 w-full max-w-md card-themed border border-themed rounded-panel p-5 shadow-invoice">
+    <div class="relative z-10 w-full max-w-md max-h-[90vh] overflow-y-auto card-themed border border-themed rounded-panel p-4 sm:p-5 shadow-invoice">
       <div class="flex items-center justify-between mb-4">
         <div>
           <div class="font-display font-bold text-[16px]">Import Arc ERC-20 Token</div>
@@ -3567,7 +3566,7 @@ function executedModal() {
   return `
   <div class="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4">
     <div class="absolute inset-0 surface-themed border border-themed/80 backdrop-blur-sm" data-act="close-tx"></div>
-    <div class="relative card-themed border border-themed rounded-lg p-4 sm:p-6 w-full max-w-md mx-2">
+    <div class="relative card-themed border border-themed rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto mx-2 shadow-2xl">
       <div class="font-display text-[16px] text-pos">TICKET SIGNED</div>
       <div class="mt-3 text-[14px]">${tx.label}</div>
       <div class="mt-2 tnum text-[12px] space-y-1 text-sub">
@@ -3626,7 +3625,7 @@ function searchModal() {
 function alertsPanel() {
   if (!state.alertsOpen) return "";
   return `
-  <div class="fixed top-14 right-2 sm:right-4 z-[60] w-[calc(100vw-1rem)] sm:w-80 max-w-sm card-themed border border-themed border border-themed rounded p-3 shadow-xl">
+  <div class="fixed top-14 right-2 sm:right-4 z-[60] w-[calc(100vw-1rem)] sm:w-80 max-w-sm max-h-[85vh] overflow-y-auto card-themed border border-themed rounded p-3 shadow-xl">
     <div class="font-display text-[12px] uppercase text-themed font-semibold mb-2 flex justify-between items-center">
       <span>Alerts</span>
       <button data-act="close-alerts" class="text-muted hover:text-themed text-[10px]">Close</button>
@@ -3721,7 +3720,7 @@ function mandateModal() {
   return `
   <div class="fixed inset-0 z-[80] flex items-center justify-center p-2 sm:p-4">
     <div class="absolute inset-0 surface-themed border border-themed/85 backdrop-blur-md" data-act="close-mandate-modal"></div>
-    <div class="relative z-10 w-full max-w-lg card-themed border border-themed rounded-lg p-4 sm:p-6 border border-themed shadow-2xl">
+    <div class="relative z-10 w-full max-w-lg max-h-[90vh] overflow-y-auto card-themed border border-themed rounded-lg p-4 sm:p-6 border border-themed shadow-2xl">
       <div class="flex items-start justify-between pb-3 border-b border-themed">
         <div>
           <div class="flex items-center gap-2">
