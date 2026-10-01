@@ -234,7 +234,7 @@ export const TerminalTradeView: React.FC = () => {
                 key={tf}
                 onClick={() => setTimeframe(tf)}
                 className={`px-2 py-1 rounded text-[11px] font-mono transition-colors ${
-                  timeframe === tf ? "bg-cyan text-black font-bold shadow-xs" : "text-muted hover:text-sub"
+                timeframe === tf ? "bg-lime-500 text-black font-bold shadow-xs" : "text-muted hover:text-sub"
                 }`}
               >
                 {tf}
@@ -280,7 +280,7 @@ export const TerminalTradeView: React.FC = () => {
               onClick={() => setOrderType("market")}
               className={`py-1.5 rounded-card transition-colors ${
                 orderType === "market"
-                  ? "bg-cyan text-black font-extrabold shadow-sm"
+                  ? "bg-lime-500 text-black font-extrabold shadow-sm"
                   : "text-sub hover:text-themed"
               }`}
             >

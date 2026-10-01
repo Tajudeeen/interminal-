@@ -220,10 +220,24 @@ export const useAppStore = create<AppState>((set, get) => {
 
     toggleTheme: () => {
       const next = get().theme === "dark" ? "light" : "dark";
-      get().setTheme(next);
+      if (typeof document !== "undefined" && "startViewTransition" in document) {
+        (document as any).startViewTransition(() => {
+          get().setTheme(next);
+        });
+      } else {
+        get().setTheme(next);
+      }
     },
 
-    setView: (view) => set({ view, searchOpen: false }),
+    setView: (view) => {
+      if (typeof document !== "undefined" && "startViewTransition" in document) {
+        (document as any).startViewTransition(() => {
+          set({ view, searchOpen: false });
+        });
+      } else {
+        set({ view, searchOpen: false });
+      }
+    },
 
     setPair: (pair) => {
       try {

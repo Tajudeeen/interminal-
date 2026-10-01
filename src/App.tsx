@@ -77,9 +77,11 @@ export const App: React.FC = () => {
         {/* Live Animated Ticker Marquee */}
         <MarketTickerMarquee />
 
-        {/* Dynamic Viewport Container */}
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-8">
-          {renderCurrentView()}
+        {/* Dynamic Viewport Container with Smooth Transitions */}
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-8 scroll-smooth">
+          <div key={view} className="animate-view-fade w-full h-full">
+            {renderCurrentView()}
+          </div>
         </main>
       </div>
 

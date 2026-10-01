@@ -116,7 +116,7 @@ export const LandingView: React.FC = () => {
         <div className="mt-12 w-full card-themed border border-themed rounded-card p-5 sm:p-6 text-left space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-widest text-cyan font-bold">
+              <div className="font-mono text-[10px] uppercase tracking-widest text-lime-500 font-bold">
                 Interactive Treasury Calculator
               </div>
               <h3 className="font-display font-bold text-base text-themed mt-0.5">
@@ -140,8 +140,8 @@ export const LandingView: React.FC = () => {
                 onClick={() => setSimTreasurySize(preset)}
                 className={`py-2 px-2 text-center rounded-card font-mono text-xs transition-all ${
                   simTreasurySize === preset
-                    ? "bg-cyan text-black font-black shadow-sm"
-                    : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-cyan/30"
+                    ? "bg-lime-500 text-black font-black shadow-sm"
+                    : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-lime-500/30"
                 }`}
               >
                 ${preset >= 1000000 ? "1M" : `${preset / 1000}k`}
@@ -157,7 +157,7 @@ export const LandingView: React.FC = () => {
             step={25000}
             value={simTreasurySize}
             onChange={(e) => setSimTreasurySize(Number(e.target.value))}
-            className="w-full accent-cyan cursor-pointer"
+            className="w-full accent-lime-500 cursor-pointer"
           />
 
           {/* Real-Time Comparative Yield Grid */}

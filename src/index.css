@@ -63,11 +63,12 @@
 html {
   margin: 0;
   padding: 0;
-  /* Selo black background */
   background: #000;
   color: #fff;
   overflow-x: hidden;
   scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -78,10 +79,40 @@ body {
   font-family: "IBM Plex Sans", sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
-  transition: background-color 0.2s, color 0.2s;
-  /* Selo dot-grid background — visible in both light and dark */
+  scroll-behavior: smooth;
+  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   background-image: radial-gradient(rgb(0 0 0 / 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
+}
+
+/* Smooth scrolling on all scrollable elements */
+main, div, section, article, textarea {
+  scroll-behavior: smooth;
+}
+
+/* Custom Institutional Smooth Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
 }
 
 /* Ensure dot grid works in dark mode */
@@ -219,6 +250,53 @@ input::placeholder, textarea::placeholder {
 .keyline     { border-left: 2px solid var(--sub); }
 .keyline-pos { border-left: 2px solid var(--pos); }
 
+/* ── Smooth Theme & Surface Transitions ────────────────── */
+body,
+.card-themed,
+.surface-themed,
+.border-themed,
+header,
+aside,
+main,
+nav {
+  transition: background-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Smooth View Transitions ────────────────── */
+@keyframes viewFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-view-fade {
+  animation: viewFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+/* Native Browser View Transition API Support */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.22s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Interactive Controls Micro-Transitions ────────────────── */
+button, a, input, select {
+  transition: background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* ── Animations ────────────────── */
 @keyframes fade-slide-in {
   0% { opacity: 0; transform: translateY(30px); filter: blur(8px); }
@@ -229,3 +307,13 @@ input::placeholder, textarea::placeholder {
 kbd { font-family: "IBM Plex Mono", monospace; }
 .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20; vertical-align: middle; }
 canvas { display: block; }
+
+/* ── Respect Accessibility Prefers-Reduced-Motion ────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

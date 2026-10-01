@@ -70,7 +70,7 @@ export const Sidebar: React.FC = () => {
               <div className="flex items-center gap-3">
                 <span
                   className={`material-symbols-outlined text-[19px] ${
-                    isActive ? "text-pos" : "text-muted"
+                    isActive ? "text-lime-500" : "text-muted"
                   }`}
                 >
                   {item.icon}
