@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { USYC_APY } from "../../constants/arc";
 import {
@@ -7,6 +7,7 @@ import {
   calculateYieldSweep,
 } from "../../lib/math/treasury";
 import { portfolioSnapshot } from "../../lib/math/risk";
+import { Button } from "../ui/Button";
 
 export const TreasuryCockpitView: React.FC = () => {
   const {
@@ -19,6 +20,8 @@ export const TreasuryCockpitView: React.FC = () => {
     addToast,
     setView,
   } = useAppStore();
+
+  const [simHorizonDays, setSimHorizonDays] = useState<number>(365);
 
   const liquidUsdc = balances.USDC || 0;
   const usycBalance = balances.USYC || 0;
@@ -66,6 +69,34 @@ export const TreasuryCockpitView: React.FC = () => {
     );
   };
 
+  const handleSimulateInflow = (amt: number) => {
+    useAppStore.setState((s) => ({
+      balances: {
+        ...s.balances,
+        USDC: (s.balances.USDC || 0) + amt,
+      },
+      activity: [
+        {
+          ts: Date.now(),
+          type: "trade",
+          label: `Inflow Wire Received: +$${amt.toLocaleString()} USDC`,
+          detail: "Treasury operating account credited via Arc clearinghouse",
+        },
+        ...s.activity,
+      ],
+    }));
+    addToast(
+      "Corporate Inflow Credited",
+      `Received +$${amt.toLocaleString()} USDC. Cash buffer recomputed.`,
+      "ok"
+    );
+  };
+
+  // Yield over selected horizon
+  const horizonYieldUsyc = usycBalance * (USYC_APY * (simHorizonDays / 365));
+  const horizonYieldBank = usycBalance * (0.0005 * (simHorizonDays / 365));
+  const horizonAlphaDelta = horizonYieldUsyc - horizonYieldBank;
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header Banner */}
@@ -79,13 +110,22 @@ export const TreasuryCockpitView: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setView("terminal")}
-            className="px-4 py-2 rounded-card bg-text text-bg font-display font-bold text-xs flex items-center gap-1.5 transition-opacity hover:opacity-90"
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => handleSimulateInflow(5000)}
+            leftIcon={<span className="material-symbols-outlined text-[16px] text-pos">add_circle</span>}
           >
-            <span className="material-symbols-outlined text-[15px]">candlestick_chart</span>
+            Simulate +$5k Inflow
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setView("terminal")}
+            leftIcon={<span className="material-symbols-outlined text-[16px]">candlestick_chart</span>}
+          >
             Open Trade Desk
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -166,7 +206,7 @@ export const TreasuryCockpitView: React.FC = () => {
             </span>
           </div>
 
-          {/* Clickable Preset Buttons (Fixed user complaint) */}
+          {/* Clickable Preset Buttons */}
           <div>
             <div className="text-[10px] font-mono text-muted uppercase tracking-wider mb-2">
               Select Preset Buffer Amount
@@ -179,8 +219,8 @@ export const TreasuryCockpitView: React.FC = () => {
                   onClick={() => setTargetBufferUsd(val)}
                   className={`py-2 px-3 rounded-card font-mono text-xs transition-all ${
                     targetBufferUsd === val
-                      ? "bg-text text-bg font-extrabold shadow-md scale-102"
-                      : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-themed"
+                      ? "bg-cyan text-black font-black shadow-md scale-102"
+                      : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-cyan/40"
                   }`}
                 >
                   ${val}
@@ -202,7 +242,7 @@ export const TreasuryCockpitView: React.FC = () => {
               step={100}
               value={targetBufferUsd}
               onChange={(e) => setTargetBufferUsd(Number(e.target.value))}
-              className="w-full accent-pos cursor-pointer"
+              className="w-full accent-cyan cursor-pointer"
             />
           </div>
 
@@ -221,17 +261,18 @@ export const TreasuryCockpitView: React.FC = () => {
               </span>
             </div>
             <div className="pt-2 border-t border-themed/20">
-              <button
-                type="button"
+              <Button
+                variant={sweep.recommended ? "pos" : "secondary"}
+                fullWidth
+                size="md"
                 onClick={handleSweepNow}
                 disabled={!sweep.recommended}
-                className="w-full py-2.5 rounded-card bg-text text-bg font-display font-extrabold text-xs tracking-wide transition-opacity disabled:opacity-40 flex items-center justify-center gap-1.5"
+                leftIcon={<span className="material-symbols-outlined text-[16px]">bolt</span>}
               >
-                <span className="material-symbols-outlined text-[16px]">bolt</span>
                 {sweep.recommended
                   ? `Sweep $${sweep.sweepAmount.toLocaleString()} USDC to USYC T-Bills`
                   : "Cash Buffer Fully Balanced"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -271,8 +312,8 @@ export const TreasuryCockpitView: React.FC = () => {
                   onClick={() => setStressTestAmount(val)}
                   className={`py-2 px-3 rounded-card font-mono text-xs transition-all ${
                     stressTestAmount === val
-                      ? "bg-text text-bg font-extrabold shadow-md scale-102"
-                      : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-themed"
+                      ? "bg-cyan text-black font-black shadow-md scale-102"
+                      : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-cyan/40"
                   }`}
                 >
                   ${val >= 1000 ? `${val / 1000}k` : val}
@@ -308,6 +349,74 @@ export const TreasuryCockpitView: React.FC = () => {
           <div className="text-[11px] font-mono text-muted flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[15px] text-pos">verified</span>
             Zero capital drag: funds remain 100% productive in T-Bills until millisecond of settlement.
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Yield Calculator & Bank Alpha Comparison */}
+      <div className="card-themed border border-themed rounded-card p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-widest text-cyan font-bold">
+              Treasury Horizon Projection
+            </div>
+            <h3 className="font-display font-bold text-base text-themed mt-0.5">
+              Yield Earned on Current Holdings (${usycBalance.toLocaleString()} USYC)
+            </h3>
+          </div>
+          {/* Horizon Period Buttons */}
+          <div className="flex gap-1.5 font-mono text-xs">
+            {[
+              { label: "30 Days", days: 30 },
+              { label: "90 Days", days: 90 },
+              { label: "180 Days", days: 180 },
+              { label: "1 Year", days: 365 },
+              { label: "3 Years", days: 1095 },
+            ].map((p) => (
+              <button
+                key={p.days}
+                onClick={() => setSimHorizonDays(p.days)}
+                className={`px-3 py-1.5 rounded-card transition-all ${
+                  simHorizonDays === p.days
+                    ? "bg-cyan text-black font-bold shadow-xs"
+                    : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-cyan/30"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 font-mono">
+          <div className="p-4 rounded-card bg-themed-card/50 border border-themed/30">
+            <div className="text-[10px] text-muted uppercase">Arc USYC (4.95% APY)</div>
+            <div className="text-2xl font-black text-pos mt-1 font-display tnum">
+              +${horizonYieldUsyc.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <div className="text-[10px] text-muted mt-1">
+              Compounds automatically on-chain
+            </div>
+          </div>
+
+          <div className="p-4 rounded-card bg-themed-card/50 border border-themed/30">
+            <div className="text-[10px] text-muted uppercase">Commercial Bank (0.05% APY)</div>
+            <div className="text-2xl font-bold text-muted mt-1 font-display tnum">
+              +${horizonYieldBank.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <div className="text-[10px] text-muted mt-1">
+              Standard corporate checking deposit
+            </div>
+          </div>
+
+          <div className="p-4 rounded-card bg-pos/10 border border-pos/30">
+            <div className="text-[10px] text-pos font-bold uppercase">Net Treasury Outperformance</div>
+            <div className="text-2xl font-black text-pos mt-1 font-display tnum">
+              +${horizonAlphaDelta.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <div className="text-[10px] text-pos mt-1 font-semibold">
+              Additional corporate cash generated
+            </div>
           </div>
         </div>
       </div>

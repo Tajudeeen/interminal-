@@ -4,6 +4,7 @@ import { PAIRS } from "../../constants/pairs";
 import { quoteTrade } from "../../lib/math/quotes";
 import { calculateJitUnwind } from "../../lib/math/treasury";
 import { Timeframe } from "../../types/market";
+import { Button } from "../ui/Button";
 
 export const TerminalTradeView: React.FC = () => {
   const {
@@ -57,6 +58,19 @@ export const TerminalTradeView: React.FC = () => {
     slippageBps: slippage * 100,
   });
 
+  // Calculate percentage sizing
+  const handlePercentageSize = (pct: number) => {
+    if (isBuy) {
+      const maxUsdc = userUsdcBal;
+      const targetAmt = Math.max(10, Math.floor((maxUsdc * pct) / 100));
+      setAmount(targetAmt);
+    } else {
+      const maxBaseUsd = userBaseBal * p.price;
+      const targetAmt = Math.max(10, Math.floor((maxBaseUsd * pct) / 100));
+      setAmount(targetAmt);
+    }
+  };
+
   // Draw chart
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -98,53 +112,63 @@ export const TerminalTradeView: React.FC = () => {
     const y = (price: number) => padT + (1 - (price - min) / span) * (h - padT - padB);
 
     // Grid lines
-    ctx.strokeStyle = isDark ? "#222222" : "#E5E5E5";
+    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
     ctx.lineWidth = 1;
-    for (let i = 0; i < 5; i++) {
-      const yy = padT + ((h - padT - padB) * i) / 4;
+    const gridSteps = 4;
+    for (let i = 0; i <= gridSteps; i++) {
+      const pLevel = min + (span * i) / gridSteps;
+      const yy = y(pLevel);
       ctx.beginPath();
       ctx.moveTo(padL, yy);
       ctx.lineTo(w - padR, yy);
       ctx.stroke();
 
-      const px = max - (span * i) / 4;
-      ctx.fillStyle = isDark ? "#888888" : "#666666";
+      ctx.fillStyle = isDark ? "#666" : "#999";
       ctx.font = "10px monospace";
-      ctx.fillText(`$${px.toFixed(2)}`, w - padR + 6, yy + 3);
+      ctx.textAlign = "left";
+      ctx.fillText(pLevel < 10 ? pLevel.toFixed(4) : `$${pLevel.toFixed(1)}`, w - padR + 6, yy + 3);
     }
 
-    // Indicators (EMA20, EMA50)
+    // Indicators: EMA20 & EMA50
     if (indicators?.series) {
-      const paintEma = (arr: number[], color: string) => {
+      const drawEma = (arr: number[], color: string) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
+        let started = false;
         arr.forEach((v, i) => {
+          if (isNaN(v)) return;
           const xx = x(i);
           const yy = y(v);
-          if (i === 0) ctx.moveTo(xx, yy);
-          else ctx.lineTo(xx, yy);
+          if (!started) {
+            ctx.moveTo(xx, yy);
+            started = true;
+          } else {
+            ctx.lineTo(xx, yy);
+          }
         });
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1.2;
         ctx.stroke();
       };
-      if (indicators.series.e20) paintEma(indicators.series.e20, "#00F0FF");
-      if (indicators.series.e50) paintEma(indicators.series.e50, "#C084FC");
+      if (indicators.series.e20) drawEma(indicators.series.e20, "#00F0FF");
+      if (indicators.series.e50) drawEma(indicators.series.e50, "#C084FC");
     }
 
-    // Support & Resistance Levels
+    // Support / Resistance Lines
     if (showLevels && analysis) {
       const drawLevel = (price: number, color: string, label: string) => {
         const yy = y(price);
-        ctx.setLineDash([4, 4]);
         ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
         ctx.beginPath();
         ctx.moveTo(padL, yy);
         ctx.lineTo(w - padR, yy);
         ctx.stroke();
         ctx.setLineDash([]);
+
         ctx.fillStyle = color;
         ctx.font = "bold 9px monospace";
-        ctx.fillText(label, w - padR + 6, yy - 2);
+        ctx.fillText(label, w - padR + 6, yy - 3);
       };
       drawLevel(analysis.resistance, "#EF4444", "RESIST");
       drawLevel(analysis.support, "#10B981", "SUPPORT");
@@ -175,7 +199,7 @@ export const TerminalTradeView: React.FC = () => {
   }, [candles, indicators, showLevels, analysis, theme]);
 
   const tfOptions: Timeframe[] = ["1m", "5m", "15m", "1h", "4h", "1D"];
-  const quickSizes = [100, 250, 500, 1000];
+  const quickSizes = [100, 500, 1000, 2500];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-7xl mx-auto">
@@ -184,10 +208,10 @@ export const TerminalTradeView: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSearchOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-card card-themed border border-themed hover:border-themed text-themed group"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-card card-themed border border-themed hover:border-cyan/50 text-themed group transition-colors"
           >
             <span className="font-display font-black text-lg">{pairKey}</span>
-            <span className="material-symbols-outlined text-[16px] text-muted group-hover:text-themed">
+            <span className="material-symbols-outlined text-[16px] text-muted group-hover:text-cyan transition-colors">
               unfold_more
             </span>
           </button>
@@ -210,20 +234,21 @@ export const TerminalTradeView: React.FC = () => {
                 key={tf}
                 onClick={() => setTimeframe(tf)}
                 className={`px-2 py-1 rounded text-[11px] font-mono transition-colors ${
-                  timeframe === tf ? "bg-themed-card text-themed font-bold shadow-xs" : "text-muted hover:text-sub"
+                  timeframe === tf ? "bg-cyan text-black font-bold shadow-xs" : "text-muted hover:text-sub"
                 }`}
               >
                 {tf}
               </button>
             ))}
           </div>
-          <button
+          <Button
+            size="sm"
+            variant="outline"
             onClick={runAiAnalysis}
-            className="px-3 py-1.5 rounded-card card-themed border border-themed text-xs font-mono text-sub hover:text-themed flex items-center gap-1.5 transition-colors"
+            leftIcon={<span className="material-symbols-outlined text-[15px] text-cyan">psychology</span>}
           >
-            <span className="material-symbols-outlined text-[15px] text-pos">psychology</span>
-            <span>AI Quant</span>
-          </button>
+            AI Quant
+          </Button>
         </div>
       </div>
 
@@ -255,7 +280,7 @@ export const TerminalTradeView: React.FC = () => {
               onClick={() => setOrderType("market")}
               className={`py-1.5 rounded-card transition-colors ${
                 orderType === "market"
-                  ? "bg-text text-bg shadow-sm"
+                  ? "bg-cyan text-black font-extrabold shadow-sm"
                   : "text-sub hover:text-themed"
               }`}
             >
@@ -265,7 +290,7 @@ export const TerminalTradeView: React.FC = () => {
               onClick={() => setOrderType("dca")}
               className={`py-1.5 rounded-card transition-colors ${
                 orderType === "dca"
-                  ? "bg-text text-bg shadow-sm"
+                  ? "bg-cyan text-black font-extrabold shadow-sm"
                   : "text-sub hover:text-themed"
               }`}
             >
@@ -273,28 +298,24 @@ export const TerminalTradeView: React.FC = () => {
             </button>
           </div>
 
-          {/* Buy / Sell Toggle Buttons (Functional side switcher) */}
+          {/* Buy / Sell Toggle Buttons (Functional side switcher with tactile React Buttons) */}
           <div className="grid grid-cols-2 gap-2">
-            <button
+            <Button
+              variant={isBuy ? "pos" : "secondary"}
+              size="md"
               onClick={() => setSide("buy")}
-              className={`py-2 rounded-card font-display font-extrabold text-xs tracking-wider uppercase transition-all ${
-                side === "buy"
-                  ? "bg-pos text-black shadow-md font-black"
-                  : "card-themed border border-themed/40 text-sub hover:text-themed"
-              }`}
+              className="uppercase tracking-wider"
             >
               Buy {p.base}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={!isBuy ? "danger" : "secondary"}
+              size="md"
               onClick={() => setSide("sell")}
-              className={`py-2 rounded-card font-display font-extrabold text-xs tracking-wider uppercase transition-all ${
-                side === "sell"
-                  ? "bg-neg text-white shadow-md font-black"
-                  : "card-themed border border-themed/40 text-sub hover:text-themed"
-              }`}
+              className="uppercase tracking-wider"
             >
               Sell {p.base}
-            </button>
+            </Button>
           </div>
 
           {/* Market Execution Mode */}
@@ -318,7 +339,7 @@ export const TerminalTradeView: React.FC = () => {
                     value={amount || ""}
                     onChange={(e) => setAmount(Number(e.target.value))}
                     placeholder="500"
-                    className="w-full pl-7 pr-16 py-2 rounded-card bg-themed-card text-themed border border-themed/50 font-mono text-sm focus:outline-none focus:border-themed transition-colors"
+                    className="w-full pl-7 pr-16 py-2.5 rounded-card bg-themed-card text-themed border border-themed/50 font-mono text-sm focus:outline-none focus:border-cyan transition-colors"
                   />
                   <span className="absolute right-3 top-2.5 font-mono text-xs text-muted uppercase">
                     USDC
@@ -326,7 +347,27 @@ export const TerminalTradeView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Quick Presets */}
+              {/* Percentage Size Pills (25%, 50%, 75%, MAX) */}
+              <div>
+                <div className="flex justify-between text-[10px] font-mono text-muted uppercase mb-1">
+                  <span>Allocation Percent</span>
+                  <span className="text-cyan">Quick Portfolio Fill</span>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[25, 50, 75, 100].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => handlePercentageSize(pct)}
+                      className="py-1 rounded font-mono text-[11px] card-themed border border-themed/30 text-sub hover:text-cyan hover:border-cyan/40 transition-colors"
+                    >
+                      {pct === 100 ? "MAX" : `${pct}%`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fixed Dollar Presets */}
               <div className="grid grid-cols-4 gap-1.5">
                 {quickSizes.map((val) => (
                   <button
@@ -335,11 +376,11 @@ export const TerminalTradeView: React.FC = () => {
                     onClick={() => setAmount(val)}
                     className={`py-1 rounded font-mono text-[11px] transition-colors ${
                       amount === val
-                        ? "bg-text text-bg font-bold"
-                        : "card-themed border border-themed/30 text-sub hover:text-themed"
+                        ? "bg-cyan text-black font-bold"
+                        : "card-themed border border-themed/30 text-sub hover:text-themed hover:border-cyan/30"
                     }`}
                   >
-                    ${val}
+                    ${val >= 1000 ? `${val / 1000}k` : val}
                   </button>
                 ))}
               </div>
@@ -357,8 +398,8 @@ export const TerminalTradeView: React.FC = () => {
                       onClick={() => setSlippage(slipVal)}
                       className={`py-1 rounded font-mono text-xs transition-colors ${
                         slippage === slipVal
-                          ? "bg-text text-bg font-bold"
-                          : "card-themed border border-themed/30 text-sub hover:text-themed"
+                          ? "bg-cyan text-black font-bold"
+                          : "card-themed border border-themed/30 text-sub hover:text-themed hover:border-cyan/30"
                       }`}
                     >
                       {slipVal}%
@@ -405,15 +446,17 @@ export const TerminalTradeView: React.FC = () => {
                 </div>
               )}
 
-              {/* Primary CTA */}
-              <button
+              {/* Primary Review CTA */}
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
                 onClick={prepareTradeReview}
                 disabled={!amount || amount <= 0}
-                className="w-full py-3 rounded-card bg-text text-bg font-display font-black text-xs uppercase tracking-wider transition-opacity hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-1.5"
+                leftIcon={<span className="material-symbols-outlined text-[18px]">draw</span>}
               >
-                <span className="material-symbols-outlined text-[16px]">draw</span>
                 Review EIP-712 Order
-              </button>
+              </Button>
             </div>
           )}
 
@@ -429,7 +472,7 @@ export const TerminalTradeView: React.FC = () => {
                   value={dcaSpendTotal || ""}
                   onChange={(e) => setDcaSpendTotal(Number(e.target.value))}
                   placeholder="500"
-                  className="w-full px-3 py-2 rounded-card bg-themed-card text-themed border border-themed/50 font-mono text-xs focus:outline-none focus:border-themed"
+                  className="w-full px-3 py-2 rounded-card bg-themed-card text-themed border border-themed/50 font-mono text-xs focus:outline-none focus:border-cyan"
                 />
               </div>
 
@@ -442,7 +485,7 @@ export const TerminalTradeView: React.FC = () => {
                   value={dcaSliceSize || ""}
                   onChange={(e) => setDcaSliceSize(Number(e.target.value))}
                   placeholder="50"
-                  className="w-full px-3 py-2 rounded-card bg-themed-card text-themed border border-themed/50 font-mono text-xs focus:outline-none focus:border-themed"
+                  className="w-full px-3 py-2 rounded-card bg-themed-card text-themed border border-themed/50 font-mono text-xs focus:outline-none focus:border-cyan"
                 />
               </div>
 
@@ -463,8 +506,8 @@ export const TerminalTradeView: React.FC = () => {
                       onClick={() => setDcaFreqSec(cad.sec)}
                       className={`py-1 rounded font-mono text-xs transition-colors ${
                         dcaFreqSec === cad.sec
-                          ? "bg-text text-bg font-bold"
-                          : "card-themed border border-themed/30 text-sub hover:text-themed"
+                          ? "bg-cyan text-black font-bold"
+                          : "card-themed border border-themed/30 text-sub hover:text-themed hover:border-cyan/30"
                       }`}
                     >
                       {cad.label}
@@ -480,13 +523,15 @@ export const TerminalTradeView: React.FC = () => {
                 <div>Gov: Zero-custody EIP-712 scoped permit</div>
               </div>
 
-              <button
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
                 onClick={startDcaPlan}
-                className="w-full py-3 rounded-card bg-text text-bg font-display font-black text-xs uppercase tracking-wider transition-opacity hover:opacity-90 flex items-center justify-center gap-1.5"
+                leftIcon={<span className="material-symbols-outlined text-[18px]">schedule</span>}
               >
-                <span className="material-symbols-outlined text-[16px]">schedule</span>
                 Authorize Autonomous DCA
-              </button>
+              </Button>
             </div>
           )}
         </div>

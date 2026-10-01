@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
+import { Button } from "../ui/Button";
 
 export const MarketsView: React.FC = () => {
   const { setPair, setView, syncMarketData, marketFeedStatus, setImportTokenOpen } = useAppStore();
@@ -45,28 +46,24 @@ export const MarketsView: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleSync}
-            disabled={syncing}
-            className="px-3 py-2 rounded-card card-themed border border-themed text-xs font-mono text-sub hover:text-themed flex items-center gap-1.5 transition-colors"
+            isLoading={syncing}
+            leftIcon={<span className="material-symbols-outlined text-[16px]">refresh</span>}
           >
-            <span
-              className={`material-symbols-outlined text-[16px] ${
-                syncing ? "animate-spin text-pos" : ""
-              }`}
-            >
-              refresh
-            </span>
-            <span>{syncing ? "Syncing DEX..." : "Sync Reserves"}</span>
-          </button>
+            {syncing ? "Syncing DEX..." : "Sync Reserves"}
+          </Button>
 
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => setImportTokenOpen(true)}
-            className="px-3.5 py-2 rounded-card bg-text text-bg font-display font-bold text-xs flex items-center gap-1.5 transition-opacity hover:opacity-90"
+            leftIcon={<span className="material-symbols-outlined text-[16px]">add</span>}
           >
-            <span className="material-symbols-outlined text-[16px]">add</span>
             Import Token
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -145,12 +142,13 @@ export const MarketsView: React.FC = () => {
                       ${data.vol.toLocaleString()}
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <button
+                      <Button
+                        variant="secondary"
+                        size="xs"
                         onClick={() => handleTrade(key)}
-                        className="px-3 py-1 rounded-card card-themed border border-themed/50 font-display font-bold text-[11px] text-themed hover:bg-themed-card hover:border-themed transition-colors"
                       >
                         Trade
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 );

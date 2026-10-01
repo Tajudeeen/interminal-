@@ -3,6 +3,7 @@ import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
 import { calculateJitUnwind } from "../../lib/math/treasury";
+import { Button } from "../ui/Button";
 
 export const ReviewTradeModal: React.FC = () => {
   const {
@@ -104,23 +105,16 @@ export const ReviewTradeModal: React.FC = () => {
         </div>
 
         {/* Sign Button */}
-        <button
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
           onClick={executeTrade}
-          disabled={executing}
-          className="w-full py-3 rounded-card bg-text text-bg font-display font-extrabold text-sm tracking-wide transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          isLoading={executing}
+          leftIcon={<span className="material-symbols-outlined text-[18px]">draw</span>}
         >
-          {executing ? (
-            <>
-              <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
-              Authorizing with Wallet...
-            </>
-          ) : (
-            <>
-              <span className="material-symbols-outlined text-[18px]">draw</span>
-              {livePortfolio ? "Sign EIP-712 Permit in Wallet" : "Sign & Generate Audit Certificate"}
-            </>
-          )}
-        </button>
+          {livePortfolio ? "Sign EIP-712 Permit in Wallet" : "Sign & Generate Audit Certificate"}
+        </Button>
       </div>
     </GlassModalWrapper>
   );

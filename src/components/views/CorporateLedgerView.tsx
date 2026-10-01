@@ -1,6 +1,7 @@
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { verifyReceiptIntegrity } from "../../lib/crypto/eip712";
+import { Button } from "../ui/Button";
 
 export const CorporateLedgerView: React.FC = () => {
   const { auditReceipts, setActiveReceiptModal, setView } = useAppStore();
@@ -18,13 +19,14 @@ export const CorporateLedgerView: React.FC = () => {
           </p>
         </div>
 
-        <button
+        <Button
+          variant="primary"
+          size="sm"
           onClick={() => setView("terminal")}
-          className="px-4 py-2 rounded-card bg-text text-bg font-display font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+          leftIcon={<span className="material-symbols-outlined text-[16px]">draw</span>}
         >
-          <span className="material-symbols-outlined text-[16px]">draw</span>
           Sign New Trade Ticket
-        </button>
+        </Button>
       </div>
 
       {/* Receipts Table */}
@@ -95,13 +97,14 @@ export const CorporateLedgerView: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <button
+                        <Button
+                          variant="secondary"
+                          size="xs"
                           onClick={() => setActiveReceiptModal(rcpt)}
-                          className="px-2.5 py-1 rounded-card card-themed border border-themed/50 font-display font-bold text-[11px] text-themed hover:bg-themed-card transition-colors inline-flex items-center gap-1"
+                          leftIcon={<span className="material-symbols-outlined text-[13px]">visibility</span>}
                         >
-                          <span className="material-symbols-outlined text-[13px]">visibility</span>
                           Inspect
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -116,12 +119,14 @@ export const CorporateLedgerView: React.FC = () => {
             <p className="font-mono text-xs text-muted max-w-sm mx-auto">
               Every EIP-712 signed order generates a canonical JSON-LD certificate with SHA-256 integrity proofs.
             </p>
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => setView("terminal")}
-              className="mt-2 px-4 py-2 rounded-card bg-text text-bg font-display font-bold text-xs"
+              className="mt-2"
             >
               Execute a Trade to Generate Receipt
-            </button>
+            </Button>
           </div>
         )}
       </div>

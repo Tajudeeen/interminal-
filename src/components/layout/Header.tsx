@@ -1,6 +1,8 @@
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { shortAddr } from "../../lib/arc/wallet";
+import { Logo } from "../ui/Logo";
+import { Button } from "../ui/Button";
 
 export const Header: React.FC = () => {
   const {
@@ -20,13 +22,13 @@ export const Header: React.FC = () => {
     <header className="lg:hidden sticky top-0 z-30 surface-themed border-b border-themed px-4 py-2.5 flex items-center justify-between">
       <button
         onClick={() => setView("landing")}
-        className="flex items-center gap-2 focus:outline-none"
+        className="flex items-center gap-2.5 focus:outline-none group text-left"
       >
-        <div className="w-7 h-7 rounded card-themed border border-themed flex items-center justify-center font-display font-black text-xs text-pos">
-          IT
-        </div>
+        <Logo size={28} />
         <div className="text-left leading-tight">
-          <div className="font-display font-extrabold text-sm text-themed">INTERMINAL</div>
+          <div className="font-display font-extrabold text-sm text-themed group-hover:text-cyan transition-colors">
+            INTERMINAL
+          </div>
           <div className="font-mono text-[8px] text-muted uppercase">Arc 5042</div>
         </div>
       </button>
@@ -74,12 +76,13 @@ export const Header: React.FC = () => {
             <span className="truncate max-w-[64px]">{shortAddr(address)}</span>
           </div>
         ) : (
-          <button
+          <Button
+            size="xs"
+            variant="primary"
             onClick={() => connectWallet()}
-            className="px-2.5 py-1 rounded-pill bg-text text-bg font-display font-bold text-[11px]"
           >
             Connect
-          </button>
+          </Button>
         )}
       </div>
     </header>

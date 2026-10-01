@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
+import { Button } from "../ui/Button";
 
 export const ImportTokenModal: React.FC = () => {
   const { importTokenOpen, setImportTokenOpen, importCustomToken, importingToken, importTokenError } =
@@ -42,13 +43,16 @@ export const ImportTokenModal: React.FC = () => {
           <div>Make sure the contract is verified on Arc Explorer.</div>
         </div>
 
-        <button
+        <Button
+          variant="primary"
+          size="md"
+          fullWidth
           onClick={handleImport}
-          disabled={importingToken || !address.trim()}
-          className="w-full py-2.5 rounded-card bg-text text-bg font-display font-extrabold text-xs tracking-wide transition-opacity disabled:opacity-50 flex items-center justify-center gap-1.5"
+          disabled={!address.trim()}
+          isLoading={importingToken}
         >
-          {importingToken ? "Querying Arc Contract..." : "Import Token"}
-        </button>
+          Import Token
+        </Button>
       </div>
     </GlassModalWrapper>
   );

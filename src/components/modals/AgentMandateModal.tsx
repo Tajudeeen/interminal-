@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
+import { Button } from "../ui/Button";
 
 export const AgentMandateModal: React.FC = () => {
   const { mandateModalOpen, setMandateModalOpen, createAgentMandate } = useAppStore();
@@ -140,13 +141,15 @@ export const AgentMandateModal: React.FC = () => {
         </div>
 
         {/* CTA */}
-        <button
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
           onClick={handleAuthorize}
-          className="w-full py-3 rounded-card bg-text text-bg font-display font-extrabold text-sm tracking-wide transition-opacity hover:opacity-95 flex items-center justify-center gap-2"
+          leftIcon={<span className="material-symbols-outlined text-[18px]">verified_user</span>}
         >
-          <span className="material-symbols-outlined text-[18px]">verified_user</span>
           Authorize Scoped EIP-712 Mandate
-        </button>
+        </Button>
       </div>
     </GlassModalWrapper>
   );

@@ -1,6 +1,8 @@
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { shortAddr } from "../../lib/arc/wallet";
+import { Logo } from "../ui/Logo";
+import { Button } from "../ui/Button";
 
 export const Sidebar: React.FC = () => {
   const {
@@ -36,11 +38,9 @@ export const Sidebar: React.FC = () => {
           onClick={() => setView("landing")}
           className="flex items-center gap-3 text-left focus:outline-none group"
         >
-          <div className="w-8 h-8 rounded-card card-themed border border-themed flex items-center justify-center font-display font-black text-sm text-pos group-hover:scale-105 transition-transform">
-            IT
-          </div>
+          <Logo size={32} />
           <div>
-            <div className="font-display font-extrabold text-[15px] tracking-tight leading-none text-themed">
+            <div className="font-display font-extrabold text-[15px] tracking-tight leading-none text-themed group-hover:text-cyan transition-colors">
               INTERMINAL
             </div>
             <div className="font-mono text-[9px] text-muted tracking-widest uppercase mt-1">
@@ -98,12 +98,14 @@ export const Sidebar: React.FC = () => {
                   Arc Gas Tank
                 </span>
               </div>
-              <button
+              <Button
+                size="xs"
+                variant="outline"
+                className="text-[10px] text-pos border-pos/30 hover:border-pos/60 hover:bg-pos/10"
                 onClick={() => setGasTankModalOpen(true)}
-                className="font-mono text-[10px] text-pos hover:underline uppercase font-bold"
               >
                 Refuel
-              </button>
+              </Button>
             </div>
             <div className="mt-2 flex items-baseline justify-between">
               <span className="font-display font-extrabold text-base text-themed tnum">
@@ -165,22 +167,22 @@ export const Sidebar: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-1.5">
-            <button
+            <Button
+              size="sm"
+              variant="primary"
               onClick={() => connectWallet()}
-              className="px-2 py-2 rounded-card bg-text text-bg font-display font-bold text-xs flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity"
+              leftIcon={<span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>}
             >
-              <span className="material-symbols-outlined text-[14px]">
-                account_balance_wallet
-              </span>
               Connect
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
               onClick={launchDemo}
-              className="px-2 py-2 rounded-card card-themed border border-themed font-display font-semibold text-xs text-sub hover:text-themed transition-colors flex items-center justify-center gap-1"
+              leftIcon={<span className="material-symbols-outlined text-[14px]">play_circle</span>}
             >
-              <span className="material-symbols-outlined text-[14px]">play_circle</span>
               Demo
-            </button>
+            </Button>
           </div>
         )}
 

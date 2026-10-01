@@ -4,6 +4,7 @@ import { useAppStore } from "../../store/useAppStore";
 import { verifyReceiptIntegrity } from "../../lib/crypto/eip712";
 import { anchorReceiptOnchain } from "../../lib/arc/receiptAnchor";
 import { shortAddr } from "../../lib/arc/wallet";
+import { Button } from "../ui/Button";
 
 export const AuditReceiptModal: React.FC = () => {
   const {
@@ -116,29 +117,35 @@ export const AuditReceiptModal: React.FC = () => {
 
         {/* Action Controls */}
         <div className="flex flex-wrap gap-2 pt-2">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleCopy}
-            className="flex-1 py-2 px-3 rounded-card card-themed border border-themed/40 font-mono text-xs text-themed hover:bg-themed-card flex items-center justify-center gap-1.5 transition-colors"
+            className="flex-1"
+            leftIcon={<span className="material-symbols-outlined text-[15px]">content_copy</span>}
           >
-            <span className="material-symbols-outlined text-[15px]">content_copy</span>
             Copy JSON
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleDownload}
-            className="flex-1 py-2 px-3 rounded-card card-themed border border-themed/40 font-mono text-xs text-themed hover:bg-themed-card flex items-center justify-center gap-1.5 transition-colors"
+            className="flex-1"
+            leftIcon={<span className="material-symbols-outlined text-[15px]">download</span>}
           >
-            <span className="material-symbols-outlined text-[15px]">download</span>
             Download .JSON
-          </button>
+          </Button>
           {!activeReceiptModal.onchainAnchored && (
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleAnchor}
-              disabled={anchoring}
-              className="w-full sm:w-auto py-2 px-4 rounded-card bg-text text-bg font-display font-extrabold text-xs flex items-center justify-center gap-1.5 transition-opacity disabled:opacity-50"
+              isLoading={anchoring}
+              className="w-full sm:w-auto"
+              leftIcon={<span className="material-symbols-outlined text-[15px]">anchor</span>}
             >
-              <span className="material-symbols-outlined text-[15px]">anchor</span>
-              {anchoring ? "Anchoring on Arc..." : "Anchor to Arc Settlement"}
-            </button>
+              Anchor to Arc Settlement
+            </Button>
           )}
         </div>
       </div>

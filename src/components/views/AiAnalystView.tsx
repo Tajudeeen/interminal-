@@ -1,15 +1,18 @@
 import React, { useEffect } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
+import { Button } from "../ui/Button";
 
 export const AiAnalystView: React.FC = () => {
   const {
     pair: activePair,
     setPair,
+    setSide,
     analysis,
     runAiAnalysis,
     setView,
     setMandateModalOpen,
+    addToast,
   } = useAppStore();
 
   useEffect(() => {
@@ -20,6 +23,19 @@ export const AiAnalystView: React.FC = () => {
 
   const p = PAIRS[activePair] || PAIRS["ETH/USDC"];
   const pairsList = ["ETH/USDC", "BTC/USDC", "EURC/USDC", "USYC/USDC", "SOL/USDC", "AVAX/USDC"];
+
+  const handleTradeOnTerminal = () => {
+    if (!analysis) return;
+    const recommendedSide = analysis.trend === "Bearish" ? "sell" : "buy";
+    setPair(analysis.pair);
+    setSide(recommendedSide);
+    setView("terminal");
+    addToast(
+      "Terminal Desk Armed",
+      `Loaded ${analysis.pair} ${recommendedSide.toUpperCase()} recommendation into execution desk.`,
+      "ok"
+    );
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
@@ -40,10 +56,10 @@ export const AiAnalystView: React.FC = () => {
             <button
               key={pk}
               onClick={() => setPair(pk)}
-              className={`px-3 py-1 rounded-pill font-mono text-xs transition-colors ${
+              className={`px-3 py-1.5 rounded-card font-mono text-xs transition-all ${
                 activePair === pk
-                  ? "bg-text text-bg font-bold shadow-xs"
-                  : "card-themed border border-themed/40 text-sub hover:text-themed"
+                  ? "bg-cyan text-black font-bold shadow-xs"
+                  : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-cyan/30"
               }`}
             >
               {pk}
@@ -58,7 +74,7 @@ export const AiAnalystView: React.FC = () => {
           <div className="card-themed border border-themed rounded-card p-6 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-themed/30">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-card bg-pos/10 border border-pos/30 flex items-center justify-center font-display font-black text-pos text-base">
+                <div className="w-10 h-10 rounded-card bg-cyan/10 border border-cyan/30 flex items-center justify-center font-display font-black text-cyan text-base">
                   {p.base.slice(0, 3)}
                 </div>
                 <div>
@@ -83,6 +99,15 @@ export const AiAnalystView: React.FC = () => {
                 <span className="px-3 py-1 rounded-pill font-mono text-xs card-themed border border-themed/40 text-sub">
                   Risk: {analysis.risk}
                 </span>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={runAiAnalysis}
+                  leftIcon={<span className="material-symbols-outlined text-[14px]">refresh</span>}
+                  title="Re-run quantitative models"
+                >
+                  Refresh
+                </Button>
               </div>
             </div>
 
@@ -150,7 +175,7 @@ export const AiAnalystView: React.FC = () => {
           </div>
 
           {/* Deterministic Mathematical Grounding */}
-          <div className="card-themed border border-themed rounded-card p-4 space-y-2">
+          <div className="card-themed border border-themed rounded-card p-4 space-y-3">
             <div className="font-mono text-[11px] text-muted uppercase tracking-wider font-semibold">
               Deterministic Mathematical Grounding
             </div>
@@ -158,33 +183,37 @@ export const AiAnalystView: React.FC = () => {
               {analysis.why}
             </p>
             <div className="pt-2 flex flex-wrap gap-3">
-              <button
-                onClick={() => setView("terminal")}
-                className="px-4 py-2 rounded-card bg-text text-bg font-display font-bold text-xs flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleTradeOnTerminal}
+                leftIcon={<span className="material-symbols-outlined text-[16px]">candlestick_chart</span>}
               >
-                <span className="material-symbols-outlined text-[16px]">candlestick_chart</span>
                 Trade Setup on Terminal
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
                 onClick={() => setMandateModalOpen(true)}
-                className="px-4 py-2 rounded-card card-themed border border-themed font-display font-semibold text-xs text-sub hover:text-themed transition-colors flex items-center gap-1.5"
+                leftIcon={<span className="material-symbols-outlined text-[16px]">verified_user</span>}
               >
-                <span className="material-symbols-outlined text-[16px]">verified_user</span>
                 Deploy Scoped Agent Mandate
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       ) : (
-        <div className="card-themed border border-themed rounded-card p-12 text-center space-y-3">
-          <span className="material-symbols-outlined text-[32px] text-muted">psychology</span>
+        <div className="card-themed border border-themed rounded-card p-12 text-center space-y-4">
+          <span className="material-symbols-outlined text-[36px] text-cyan animate-pulse">psychology</span>
           <p className="font-mono text-xs text-sub">Running technical indicators for {activePair}...</p>
-          <button
+          <Button
+            variant="primary"
+            size="md"
             onClick={runAiAnalysis}
-            className="px-4 py-2 rounded-card bg-text text-bg font-display font-bold text-xs"
+            leftIcon={<span className="material-symbols-outlined text-[16px]">play_arrow</span>}
           >
             Compute Analysis
-          </button>
+          </Button>
         </div>
       )}
     </div>

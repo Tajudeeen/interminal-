@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { ARC } from "../../constants/arc";
+import { Button } from "../ui/Button";
 
 export const ProofRpcView: React.FC = () => {
   const { proof, runProof, block } = useAppStore();
@@ -27,20 +28,15 @@ export const ProofRpcView: React.FC = () => {
           </p>
         </div>
 
-        <button
+        <Button
+          variant="primary"
+          size="sm"
           onClick={runProof}
-          disabled={proof.running}
-          className="px-4 py-2 rounded-card bg-text text-bg font-display font-bold text-xs flex items-center gap-1.5 transition-opacity disabled:opacity-50"
+          isLoading={proof.running}
+          leftIcon={<span className="material-symbols-outlined text-[16px]">refresh</span>}
         >
-          <span
-            className={`material-symbols-outlined text-[16px] ${
-              proof.running ? "animate-spin text-pos" : ""
-            }`}
-          >
-            refresh
-          </span>
           {proof.running ? "Running Verification..." : "Run All Proofs"}
-        </button>
+        </Button>
       </div>
 
       {/* Summary KPI Cards */}

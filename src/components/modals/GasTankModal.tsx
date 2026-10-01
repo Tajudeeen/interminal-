@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
+import { Button } from "../ui/Button";
 
 export const GasTankModal: React.FC = () => {
   const { gasTankModalOpen, setGasTankModalOpen, nativeGasBalance, balances, refuelGasTank, gasRefueling } =
@@ -82,23 +83,17 @@ export const GasTankModal: React.FC = () => {
         </div>
 
         {/* CTA */}
-        <button
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
           onClick={handleRefuel}
-          disabled={gasRefueling || (balances.USDC || 0) < selectedAmount}
-          className="w-full py-3 rounded-card bg-text text-bg font-display font-extrabold text-sm tracking-wide transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          disabled={(balances.USDC || 0) < selectedAmount}
+          isLoading={gasRefueling}
+          leftIcon={<span className="material-symbols-outlined text-[18px]">local_gas_station</span>}
         >
-          {gasRefueling ? (
-            <>
-              <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
-              Refueling Tank...
-            </>
-          ) : (
-            <>
-              <span className="material-symbols-outlined text-[18px]">local_gas_station</span>
-              Confirm Refuel (${selectedAmount} USDC)
-            </>
-          )}
-        </button>
+          Confirm Refuel (${selectedAmount} USDC)
+        </Button>
       </div>
     </GlassModalWrapper>
   );
