@@ -129,8 +129,8 @@ export const JudgeTourBar: React.FC = () => {
         {/* Step Content */}
         {judgeTourStep === 1 && (
           <div className="space-y-3">
-            <div className="font-mono text-xs text-sub leading-relaxed">
-              <span className="text-themed font-bold">Pillar 1: Continuous Cash Optimization.</span> Operating cash buffer retains $5,000 for gas & wires; detects{" "}
+            <div className="font-mono text-xs text-themed leading-relaxed">
+              <span className="font-bold">Pillar 1: Continuous Cash Optimization.</span> Operating cash buffer retains $5,000 for gas & wires; detects{" "}
               <span className="text-pos font-bold">${excessCash.toLocaleString()} USDC</span> idle cash drag and automatically sweeps to USYC T-Bills.
             </div>
             <div className="flex items-center gap-2">
@@ -156,8 +156,8 @@ export const JudgeTourBar: React.FC = () => {
 
         {judgeTourStep === 2 && (
           <div className="space-y-3">
-            <div className="font-mono text-xs text-sub leading-relaxed">
-              <span className="text-themed font-bold">Pillar 2: Just-In-Time (JIT) Liquidity Bridge.</span> An outgoing wire or trade of{" "}
+            <div className="font-mono text-xs text-themed leading-relaxed">
+              <span className="font-bold">Pillar 2: Just-In-Time (JIT) Liquidity Bridge.</span> An outgoing wire or trade of{" "}
               <span className="text-lime-500 font-bold">$25,000</span> exceeds liquid USDC. USYC T-Bills automatically redeem at par ($1.00) instantly with zero capital drag.
             </div>
             <div className="flex items-center gap-2">
@@ -183,8 +183,8 @@ export const JudgeTourBar: React.FC = () => {
 
         {judgeTourStep === 3 && (
           <div className="space-y-3">
-            <div className="font-mono text-xs text-sub leading-relaxed">
-              <span className="text-themed font-bold">Pillar 3: Zero-Custody EIP-712 Mandates & Arc Settlement.</span> Every ticket generates a canonical JSON-LD certificate with SHA-256 integrity proofs anchored to verified Arc contract{" "}
+            <div className="font-mono text-xs text-themed leading-relaxed">
+              <span className="font-bold">Pillar 3: Zero-Custody EIP-712 Mandates & Arc Settlement.</span> Every ticket generates a canonical JSON-LD certificate with SHA-256 integrity proofs anchored to verified Arc contract{" "}
               <span className="text-pos font-bold font-mono">{shortAddr(ARC.settlement)}</span> on Chain 5042.
             </div>
             <div className="flex items-center gap-2">
