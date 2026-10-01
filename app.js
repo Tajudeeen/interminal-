@@ -1671,7 +1671,17 @@ function analyzeMarket() {
   const momentum = ind.rsi >= 60 && ind.macdHist > 0 ? "Positive" : ind.rsi <= 40 && ind.macdHist < 0 ? "Negative" : "Neutral";
   const risk = Math.abs(ind.rsi - 50) > 22 ? "Elevated" : "Medium";
   const invalidation = trend === "Bullish" ? ind.ema50 * 0.992 : ind.ema20 * 1.008;
-  const summary = `${state.pair.split("/")[0]} is ${trend.toLowerCase()} on the ${state.timeframe}. Price ${fmtUsd(px)} is ${px >= ind.ema20 ? "holding above" : "trading below"} the 20 EMA (${fmtUsd(ind.ema20)}) with RSI ${fmt(ind.rsi, 1)}.`;
+  const regime = trend === "Bullish" ? "Expansionary Uptrend" : trend === "Bearish" ? "Correctional Downtrend" : "Consolidation Range";
+  const action = trend === "Bullish" ? "Accumulate on pullbacks toward 20 EMA" : trend === "Bearish" ? "Preserve capital or hedge in USYC" : "Range-bound mean reversion trade";
+  const upsideDist = Math.max(0, ind.resistance - px);
+  const downsideDist = Math.max(0.01, px - invalidation);
+  const rr = Math.round((upsideDist / downsideDist) * 10) / 10;
+  const setup = `${pair.base} trades ${trend.toLowerCase()} at ${fmtUsd(px)}. Structure holds ${px >= ind.ema20 ? "above" : "below"} 20 EMA (${fmtUsd(ind.ema20)}) with RSI at ${fmt(ind.rsi, 1)} and MACD histogram at ${fmt(ind.macdHist, 2)}.`;
+  const thesis = trend === "Bullish"
+    ? `Strong demand confluence above ${fmtUsd(ind.ema20)} with MACD expansion. Immediate resistance rests at the 30-bar swing high of ${fmtUsd(ind.resistance)}.`
+    : trend === "Bearish"
+    ? `Supply absorption dominant below ${fmtUsd(ind.ema20)}. Key support sits at 30-bar swing low of ${fmtUsd(ind.support)}; watch for exhaustion.`
+    : `Consolidation corridor between support (${fmtUsd(ind.support)}) and resistance (${fmtUsd(ind.resistance)}). Volume equilibrium intact.`;
   return {
     kind: "market",
     pair: state.pair,
@@ -1679,11 +1689,16 @@ function analyzeMarket() {
     price: px,
     trend,
     momentum,
+    regime,
+    action,
+    thesis,
     support: ind.support,
     resistance: ind.resistance,
-    setup: `Price is ${px >= ind.ema20 ? "holding above" : "rejecting"} the 20 EMA while momentum remains ${momentum.toLowerCase()}.`,
+    setup,
     invalidation,
     risk,
+    rr: Number.isFinite(rr) && rr > 0 ? rr : 1.5,
+    entryZone: `${fmtUsd(px * 0.998)} - ${fmtUsd(px * 1.002)}`,
     confidence: trend === "Bullish" && momentum === "Positive" ? 0.68 : 0.54,
     why: `Deterministic inputs: EMA20 ${fmtUsd(ind.ema20)}, EMA50 ${fmtUsd(ind.ema50)}, RSI ${fmt(ind.rsi, 1)}, MACD histogram ${fmt(ind.macdHist, 2)}, 30-bar swing high ${fmtUsd(ind.resistance)} / low ${fmtUsd(ind.support)}.`,
     invalidateText: `A 4H close through ${fmtUsd(invalidation)} would negate the current ${trend.toLowerCase()} structure.`,
@@ -2570,9 +2585,9 @@ function terminalView() {
 
       <aside class="md:col-span-5 lg:col-span-4 surface-themed border border-themed rounded p-2.5 sm:p-3 flex flex-col gap-2.5 sm:gap-3">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-1 bg-themed/10 p-0.5 rounded-card border border-themed">
-            <button data-order-type="market" class="px-2.5 py-0.5 text-[11px] font-display font-semibold rounded ${state.orderType !== 'dca' ? 'bg-themed text-themed' : 'text-muted hover:text-themed'}" style="${state.orderType !== 'dca' ? 'background:var(--text);color:var(--bg)' : ''}">Instant</button>
-            <button data-order-type="dca" class="px-2.5 py-0.5 text-[11px] font-display font-semibold rounded ${state.orderType === 'dca' ? 'bg-themed text-themed' : 'text-muted hover:text-themed'}" style="${state.orderType === 'dca' ? 'background:var(--text);color:var(--bg)' : ''}">DCA / TWAP</button>
+          <div class="flex items-center gap-1 card-themed p-1 rounded-card border border-themed">
+            <button data-order-type="market" class="px-2.5 py-1 text-[11px] font-display font-bold rounded transition cursor-pointer ${state.orderType !== 'dca' ? 'bg-themed text-themed' : 'text-muted hover:text-themed'}" style="${state.orderType !== 'dca' ? 'background:var(--text);color:var(--bg)' : ''}">Instant Spot</button>
+            <button data-order-type="dca" class="px-2.5 py-1 text-[11px] font-display font-bold rounded transition cursor-pointer ${state.orderType === 'dca' ? 'bg-themed text-themed' : 'text-muted hover:text-themed'}" style="${state.orderType === 'dca' ? 'background:var(--text);color:var(--bg)' : ''}">DCA / TWAP</button>
           </div>
           <span class="tnum text-[11px] text-muted">NAV ${fmtUsd(p.total)}</span>
         </div>
@@ -2590,17 +2605,23 @@ function terminalView() {
               <span>Total Budget (USDC)</span>
               <span>Bal ${fmt(state.balances.USDC)} USDC</span>
             </div>
-            <input id="dca-total-in" type="number" value="${state.dcaSpendTotal}" class="w-full bg-themed/10 border border-themed rounded px-2.5 py-1.5 font-mono text-[13px] text-themed text-right outline-none" />
+            <input id="dca-total-in" type="number" value="${state.dcaSpendTotal}" class="w-full card-themed text-themed border border-themed rounded px-2.5 py-1.5 font-mono text-[13px] text-right outline-none" />
+            <div class="flex gap-1 mt-1.5">
+              ${[100, 250, 500, 1000].map(b => `<button data-dca-budget="${b}" class="flex-1 text-[10px] py-1 rounded card-themed border border-themed font-mono text-muted hover:text-themed font-semibold">$${b}</button>`).join("")}
+            </div>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
             <div>
               <div class="text-[10px] text-muted mb-1">Slice Size (USDC)</div>
-              <input id="dca-slice-in" type="number" value="${state.dcaSliceSize}" class="w-full bg-themed/10 border border-themed rounded px-2 py-1 font-mono text-[12px] text-themed text-right outline-none" />
+              <input id="dca-slice-in" type="number" value="${state.dcaSliceSize}" class="w-full card-themed text-themed border border-themed rounded px-2 py-1 font-mono text-[12px] text-right outline-none" />
+              <div class="flex gap-1 mt-1">
+                ${[10, 25, 50, 100].map(s => `<button data-dca-slice="${s}" class="flex-1 text-[9px] py-0.5 rounded card-themed border border-themed font-mono text-muted hover:text-themed">$${s}</button>`).join("")}
+              </div>
             </div>
             <div>
               <div class="text-[10px] text-muted mb-1">Frequency</div>
-              <select id="dca-freq-sel" class="w-full bg-themed/10 border border-themed rounded px-1.5 py-1 font-mono text-[11px] text-themed outline-none">
+              <select id="dca-freq-sel" class="w-full card-themed text-themed border border-themed rounded px-1.5 py-1 font-mono text-[11px] outline-none">
                 <option value="15" ${state.dcaFreqSec === 15 ? "selected" : ""}>Every 15s (Test)</option>
                 <option value="60" ${state.dcaFreqSec === 60 ? "selected" : ""}>Every 1 min</option>
                 <option value="900" ${state.dcaFreqSec === 900 ? "selected" : ""}>Every 15 min</option>
@@ -2616,24 +2637,28 @@ function terminalView() {
             <div class="flex justify-between"><span class="text-muted">Key Custody</span><span class="text-pos">Zero (EIP-712 Permit)</span></div>
           </div>
 
-          <button data-act="start-dca" class="w-full py-2.5 rounded-pill font-display font-bold text-[13px] transition flex items-center justify-center gap-1.5" style="background:var(--text);color:var(--bg)">
+          <button data-act="start-dca" class="w-full py-2.5 rounded-pill font-display font-bold text-[13px] transition flex items-center justify-center gap-1.5 cursor-pointer shadow-lg" style="background:var(--text);color:var(--bg)">
             <span class="material-symbols-outlined text-[16px]">smart_toy</span> Authorize DCA Mandate
           </button>
         </div>
         ` : `
         <!-- Instant Market Mode -->
-        <div class="grid grid-cols-2 p-0.5 card-themed rounded">
-          <button data-side="buy" class="py-1.5 text-[13px] font-display font-semibold rounded ${state.side==="buy"?"bg-[#00E599] text-[#08090C]":"text-muted"}">Buy</button>
-          <button data-side="sell" class="py-1.5 text-[13px] font-display font-semibold rounded ${state.side==="sell"?"bg-[#FF3B57] text-themed":"text-muted"}">Sell</button>
+        <div class="grid grid-cols-2 p-1 card-themed rounded border border-themed gap-1">
+          <button data-side="buy" class="py-2 text-[12px] sm:text-[13px] font-display font-bold rounded transition cursor-pointer flex items-center justify-center gap-1.5 ${state.side==='buy' ? 'bg-[#00E599] text-[#08090C] shadow' : 'card-themed border border-themed text-muted hover:text-themed'}">
+            <span class="material-symbols-outlined text-[15px]">arrow_downward</span> Buy ${pair.base}
+          </button>
+          <button data-side="sell" class="py-2 text-[12px] sm:text-[13px] font-display font-bold rounded transition cursor-pointer flex items-center justify-center gap-1.5 ${state.side==='sell' ? 'bg-[#FF3B57] text-white shadow' : 'card-themed border border-themed text-muted hover:text-themed'}">
+            <span class="material-symbols-outlined text-[15px]">arrow_upward</span> Sell ${pair.base}
+          </button>
         </div>
-        <div class="text-[11px] text-muted uppercase">Market</div>
+        <div class="text-[11px] text-muted uppercase mt-0.5">Order Setup</div>
         <div>
           <div class="flex items-center justify-between text-[11px] text-muted mb-1">
             <span>${state.side === "buy" ? "Spend (USDC)" : "Sell (" + pair.base + " in USD)"}</span>
             <span>${state.side === "buy" ? "Bal " + fmt(state.balances.USDC) + " USDC" : "Bal " + fmt(state.balances[pair.base] || 0, 4) + " " + pair.base + " (" + fmtUsd((state.balances[pair.base] || 0) * pair.price) + ")"}</span>
           </div>
-          <input id="amt" type="number" value="${state.amount}" class="w-full bg-[#0D0F14] border border-themed focus:border-[#00F0FF] outline-none rounded px-2 py-1.5 tnum text-right text-[14px]" />
-          <div class="flex gap-1 mt-1">${[100,250,500,1000].map((n)=>`<button data-amt="${n}" class="flex-1 text-[11px] py-0.5 rounded card-themed border border-themed hover:card-themed border border-themed tnum">${n}</button>`).join("")}<button data-amt="max" class="flex-1 text-[11px] py-0.5 rounded card-themed border border-themed">MAX</button></div>
+          <input id="amt" type="number" value="${state.amount}" class="w-full card-themed text-themed border border-themed focus:border-themed outline-none rounded px-2.5 py-1.5 tnum text-right text-[14px]" />
+          <div class="flex gap-1 mt-1.5">${[100,250,500,1000].map((n)=>`<button data-amt="${n}" class="flex-1 text-[11px] py-1 rounded card-themed border border-themed hover:card-themed border border-themed tnum font-semibold">${n}</button>`).join("")}<button data-amt="max" class="flex-1 text-[11px] py-1 rounded card-themed border border-themed font-bold text-themed">MAX</button></div>
         </div>
         <div>
           <div class="flex items-center justify-between text-[11px] text-muted mb-1"><span>Slippage</span><span id="slip-val" class="tnum">${state.slippage}%</span></div>
@@ -2642,7 +2667,9 @@ function terminalView() {
         <div id="order-preview" class="card-themed rounded p-2 tnum text-[12px] space-y-1">
           ${renderOrderPreviewContent()}
         </div>
-        <button data-act="review" class="w-full py-2.5 rounded ${state.side==="buy"?"bg-green-500 text-white":"bg-red-500 text-white"} font-display font-bold text-[13px]">Review trade</button>
+        <button data-act="review" class="w-full py-2.5 rounded ${state.side==='buy' ? 'bg-[#00E599] text-[#08090C] hover:bg-[#10f5a9]' : 'bg-[#FF3B57] text-white hover:bg-[#ff526c]'} font-display font-bold text-[13px] shadow-lg transition cursor-pointer">
+          Review ${state.side === "buy" ? "Buy " + pair.base : "Sell " + pair.base}
+        </button>
         <div class="text-[10px] text-muted leading-relaxed">AI recommends. Trading engine validates. Wallet authorizes. Arc executes. No private keys leave the wallet.</div>
         ` }
 
@@ -2899,8 +2926,12 @@ function portfolioView() {
         <div class="flex flex-wrap items-center gap-2 mt-2">
           <span class="text-[11px] text-muted font-mono uppercase mr-1">Preset Buffers:</span>
           ${[100, 250, 500, 1000, 2500, 5000].map(b => `
-            <button data-set-buffer="${b}" class="px-2.5 py-1 rounded text-[11px] font-mono transition ${targetBuffer === b ? 'bg-themed text-themed font-bold' : 'card-themed border border-themed text-muted hover:text-themed'}" style="${targetBuffer === b ? 'background:var(--text);color:var(--bg)' : ''}">$${b}</button>
+            <button data-act="set-buffer" data-set-buffer="${b}" class="px-3 py-1.5 rounded text-[12px] font-mono cursor-pointer transition ${targetBuffer === b ? 'font-bold shadow' : 'card-themed border border-themed text-muted hover:text-themed'}" style="${targetBuffer === b ? 'background:var(--text);color:var(--bg)' : ''}">$${b}</button>
           `).join("")}
+          <div class="flex items-center gap-1.5 ml-auto">
+            <span class="text-[11px] text-muted font-mono">Custom: $</span>
+            <input id="custom-buffer-in" type="number" min="0" step="100" value="${targetBuffer}" class="w-24 card-themed text-themed border border-themed rounded px-2 py-1 font-mono text-[12px] text-right outline-none" />
+          </div>
         </div>
 
         <!-- Water level visualizer -->
@@ -2953,7 +2984,7 @@ function portfolioView() {
           </div>
           <div class="text-[11px] text-muted mt-0.5">Simulate outgoing wires or large transactions to test instant USYC par redemption without liquid pre-funding</div>
         </div>
-        <button data-act="test-jit-payout" class="px-3.5 py-1.5 rounded-pill card-themed border border-blue-500/40 text-blue-400 hover:bg-blue-500/10 font-display font-semibold text-[11px] flex items-center gap-1.5 transition">
+        <button data-act="test-jit-payout" class="px-3.5 py-1.5 rounded-pill card-themed border border-blue-500/40 text-blue-400 hover:bg-blue-500/10 font-display font-semibold text-[11px] flex items-center gap-1.5 transition cursor-pointer">
           <span class="material-symbols-outlined text-[15px]">play_circle</span> Simulate $${fmt(stressAmount)} Payout
         </button>
       </div>
@@ -2962,10 +2993,14 @@ function portfolioView() {
         <div class="surface-themed border border-themed p-2.5 rounded">
           <div class="text-[10px] uppercase text-muted font-mono">Test Withdrawal Size</div>
           <div class="text-[15px] font-bold text-themed mt-0.5">${fmtUsd(stressAmount)}</div>
-          <div class="flex gap-1 mt-1.5">
-            ${[500, 1000, 2500, 5000].map(amt => `
-              <button data-set-stress="${amt}" class="px-1.5 py-0.5 rounded text-[10px] font-mono ${stressAmount === amt ? 'bg-themed text-themed font-bold' : 'card-themed border border-themed text-muted'}">$${amt}</button>
+          <div class="flex flex-wrap items-center gap-1 mt-1.5">
+            ${[500, 1000, 2500, 5000, 10000].map(amt => `
+              <button data-act="set-stress" data-set-stress="${amt}" class="px-2 py-1 rounded text-[10px] sm:text-[11px] font-mono cursor-pointer transition ${stressAmount === amt ? 'font-bold shadow' : 'card-themed border border-themed text-muted hover:text-themed'}" style="${stressAmount === amt ? 'background:var(--text);color:var(--bg)' : ''}">$${amt}</button>
             `).join("")}
+            <div class="flex items-center gap-1 mt-1">
+              <span class="text-[10px] text-muted font-mono">$</span>
+              <input id="custom-stress-in" type="number" min="100" step="500" value="${stressAmount}" class="w-20 card-themed text-themed border border-themed rounded px-1.5 py-0.5 font-mono text-[11px] text-right outline-none" />
+            </div>
           </div>
         </div>
         <div class="surface-themed border border-themed p-2.5 rounded">
@@ -3061,9 +3096,12 @@ function aiView() {
     ["mandates","policy","Agent Mandates","EIP-712 scoped delegation"],
     ["wallet","fingerprint","Wallet Forensics","Holdings, frequency, P&L"],
   ];
+  if (!state.indicators) loadMarket();
+  if (!state.analysis) state.analysis = analyzeMarket();
   const a = state.analysis;
   const p = analyzePortfolio();
   const w = analyzeWallet();
+  const currentPair = PAIRS[state.pair] || PAIRS["ETH/USDC"];
   return `
   <main class="pt-16 sm:pt-20 lg:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4 max-w-7xl mx-auto">
     <div class="px-3 sm:px-4 py-2 surface-themed border border-themed flex flex-wrap items-center justify-between gap-2 border-b border-themed">
@@ -3072,7 +3110,7 @@ function aiView() {
         <span class="font-display text-[12px] sm:text-[13px] uppercase tracking-tight text-themed">Arc AI Market & Portfolio Analyst</span>
         <span class="text-[10px] sm:text-[11px] px-1 card-themed border border-themed rounded text-muted">TELEMETRY_v4.2</span>
       </div>
-      <div class="text-[10px] sm:text-[11px] text-muted">ARC DUAL-KERNEL: DETERMINISTIC DATA ENGINE → VERIFIABLE AI SYNTHESIS</div>
+      <div class="text-[10px] sm:text-[11px] text-muted">ARC DUAL-KERNEL: DETERMINISTIC DATA ENGINE -> VERIFIABLE AI SYNTHESIS</div>
     </div>
     <div class="p-1 sm:p-3 grid grid-cols-1 lg:grid-cols-12 gap-3">
       <div class="lg:col-span-4 xl:col-span-3 flex flex-col gap-2">
@@ -3080,8 +3118,8 @@ function aiView() {
           <div class="text-[10px] uppercase text-muted mb-2">Analysis Matrix</div>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-1">
             ${cores.map(([id,ic,t,s]) => `
-              <button data-core="${id}" class="w-full text-left p-2 rounded flex items-center gap-2 ${state.aiCore===id?"card-themed border border-themed":"card-themed border border-themed hover:card-themed border border-themed"}">
-                <span class="material-symbols-outlined text-[18px] shrink-0 ${state.aiCore===id?"text-themed font-semibold":"text-muted"}">${ic}</span>
+              <button data-core="${id}" class="w-full text-left p-2 rounded flex items-center gap-2 cursor-pointer transition ${state.aiCore===id?"card-themed border border-themed font-bold":"card-themed border border-themed text-muted hover:text-themed"}">
+                <span class="material-symbols-outlined text-[18px] shrink-0 ${state.aiCore===id?"text-themed":"text-muted"}">${ic}</span>
                 <div class="min-w-0"><div class="font-display text-[12px] sm:text-[13px] truncate ${state.aiCore===id?"text-themed font-semibold":""}">${t}</div><div class="text-[10px] sm:text-[11px] text-muted truncate hidden sm:block">${s}</div></div>
               </button>`).join("")}
           </div>
@@ -3095,25 +3133,99 @@ function aiView() {
               ["Audit idle cash & USYC yield","ai-treasury"],
               ["Issue 4h Agent Mandate ($250)","ai-mandate-quick"],
               ["Audit wallet activity","ai-wallet"],
-            ].map(([q,act]) => `<button data-act="${act}" class="w-full text-left px-2 py-1.5 rounded card-themed border border-themed text-[11px] sm:text-[12px] hover:card-themed flex justify-between items-center">${q}<span class="material-symbols-outlined text-[14px] text-themed font-semibold shrink-0">arrow_forward</span></button>`).join("")}
+            ].map(([q,act]) => `<button data-act="${act}" class="w-full text-left px-2 py-1.5 rounded card-themed border border-themed text-[11px] sm:text-[12px] hover:border-themed flex justify-between items-center transition cursor-pointer">${q}<span class="material-symbols-outlined text-[14px] text-themed font-semibold shrink-0">arrow_forward</span></button>`).join("")}
           </div>
         </div>
       </div>
       <div class="lg:col-span-8 xl:col-span-9 surface-themed border border-themed rounded p-3 sm:p-4">
         ${state.aiCore === "market" && a ? `
-          <div class="font-display text-[18px] text-themed font-semibold">${a.trend.toUpperCase()} STRUCTURE</div>
-          <p class="mt-2 text-[14px]">${a.setup}</p>
-          <p class="mt-2 text-[13px] text-sub">${a.why}</p>
-          <p class="mt-2 text-[13px] text-[#F59E0B]">What could invalidate it — ${a.invalidateText}</p>
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3 mt-4 tnum text-[12px]">
-            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">TREND</div>${a.trend}</div>
-            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">MOMENTUM</div>${a.momentum}</div>
-            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">SUPPORT</div>${fmtUsd(a.support)}</div>
-            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">RESISTANCE</div>${fmtUsd(a.resistance)}</div>
-            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">INVALIDATION</div>${fmtUsd(a.invalidation)}</div>
-            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px]">CONFIDENCE</div>${fmt(a.confidence*100,1)}%</div>
+          <!-- Header with Market Selector -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-themed">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-display text-[18px] sm:text-[20px] text-themed font-bold">${a.pair}</span>
+                <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded ${a.trend === 'Bullish' ? 'bg-green-500/15 text-pos border border-green-500/30' : a.trend === 'Bearish' ? 'bg-red-500/15 text-neg border border-red-500/30' : 'card-themed border border-themed text-themed'}">${a.trend.toUpperCase()} STRUCTURE</span>
+                <span class="text-[10px] font-mono text-muted uppercase hidden sm:inline">${a.timeframe} · Arc DexScreener L1 Feed</span>
+              </div>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="font-mono text-[16px] font-bold text-themed">${a.pair === "EURC/USDC" ? currentPair.price.toFixed(4) : fmtUsd(a.price)}</span>
+                <span class="font-mono text-[11px] ${currentPair.change >= 0 ? 'text-pos' : 'text-neg'} font-semibold">${fmtPct(currentPair.change)}</span>
+              </div>
+            </div>
+            <!-- Quick Pair Selector -->
+            <div class="flex flex-wrap items-center gap-1">
+              <span class="text-[10px] text-muted font-mono uppercase mr-1">Market:</span>
+              ${["ETH/USDC", "EURC/USDC", "USYC/USDC", "BTC/USDC"].map(pk => `
+                <button data-pair="${pk}" class="px-2 py-0.5 rounded text-[11px] font-mono transition cursor-pointer ${state.pair === pk ? 'font-bold' : 'card-themed border border-themed text-muted hover:text-themed'}" style="${state.pair === pk ? 'background:var(--text);color:var(--bg)' : ''}">${pk.split('/')[0]}</button>
+              `).join("")}
+            </div>
           </div>
-          <button data-act="apply-levels" class="mt-4 px-3 py-1.5 rounded bg-[#00f0ff] text-themed font-bold text-[12px] font-display font-bold">Apply to chart</button>
+
+          <!-- Institutional Thesis Card -->
+          <div class="mt-4 card-themed border border-themed rounded-lg p-3 sm:p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="text-[10px] font-mono uppercase tracking-wider text-muted font-semibold">Institutional Market Synthesis</div>
+              <span class="text-[10px] font-mono text-pos bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded">Formula Grounded</span>
+            </div>
+            <p class="text-[13px] sm:text-[14px] text-themed leading-relaxed font-medium">${a.setup}</p>
+            <p class="text-[12px] sm:text-[13px] text-sub leading-relaxed">${a.thesis || a.why}</p>
+            <div class="pt-2 border-t border-themed/50 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px]">
+              <div class="flex items-center gap-1 text-muted">
+                <span class="material-symbols-outlined text-[14px] text-amber-500">warning</span>
+                <span>Invalidation: <strong class="text-amber-500 font-mono">${fmtUsd(a.invalidation)}</strong> (${a.invalidateText})</span>
+              </div>
+              <div class="text-muted font-mono">Confidence: <strong class="text-pos">${fmt(a.confidence * 100, 1)}%</strong></div>
+            </div>
+          </div>
+
+          <!-- Actionable Trade Plan Card -->
+          <div class="mt-3 surface-themed border border-themed rounded-lg p-3">
+            <div class="text-[10px] font-mono uppercase tracking-wider text-muted mb-2 font-semibold">Actionable Execution Vector</div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 tnum text-[12px]">
+              <div class="card-themed border border-themed p-2.5 rounded">
+                <div class="text-[10px] uppercase text-muted font-mono">Target Entry Zone</div>
+                <div class="text-[14px] font-bold text-themed mt-0.5">${a.entryZone}</div>
+                <div class="text-[10px] text-muted mt-0.5">Tight delta</div>
+              </div>
+              <div class="card-themed border border-themed p-2.5 rounded">
+                <div class="text-[10px] uppercase text-muted font-mono">Resistance Target</div>
+                <div class="text-[14px] font-bold text-pos mt-0.5">${fmtUsd(a.resistance)}</div>
+                <div class="text-[10px] text-pos mt-0.5">30-bar swing high</div>
+              </div>
+              <div class="card-themed border border-themed p-2.5 rounded">
+                <div class="text-[10px] uppercase text-muted font-mono">Invalidation Stop</div>
+                <div class="text-[14px] font-bold text-neg mt-0.5">${fmtUsd(a.invalidation)}</div>
+                <div class="text-[10px] text-neg mt-0.5">Strict fail-closed</div>
+              </div>
+              <div class="card-themed border border-themed p-2.5 rounded">
+                <div class="text-[10px] uppercase text-muted font-mono">Risk/Reward</div>
+                <div class="text-[14px] font-bold text-themed mt-0.5">1 : ${a.rr}</div>
+                <div class="text-[10px] text-muted mt-0.5">Mathematical ratio</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Deterministic Telemetry Breakdown -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mt-3 tnum text-[12px]">
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px] font-mono uppercase">Trend</div><div class="text-pos font-semibold">${a.trend}</div></div>
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px] font-mono uppercase">Momentum</div><div class="text-themed font-semibold">${a.momentum}</div></div>
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px] font-mono uppercase">Support</div><div class="text-themed font-mono font-semibold">${fmtUsd(a.support)}</div></div>
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px] font-mono uppercase">Resistance</div><div class="text-themed font-mono font-semibold">${fmtUsd(a.resistance)}</div></div>
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px] font-mono uppercase">Invalidation</div><div class="text-amber-500 font-mono font-semibold">${fmtUsd(a.invalidation)}</div></div>
+            <div class="card-themed border border-themed p-2 rounded"><div class="text-muted text-[10px] font-mono uppercase">Confidence</div><div class="text-themed font-mono font-semibold">${fmt(a.confidence*100,1)}%</div></div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 mt-4">
+            <button data-act="apply-levels" class="px-3.5 py-1.5 rounded card-themed border border-themed hover:border-themed text-themed font-display font-bold text-[12px] flex items-center gap-1.5 cursor-pointer">
+              <span class="material-symbols-outlined text-[15px]">show_chart</span> Apply Levels to Chart
+            </button>
+            <button data-trade="${a.pair}" class="px-3.5 py-1.5 rounded bg-themed text-themed font-display font-bold text-[12px] flex items-center gap-1.5 cursor-pointer" style="background:var(--text);color:var(--bg)">
+              <span class="material-symbols-outlined text-[15px]">swap_horiz</span> Trade ${a.pair.split('/')[0]} on Terminal
+            </button>
+            <button data-act="ai-analyze" class="px-3 py-1.5 rounded card-themed border border-themed hover:border-themed text-muted hover:text-themed text-[11px] font-mono ml-auto flex items-center gap-1 cursor-pointer">
+              <span class="material-symbols-outlined text-[14px]">refresh</span> Re-Analyze Live Feed
+            </button>
+          </div>
         ` : state.aiCore === "portfolio" ? `
           <div class="font-display text-[18px] text-themed font-semibold">PORTFOLIO HEALTH</div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 tnum">
@@ -4377,12 +4489,12 @@ function bind() {
       state.mandateModalOpen = false;
       render();
     }
-    if (el.dataset.setBuffer) {
+    if (el.dataset.setBuffer || a === "set-buffer") {
       state.targetBufferUsd = Number(el.dataset.setBuffer);
       render();
       return;
     }
-    if (el.dataset.setStress) {
+    if (el.dataset.setStress || a === "set-stress") {
       state.stressTestAmount = Number(el.dataset.setStress);
       render();
       return;
@@ -4666,6 +4778,49 @@ function bind() {
   if (dcaFreqSel) dcaFreqSel.addEventListener("change", (e) => {
     state.dcaFreqSec = Number(e.target.value) || 60;
   });
+  document.querySelectorAll("[data-dca-budget]").forEach((el) => el.addEventListener("click", () => {
+    state.dcaSpendTotal = Number(el.dataset.dcaBudget) || 100;
+    render();
+  }));
+  document.querySelectorAll("[data-dca-slice]").forEach((el) => el.addEventListener("click", () => {
+    state.dcaSliceSize = Number(el.dataset.dcaSlice) || 20;
+    render();
+  }));
+
+  document.querySelectorAll("[data-set-buffer]").forEach((el) => el.addEventListener("click", () => {
+    const val = Number(el.dataset.setBuffer);
+    if (Number.isFinite(val) && val >= 0) {
+      state.targetBufferUsd = val;
+      render();
+    }
+  }));
+  document.querySelectorAll("[data-set-stress]").forEach((el) => el.addEventListener("click", () => {
+    const val = Number(el.dataset.setStress);
+    if (Number.isFinite(val) && val >= 0) {
+      state.stressTestAmount = val;
+      render();
+    }
+  }));
+  const customBufferIn = $("#custom-buffer-in");
+  if (customBufferIn) {
+    customBufferIn.addEventListener("change", (e) => {
+      const val = Number(e.target.value);
+      if (Number.isFinite(val) && val >= 0) {
+        state.targetBufferUsd = val;
+        render();
+      }
+    });
+  }
+  const customStressIn = $("#custom-stress-in");
+  if (customStressIn) {
+    customStressIn.addEventListener("change", (e) => {
+      const val = Number(e.target.value);
+      if (Number.isFinite(val) && val >= 0) {
+        state.stressTestAmount = val;
+        render();
+      }
+    });
+  }
 
   document.querySelectorAll("[data-cat]").forEach((el) => el.addEventListener("click", () => {
     state.marketCat = el.dataset.cat;

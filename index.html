@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="dark" lang="en" id="html-root">
+<html lang="en" id="html-root">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -9,7 +9,7 @@
   <link rel="icon" type="image/svg+xml" href="./logo.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -30,51 +30,34 @@
             pos:    "var(--pos)",
             neg:    "var(--neg)",
             warn:   "var(--warn)",
-            /* Dark mode surfaces */
-            "dm-bg":      "#0A0A0A",
-            "dm-surface": "#111111",
-            "dm-card":    "#1A1A1A",
+            /* Dark mode surfaces — Selo-inspired */
+            "dm-bg":      "#000000",
+            "dm-surface": "#0A0A0A",
+            "dm-card":    "#111111",
             "dm-border":  "#2A2A2A",
-            "dm-muted":   "#666666",
-            "dm-sub":     "#999999",
-            "dm-text":    "#F0F0F0",
-            /* Light mode surfaces */
+            "dm-muted":   "#7A7A7A",
+            "dm-sub":     "#A3A3A3",
+            "dm-text":    "#FFFFFF",
+            /* Light mode surfaces — Selo-inspired (clean light mode) */
             "lm-bg":      "#FFFFFF",
             "lm-surface": "#F8F8F8",
             "lm-card":    "#F0F0F0",
-            "lm-border":  "#E0E0E0",
-            "lm-muted":   "#999999",
+            "lm-border":  "#E5E5E5",
+            "lm-muted":   "#888888",
             "lm-sub":     "#666666",
-            "lm-text":    "#0A0A0A",
-            /* Accent — same in both modes */
-            accent:       "#000000",
-            "accent-inv": "#FFFFFF",
-            positive:     "#16A34A",
-            negative:     "#DC2626",
-            warning:      "#D97706",
-            /* Legacy aliases kept for old code */
-            paper:    "#0A0A0A",
-            snow:     "#111111",
-            mist:     "#2A2A2A",
-            ink:      "#F0F0F0",
-            smoke:    "#999999",
-            fog:      "#666666",
-            paid:     "#16A34A",
-            refused:  "#DC2626",
-            electric: "#0A0A0A",
-            hold:     "#D97706",
-            void:     "#000000",
-            "t1":     "#0D0D0D",
-            "t2":     "#141414",
-            "t3":     "#1A1A1A",
-            "line":   "#2A2A2A",
-            "line-active": "#3A3A3A",
-            cyan:     "#E0E0E0",
-            "cyan-dim": "#C0C0C0",
-            mint:     "#16A34A",
-            danger:   "#DC2626",
-            warn:     "#D97706",
-            mute:     "#999999",
+            "lm-text":    "#171717",
+            /* Accent — orange Selo style */
+            accent:       "#F59E0B",
+            "accent-inv": "#0A0A0A",
+            positive:     "#10B981",
+            negative:     "#EF4444",
+            warning:      "#F59E0B",
+            /* Selo-inspired orange */
+            "selo-orange":    "#F59E0B",
+            "selo-orange-500": "#F59E0B",
+            "selo-orange-400": "#FBBF24",
+            "selo-white":     "#FFFFFF",
+            "selo-black":     "#000000",
           },
           fontFamily: {
             display: ["Manrope", "sans-serif"],
@@ -86,10 +69,6 @@
             panel: "16px",
             card:  "12px",
           },
-          boxShadow: {
-            invoice: "0 2px 20px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.06) inset",
-            "invoice-lm": "0 2px 20px rgba(0,0,0,0.08)",
-          },
         }
       }
     };
@@ -100,33 +79,70 @@
       --bg:      #FFFFFF;
       --surface: #F8F8F8;
       --card:    #F0F0F0;
-      --border:  #E0E0E0;
-      --text:    #0A0A0A;
-      --sub:     #4A4A4A;
-      --muted:   #737373;
-      --accent:  #000000;
-      --acc-inv: #FFFFFF;
-      --pos:     #16A34A;
-      --neg:     #DC2626;
-      --warn:    #D97706;
+      --border:  #E5E5E5;
+      --text:    #171717;
+      --sub:     #666666;
+      --muted:   #888888;
+      --accent:  #F59E0B;
+      --pos:     #10B981;
+      --neg:     #EF4444;
+      --warn:    #F59E0B;
     }
     .dark {
       --bg:      #000000;
       --surface: #0A0A0A;
-      --card:    #141414;
-      --border:  #242424;
+      --card:    #111111;
+      --border:  #2A2A2A;
       --text:    #FFFFFF;
       --sub:     #A3A3A3;
-      --muted:   #737373;
-      --accent:  #FFFFFF;
-      --acc-inv: #000000;
-      --pos:     #22C55E;
+      --muted:   #7A7A7A;
+      --accent:  #F59E0B;
+      --pos:     #10B981;
       --neg:     #EF4444;
       --warn:    #F59E0B;
     }
 
-    html { margin: 0; padding: 0; background: var(--bg); color: var(--text); overflow-x: hidden; overflow-y: auto; }
-    body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: "IBM Plex Sans", sans-serif; min-height: 100vh; overflow-x: hidden; transition: background 0.2s, color 0.2s; }
+    /* ── Selo-inspired base styles ──────────────────────────── */
+    html {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+    input, select, textarea {
+      background-color: var(--card);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    input::placeholder, textarea::placeholder {
+      color: var(--muted);
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "IBM Plex Sans", sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.2s, color 0.2s;
+      /* Selo dot-grid background */
+      background-image: radial-gradient(rgb(255 255 255 / 0.15) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    /* Ensure dot grid works in both modes */
+    .dark body {
+      background-image: radial-gradient(rgb(255 255 255 / 0.15) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    body:not(.dark) {
+      background-image: radial-gradient(rgb(0 0 0 / 0.08) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
     .font-display  { font-family: Manrope, sans-serif; }
     .font-mono-num { font-family: "IBM Plex Mono", monospace; }
     .tnum { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "zero" 1; }
@@ -142,17 +158,107 @@
     .text-sub         { color: var(--sub); }
     .text-muted       { color: var(--muted); }
 
-    /* Status pill badges — same shape, theme-aware border */
-    .badge-settled  { background:rgba(22,163,74,0.12);  border:1px solid rgba(22,163,74,0.3);  color:var(--pos); }
-    .badge-anchored { background:rgba(10,10,10,0.08);   border:1px solid var(--border);         color:var(--sub); }
-    .badge-refused  { background:rgba(220,38,38,0.12);  border:1px solid rgba(220,38,38,0.3);   color:var(--neg); }
-    .badge-held     { background:rgba(217,119,6,0.12);  border:1px solid rgba(217,119,6,0.3);   color:var(--warn); }
-    .badge-pending  { background:rgba(153,153,153,0.12);border:1px solid var(--border);          color:var(--muted); }
+    /* Selo edge effects */
+    .edge {
+      position: relative;
+    }
+    .edge::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      padding: 1px;
+      border-radius: inherit;
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      background: var(
+        --edge,
+        linear-gradient(135deg, rgb(255 255 255 / 0.2), rgb(255 255 255 / 0), rgb(255 255 255 / 0.1))
+      );
+      pointer-events: none;
+    }
+    .edge-bright {
+      --edge: linear-gradient(
+        135deg,
+        rgb(255 255 255 / 0.2),
+        rgb(255 255 255 / 0),
+        rgb(255 255 255 / 0.2)
+      );
+    }
+    .edge-pill {
+      --edge: linear-gradient(
+        180deg,
+        rgb(255 255 255 / 0.2),
+        rgb(255 255 255 / 0),
+        rgb(255 255 255 / 0.1)
+      );
+    }
+    .edge-soft {
+      --edge: linear-gradient(
+        135deg,
+        rgb(255 255 255 / 0.1),
+        rgb(255 255 255 / 0),
+        rgb(255 255 255 / 0.1)
+      );
+    }
+    .edge-faint {
+      --edge: linear-gradient(
+        135deg,
+        rgb(255 255 255 / 0.1),
+        rgb(255 255 255 / 0),
+        rgb(255 255 255 / 0.05)
+      );
+    }
+
+    /* Selo beam button */
+    .selo-beam-link {
+      position: relative;
+      isolate: true;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      overflow: hidden;
+      border-radius: 9999px;
+      padding: 0.75rem 2rem;
+      font-family: Manrope, sans-serif;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.125em;
+      color: #fff;
+      transition: all 0.5s;
+      cursor: pointer;
+    }
+    .selo-beam-link:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 40px -10px rgba(245, 158, 11, 0.5);
+    }
+    .selo-beam-link .beam {
+      animation: beam-spin 3s linear infinite;
+    }
+    @keyframes beam-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Fade bottom patterns */
+    .fade-bottom-90 {
+      mask-image: linear-gradient(180deg, transparent, #000 0%, #000 90%, transparent);
+    }
+
+    /* Status pill badges — theme-aware */
+    .badge-settled  { background:rgba(16,185,134,0.12);  border:1px solid rgba(16,185,134,0.3);  color:var(--pos); }
+    .badge-anchored { background:rgba(255,255,255,0.06); border:1px solid var(--border);         color:var(--sub); }
+    .badge-refused  { background:rgba(239,68,68,0.12);  border:1px solid rgba(239,68,68,0.3);   color:var(--neg); }
+    .badge-held     { background:rgba(245,158,11,0.12);  border:1px solid rgba(245,158,11,0.3);  color:var(--warn); }
+    .badge-pending  { background:rgba(122,122,122,0.12);border:1px solid var(--border);          color:var(--muted); }
     .dark .badge-anchored { background:rgba(255,255,255,0.06); }
 
     /* Header pill card */
     .pill-bar { background: var(--surface); border: 1px solid var(--border); }
-    .dark .pill-bar { background: rgba(17,17,17,0.95); }
+    .dark .pill-bar { background: rgba(10,10,10,0.95); }
 
     /* Nav active state */
     .pill-nav-active { background: var(--card); color: var(--text); }
@@ -170,9 +276,19 @@
     .card-hover { transition: border-color 0.15s, box-shadow 0.15s; }
     .card-hover:hover { border-color: var(--sub); box-shadow: 0 0 0 1px rgba(128,128,128,0.12); }
 
-    kbd { font-family: "IBM Plex Mono", monospace; }
-    .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20; vertical-align: middle; }
-    canvas { display: block; }
+    /* Step cards */
+    .step-card {
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .step-card.done { opacity: 1; }
+    .step-card.locked { opacity: 0.5; }
+
+    /* Selo-style result badges */
+    .result-pass { color: #10B981; }
+    .result-fail { color: #EF4444; }
+    .result-inconclusive { color: #F59E0B; }
+
+    /* View display */
     .view { display: none; }
     .view.active { display: block; }
     #toast-stack { pointer-events: none; }
@@ -180,14 +296,40 @@
     .safe-bottom { padding-bottom: max(0.375rem, env(safe-area-inset-bottom, 0px)); }
     .keyline     { border-left: 2px solid var(--sub); }
     .keyline-pos { border-left: 2px solid var(--pos); }
+
+    /* Animations */
+    @keyframes fade-slide-in {
+      0% { opacity: 0; transform: translateY(30px); filter: blur(8px); }
+      100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+    .enter { animation: fade-slide-in 1s ease-out both; }
+
+    kbd { font-family: "IBM Plex Mono", monospace; }
+    .material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20; vertical-align: middle; }
+    canvas { display: block; }
   </style>
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
 <body class="bg-themed text-themed antialiased min-h-screen">
-  <div id="app"></div>
-  <div id="modal-root"></div>
+  <div id="app">
+    <!-- Loading fallback while app.js renders -->
+    <div class="min-h-screen flex items-center justify-center bg-black text-white">
+      <div class="text-center">
+        <svg class="animate-spin h-8 w-8 border-2 border-white border-t-transparent rounded-full mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <div class="font-mono text-xs text-gray-500">Booting Interminal</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Stack -->
   <div id="toast-stack" class="fixed bottom-20 sm:bottom-4 right-2 sm:right-4 left-2 sm:left-auto z-[80] flex flex-col items-center sm:items-end gap-2"></div>
-  <script src="./contractArtifact.js"></script>
-  <script src="./app.js"></script>
+
+  <!-- Modal Root -->
+  <div id="modal-root"></div>
 </body>
+<script src="./contractArtifact.js"></script>
+<script src="./app.js"></script>
 </html>

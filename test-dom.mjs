@@ -57,6 +57,12 @@ class MockElement {
       if (catMatch) el.dataset.cat = catMatch[1];
       const sideMatch = attrs.match(/data-side="([^"]+)"/);
       if (sideMatch) el.dataset.side = sideMatch[1];
+      const bufferMatch = attrs.match(/data-set-buffer="([^"]+)"/);
+      if (bufferMatch) el.dataset.setBuffer = bufferMatch[1];
+      const stressMatch = attrs.match(/data-set-stress="([^"]+)"/);
+      if (stressMatch) el.dataset.setStress = stressMatch[1];
+      const orderTypeMatch = attrs.match(/data-order-type="([^"]+)"/);
+      if (orderTypeMatch) el.dataset.orderType = orderTypeMatch[1];
       const idMatch = attrs.match(/id="([^"]+)"/);
       if (idMatch) el.id = idMatch[1];
       this.children.push(el);
@@ -88,6 +94,9 @@ class MockElement {
       if (sel.startsWith("[data-nav]") && ch.dataset.nav) results.push(ch);
       if (sel.startsWith("[data-cat]") && ch.dataset.cat) results.push(ch);
       if (sel.startsWith("[data-side]") && ch.dataset.side) results.push(ch);
+      if (sel.startsWith("[data-set-buffer]") && ch.dataset.setBuffer) results.push(ch);
+      if (sel.startsWith("[data-set-stress]") && ch.dataset.setStress) results.push(ch);
+      if (sel.startsWith("[data-order-type]") && ch.dataset.orderType) results.push(ch);
       results = results.concat(ch.querySelectorAll(sel));
     }
     return results;
@@ -226,6 +235,48 @@ try {
     buyBtn.click();
     console.log("PASS: Clicked 'Buy' button, state.side =", state.side);
   }
+
+  // 7. Test Instant vs DCA / TWAP Mode Switching
+  const dcaTab = appDiv.querySelectorAll("[data-order-type]").find(b => b.dataset.orderType === "dca");
+  if (!dcaTab) throw new Error("DCA / TWAP tab not found in terminal");
+  dcaTab.click();
+  if (state.orderType !== "dca") throw new Error("Failed to switch to DCA mode");
+  console.log("PASS: Clicked 'DCA / TWAP', state.orderType =", state.orderType);
+
+  const instantTab = appDiv.querySelectorAll("[data-order-type]").find(b => b.dataset.orderType === "market");
+  if (!instantTab) throw new Error("Instant Spot tab not found in terminal");
+  instantTab.click();
+  if (state.orderType !== "market") throw new Error("Failed to switch back to Instant mode");
+  console.log("PASS: Clicked 'Instant Spot', state.orderType =", state.orderType);
+
+  // 8. Test Target Operating Cash Buffer Clickability in Portfolio View
+  const portNav = appDiv.querySelectorAll("[data-nav]").find(b => b.dataset.nav === "portfolio");
+  portNav.click();
+
+  const bufferBtn2500 = appDiv.querySelectorAll("[data-set-buffer]").find(b => b.dataset.setBuffer === "2500");
+  if (!bufferBtn2500) throw new Error("Buffer $2500 button not found in portfolio view");
+  bufferBtn2500.click();
+  if (state.targetBufferUsd !== 2500) throw new Error(`Expected targetBufferUsd to be 2500, got ${state.targetBufferUsd}`);
+  console.log("PASS: Clicked Buffer '$2500', state.targetBufferUsd =", state.targetBufferUsd);
+
+  const bufferBtn5000 = appDiv.querySelectorAll("[data-set-buffer]").find(b => b.dataset.setBuffer === "5000");
+  if (!bufferBtn5000) throw new Error("Buffer $5000 button not found in portfolio view");
+  bufferBtn5000.click();
+  if (state.targetBufferUsd !== 5000) throw new Error(`Expected targetBufferUsd to be 5000, got ${state.targetBufferUsd}`);
+  console.log("PASS: Clicked Buffer '$5000', state.targetBufferUsd =", state.targetBufferUsd);
+
+  // 9. Test JIT Stress Tester Button Clickability
+  const stressBtn5000 = appDiv.querySelectorAll("[data-set-stress]").find(b => b.dataset.setStress === "5000");
+  if (!stressBtn5000) throw new Error("JIT Stress $5000 button not found in portfolio view");
+  stressBtn5000.click();
+  if (state.stressTestAmount !== 5000) throw new Error(`Expected stressTestAmount to be 5000, got ${state.stressTestAmount}`);
+  console.log("PASS: Clicked Stress '$5000', state.stressTestAmount =", state.stressTestAmount);
+
+  // 10. Test AI Analyst View Market Analysis
+  const aiNav = appDiv.querySelectorAll("[data-nav]").find(b => b.dataset.nav === "ai");
+  aiNav.click();
+  if (!state.analysis) throw new Error("AI Analyst view did not compute market analysis");
+  console.log("PASS: AI Analyst computed real market analysis for", state.analysis.pair, "Trend =", state.analysis.trend, "Regime =", state.analysis.regime);
 
   console.log("\nALL INTERACTIVE TESTS PASSED WITHOUT RUNTIME ERRORS!");
 } catch (e) {
