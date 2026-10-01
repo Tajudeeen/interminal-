@@ -14,7 +14,7 @@ import {
 } from "../lib/crypto/eip712";
 import { calculateJitUnwind } from "../lib/math/treasury";
 import { computeIndicators, generateCandles, analyzeMarket } from "../lib/math/indicators";
-import { quoteTrade } from "../lib/math/quotes";
+import { formatUnits, quoteTrade } from "../lib/math/quotes";
 import {
   getInjected,
   isAddress,
@@ -25,6 +25,7 @@ import {
 } from "../lib/arc/wallet";
 import {
   loadOnchainPortfolio,
+  publicRpc,
   readChainId,
   verifyArcLive,
 } from "../lib/arc/rpcClient";
@@ -420,8 +421,13 @@ export const useAppStore = create<AppState>((set, get) => {
         const { id } = await readChainId();
         const wrongNetwork = id !== ARC.chainId;
         let balances = get().balances;
+        let nativeGasBalance = get().nativeGasBalance;
         if (!wrongNetwork) {
           balances = await loadOnchainPortfolio(address);
+          try {
+            const nativeHex = await publicRpc("eth_getBalance", [address, "latest"]);
+            nativeGasBalance = formatUnits(nativeHex, ARC.nativeDecimals);
+          } catch {}
         }
         set({
           connected: true,
@@ -432,6 +438,7 @@ export const useAppStore = create<AppState>((set, get) => {
           providerLabel: providerName(eth),
           livePortfolio: true,
           balances,
+          nativeGasBalance,
           view: "portfolio",
         });
         get().addToast("Wallet Connected", `Authorized: ${shortAddr(address)} on Arc Mainnet`, "ok");

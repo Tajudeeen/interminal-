@@ -1,5 +1,6 @@
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
+import { ARC } from "../../constants/arc";
 import { verifyReceiptIntegrity } from "../../lib/crypto/eip712";
 import { Button } from "../ui/Button";
 
@@ -86,15 +87,22 @@ export const CorporateLedgerView: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <span
-                          className={`px-2 py-0.5 rounded-pill text-[10px] font-bold ${
-                            rcpt.onchainAnchored
-                              ? "bg-pos/15 text-pos border border-pos/30"
-                              : "bg-themed-card text-muted border border-themed/40"
-                          }`}
-                        >
-                          {rcpt.onchainAnchored ? "ANCHORED" : "LOCAL"}
-                        </span>
+                        {rcpt.onchainAnchored && rcpt.anchorTx ? (
+                          <a
+                            href={`${ARC.explorer}/tx/${rcpt.anchorTx}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-[10px] font-bold bg-pos/15 text-pos border border-pos/30 hover:bg-pos/25 transition-colors"
+                            title="View confirmed transaction on Arc Explorer"
+                          >
+                            <span>ANCHORED</span>
+                            <span className="material-symbols-outlined text-[11px]">open_in_new</span>
+                          </a>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-pill text-[10px] font-bold bg-themed-card text-muted border border-themed/40">
+                            LOCAL
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <Button

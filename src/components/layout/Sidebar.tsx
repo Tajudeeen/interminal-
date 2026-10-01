@@ -206,7 +206,7 @@ export const Sidebar: React.FC = () => {
 
         {/* Verified Arc Contract Explorer Link */}
         <a
-          href={`https://explorer.arc.network/address/${ARC.settlement}`}
+          href={`https://explorer.arc.io/address/${ARC.settlement}`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-between px-2.5 py-1.5 rounded-card bg-themed-card/40 hover:bg-cyan/10 border border-dashed border-themed/40 hover:border-cyan/40 text-[10px] font-mono text-muted hover:text-cyan transition-colors"

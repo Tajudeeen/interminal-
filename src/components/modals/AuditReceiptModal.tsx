@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
+import { ARC } from "../../constants/arc";
 import { verifyReceiptIntegrity } from "../../lib/crypto/eip712";
 import { anchorReceiptOnchain } from "../../lib/arc/receiptAnchor";
 import { shortAddr } from "../../lib/arc/wallet";
@@ -15,6 +16,7 @@ export const AuditReceiptModal: React.FC = () => {
     settlementContractAddress,
   } = useAppStore();
   const [anchoring, setAnchoring] = useState(false);
+  const [anchorStage, setAnchorStage] = useState<string>("");
 
   if (!activeReceiptModal) return null;
 
@@ -42,12 +44,16 @@ export const AuditReceiptModal: React.FC = () => {
       return;
     }
     setAnchoring(true);
+    setAnchorStage("Awaiting wallet approval...");
     try {
+      setAnchorStage("Broadcasting to Arc Mainnet...");
       const txHash = await anchorReceiptOnchain(activeReceiptModal, address, settlementContractAddress);
+      setAnchorStage("Confirmed on Arc L1");
       addToast("Receipt Anchored!", `Anchored in Arc state. Tx: ${shortAddr(txHash)}`, "ok");
       // update state
       setActiveReceiptModal({ ...activeReceiptModal, onchainAnchored: true, anchorTx: txHash });
     } catch (e: any) {
+      setAnchorStage("");
       addToast("Anchoring Failed", e?.message || String(e), "err");
     } finally {
       setAnchoring(false);
@@ -114,6 +120,32 @@ export const AuditReceiptModal: React.FC = () => {
             {JSON.stringify(activeReceiptModal, null, 2)}
           </pre>
         </div>
+
+        {/* On-Chain Anchored Link Badge */}
+        {activeReceiptModal.onchainAnchored && activeReceiptModal.anchorTx && (
+          <a
+            href={`${ARC.explorer}/tx/${activeReceiptModal.anchorTx}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between p-3 rounded-card bg-pos/10 border border-pos/30 text-pos text-xs font-mono hover:bg-pos/20 transition-colors"
+          >
+            <div className="flex items-center gap-2 truncate">
+              <span className="material-symbols-outlined text-[16px]">verified</span>
+              <span className="truncate">Anchored on Arc: {shortAddr(activeReceiptModal.anchorTx)}</span>
+            </div>
+            <span className="flex items-center gap-1 font-bold text-[11px] shrink-0">
+              View on Arc Explorer <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+            </span>
+          </a>
+        )}
+
+        {/* Anchoring in-progress stage */}
+        {anchoring && anchorStage && (
+          <div className="flex items-center gap-2 p-2.5 rounded-card bg-cyan/10 border border-cyan/30 text-cyan text-xs font-mono">
+            <span className="w-2 h-2 rounded-full bg-cyan animate-ping" />
+            <span>{anchorStage}</span>
+          </div>
+        )}
 
         {/* Action Controls */}
         <div className="flex flex-wrap gap-2 pt-2">

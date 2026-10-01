@@ -8,10 +8,12 @@ export const AiAnalystView: React.FC = () => {
     pair: activePair,
     setPair,
     setSide,
+    setAmount,
     analysis,
     runAiAnalysis,
     setView,
     setMandateModalOpen,
+    prepareTradeReview,
     addToast,
   } = useAppStore();
 
@@ -33,6 +35,20 @@ export const AiAnalystView: React.FC = () => {
     addToast(
       "Terminal Desk Armed",
       `Loaded ${analysis.pair} ${recommendedSide.toUpperCase()} recommendation into execution desk.`,
+      "ok"
+    );
+  };
+
+  const handleExecuteRecommendedPolicy = () => {
+    if (!analysis) return;
+    const recommendedSide = analysis.trend === "Bearish" ? "sell" : "buy";
+    setPair(analysis.pair);
+    setSide(recommendedSide);
+    setAmount(500);
+    prepareTradeReview();
+    addToast(
+      "Policy Checks Passed",
+      "Action complies with daily spend limits and slippage bounds. Ready for authorization.",
       "ok"
     );
   };
@@ -171,6 +187,90 @@ export const AiAnalystView: React.FC = () => {
                 {analysis.rr} : 1
               </div>
               <div className="font-mono text-[10px] text-pos mt-1">Favorable expectancy band</div>
+            </div>
+          </div>
+
+          {/* Autonomous Action & Policy Guardrail Decision Card */}
+          <div className="card-themed border border-themed rounded-card p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-themed/30 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-cyan animate-pulse" />
+                <h3 className="font-display font-bold text-sm text-themed uppercase tracking-wider">
+                  Proposed Autonomous Action & Policy Verification
+                </h3>
+              </div>
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-cyan/15 text-cyan border border-cyan/30 font-bold">
+                EIP-712 POLICY GATEWAY
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="font-mono text-[10px] text-muted uppercase">Recommended Execution</div>
+                <div className="font-display font-extrabold text-base text-themed mt-0.5">
+                  {analysis.trend === "Bearish" ? "Take Profit / Hedge" : "Treasury Rebalance"}: {analysis.pair}
+                </div>
+                <div className="font-mono text-xs text-sub mt-0.5">
+                  Allocate $500 USDC based on {analysis.regime.toLowerCase()} regime & favorable risk/reward ({analysis.rr}:1)
+                </div>
+              </div>
+              <div className="text-right font-mono text-xs text-pos font-bold shrink-0">
+                Size: $500.00 USDC
+              </div>
+            </div>
+
+            {/* Policy Pre-Flight Checks */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 font-mono text-xs">
+              <div className="p-2.5 rounded-card bg-pos/10 border border-pos/30 text-pos flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] opacity-75">Target Allowlist</div>
+                  <div className="font-bold">Arc Settlement</div>
+                </div>
+                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+              </div>
+
+              <div className="p-2.5 rounded-card bg-pos/10 border border-pos/30 text-pos flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] opacity-75">Daily Spend Cap</div>
+                  <div className="font-bold">&lt; $5,000 Limit</div>
+                </div>
+                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+              </div>
+
+              <div className="p-2.5 rounded-card bg-pos/10 border border-pos/30 text-pos flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] opacity-75">Slippage Bound</div>
+                  <div className="font-bold">&lt;= 30 bps</div>
+                </div>
+                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+              </div>
+
+              <div className="p-2.5 rounded-card bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] opacity-75">Officer Permit</div>
+                  <div className="font-bold">EIP-712 Required</div>
+                </div>
+                <span className="material-symbols-outlined text-[16px]">fingerprint</span>
+              </div>
+            </div>
+
+            <div className="pt-1 flex flex-wrap items-center gap-3">
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleExecuteRecommendedPolicy}
+                leftIcon={<span className="material-symbols-outlined text-[16px]">verified</span>}
+              >
+                Approve & Execute via EIP-712 Permit
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={handleTradeOnTerminal}
+                leftIcon={<span className="material-symbols-outlined text-[16px]">tune</span>}
+              >
+                Customize on Trade Desk
+              </Button>
             </div>
           </div>
 

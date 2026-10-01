@@ -53,7 +53,7 @@ export const LandingView: React.FC = () => {
 
         {/* Arc Badge linked to Explorer */}
         <a
-          href={`https://explorer.arc.network/address/${ARC.settlement}`}
+          href={`https://explorer.arc.io/address/${ARC.settlement}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-3.5 py-1 rounded-pill card-themed border border-themed/60 hover:border-cyan/50 text-[10px] font-mono tracking-widest uppercase text-muted hover:text-cyan transition-colors mb-6 group"

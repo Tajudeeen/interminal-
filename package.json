@@ -1,7 +1,7 @@
 {
   "name": "interminal",
   "version": "1.0.0",
-  "description": "Arc-native trading workstation.",
+  "description": "Autonomous treasury infrastructure for USDC on Arc.",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

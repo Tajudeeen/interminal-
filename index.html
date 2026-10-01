@@ -5,7 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.vercel-insights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://rpc.mainnet.arc.io https://api.dexscreener.com https://vitals.vercel-insights.com ws: wss:; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'none'" />
   <meta name="referrer" content="no-referrer" />
-  <title>INTERMINAL — Autonomous Corporate Treasury & Liquidity Desk (Arc Mainnet)</title>
+  
+  <!-- Primary Meta Tags -->
+  <title>INTERMINAL — Autonomous Treasury Infrastructure for USDC on Arc</title>
+  <meta name="title" content="INTERMINAL — Autonomous Treasury Infrastructure for USDC on Arc" />
+  <meta name="description" content="Autonomous cash buffer management, 4.95% USYC Treasury sweeps, and just-in-time liquidity orchestration built natively for Arc Mainnet (Chain ID: 5042)." />
+
+  <!-- Open Graph / Facebook / Discord -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://useinterminal.vercel.app/" />
+  <meta property="og:title" content="INTERMINAL — Autonomous Treasury Infrastructure for USDC on Arc" />
+  <meta property="og:description" content="Autonomous cash buffer management, 4.95% USYC Treasury sweeps, and just-in-time liquidity orchestration built natively for Arc Mainnet (Chain ID: 5042)." />
+  <meta property="og:image" content="https://useinterminal.vercel.app/logo.svg" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary" />
+  <meta property="twitter:url" content="https://useinterminal.vercel.app/" />
+  <meta property="twitter:title" content="INTERMINAL — Autonomous Treasury Infrastructure for USDC on Arc" />
+  <meta property="twitter:description" content="Autonomous cash buffer management, 4.95% USYC Treasury sweeps, and just-in-time liquidity orchestration built natively for Arc Mainnet (Chain ID: 5042)." />
+  <meta property="twitter:image" content="https://useinterminal.vercel.app/logo.svg" />
+
   <link rel="icon" type="image/svg+xml" href="./logo.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,7 +33,20 @@
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
 <body class="bg-bg text-themed antialiased min-h-screen">
-  <div id="root"></div>
+  <div id="root">
+    <!-- Static Fallback for Web Crawlers, Link Previews, and Non-JS Clients -->
+    <noscript>
+      <div style="font-family: monospace; padding: 2rem; max-width: 700px; margin: 0 auto; color: #fff; background: #0a0a0a; border: 1px solid #222; border-radius: 8px; margin-top: 2rem;">
+        <h1 style="color: #00F0FF; margin-bottom: 0.5rem;">INTERMINAL</h1>
+        <p style="font-size: 1.1rem; color: #ddd;"><strong>Autonomous Treasury Infrastructure for USDC on Arc</strong></p>
+        <p style="color: #aaa; line-height: 1.6;">Continuous cash buffer optimization, automated USYC T-Bill yield sweeps, and Just-In-Time par redemption built natively on Arc Mainnet (Chain ID: 5042).</p>
+        <hr style="border: 0; border-top: 1px solid #333; margin: 1.5rem 0;" />
+        <p><strong>Arc Mainnet Settlement Contract:</strong> <a href="https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36" style="color: #10B981;">0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36</a></p>
+        <p><strong>GitHub Repository:</strong> <a href="https://github.com/Tajudeeen/interminal-" style="color: #00F0FF;">https://github.com/Tajudeeen/interminal-</a></p>
+        <p style="color: #888; font-size: 0.9rem; margin-top: 1.5rem;"><em>Please enable JavaScript to launch the full interactive terminal application.</em></p>
+      </div>
+    </noscript>
+  </div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
