@@ -112,7 +112,7 @@ export const TerminalTradeView: React.FC = () => {
     const y = (price: number) => padT + (1 - (price - min) / span) * (h - padT - padB);
 
     // Grid lines
-    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
+    ctx.strokeStyle = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
     ctx.lineWidth = 1;
     const gridSteps = 4;
     for (let i = 0; i <= gridSteps; i++) {
@@ -149,8 +149,8 @@ export const TerminalTradeView: React.FC = () => {
         });
         ctx.stroke();
       };
-      if (indicators.series.e20) drawEma(indicators.series.e20, "#00F0FF");
-      if (indicators.series.e50) drawEma(indicators.series.e50, "#C084FC");
+      if (indicators.series.e20) drawEma(indicators.series.e20, isDark ? "#00F0FF" : "#0284C7");
+      if (indicators.series.e50) drawEma(indicators.series.e50, isDark ? "#C084FC" : "#A855F7");
     }
 
     // Support / Resistance Lines
@@ -263,8 +263,8 @@ export const TerminalTradeView: React.FC = () => {
               <span className="hidden sm:inline">Vol: ${p.vol.toLocaleString()}</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[#00F0FF]">EMA20</span>
-              <span className="text-[#C084FC]">EMA50</span>
+              <span className="text-cyan">EMA20</span>
+              <span className="text-purple-400">EMA50</span>
             </div>
           </div>
           <div className="flex-1 w-full relative mt-2">

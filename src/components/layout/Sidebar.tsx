@@ -63,7 +63,7 @@ export const Sidebar: React.FC = () => {
               onClick={() => setView(item.id)}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-card text-xs font-display font-semibold transition-all ${
                 isActive
-                  ? "bg-themed-card text-themed shadow-sm border border-themed"
+                  ? "bg-themed-card text-themed shadow-sm border border-lime-500/40"
                   : "text-sub hover:text-themed hover:bg-themed-card/50"
               }`}
             >

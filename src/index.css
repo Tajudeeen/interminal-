@@ -4,39 +4,68 @@
 
 /* ── CSS variables for dark/light theming ────────────────── */
 :root {
-  --bg:      #FFFFFF;
-  --surface: #F8F8F8;
-  --card:    #F0F0F0;
-  --border:  #E5E5E5;
-  --text:    #171717;
-  --sub:     #666666;
-  --muted:   #888888;
-  --accent:  #F59E0B;
+  /* Light mode — Salesforce charcoal/light surface */
+  --bg:      #F8F9FA;
+  --surface: #FFFFFF;
+  --card:    #FFFFFF;
+  --border:  #E4E6EB;
+  --text:    #1A1D23;
+  --sub:     #6B7280;
+  --muted:   #9CA3AF;
+  --accent:  #d8ff4f;
   --pos:     #10B981;
   --neg:     #EF4444;
   --warn:    #F59E0B;
+  /* Salesfoce lime green accent */
+  --cyan:     #00B4D8;
+  --cyan-dim: #0284C7;
+  --blue-dim: #64748B;
+  --blue-400: #38BDF8;
+  --green-500: #10B981;
+  --red-500: #EF4444;
+  --amber-500: #F59E0B;
+  --mint-500: #70FFBA;
+  --lime-500: #d8ff4f;
+  --lime-400: #d0ff40;
+  --charcoal: #2D2D2D;
+  --charcoal-light: #3A3A3A;
 }
 
 .dark {
-  --bg:      #000000;
-  --surface: #0A0A0A;
-  --card:    #111111;
+  /* Dark mode — Salesforce charcoal/black */
+  --bg:      #0A0A0A;
+  --surface: #0F0F0F;
+  --card:    #141414;
   --border:  #2A2A2A;
   --text:    #FFFFFF;
   --sub:     #A3A3A3;
   --muted:   #7A7A7A;
-  --accent:  #F59E0B;
+  --accent:  #d8ff4f;
   --pos:     #10B981;
   --neg:     #EF4444;
   --warn:    #F59E0B;
+  /* Salesfoce lime green accent */
+  --cyan:     #00f0ff;
+  --cyan-dim: #00B8D9;
+  --blue-dim: #64748B;
+  --blue-400: #38BDF8;
+  --green-500: #10B981;
+  --red-500: #EF4444;
+  --amber-500: #F59E0B;
+  --mint-500: #70FFBA;
+  --lime-500: #d8ff4f;
+  --lime-400: #d0ff40;
+  --charcoal: #1A1A1A;
+  --charcoal-light: #2D2D2D;
 }
 
-/* ── Base Styles ──────────────────────────── */
+/* ── Selo-inspired base styles ──────────────────────────── */
 html {
   margin: 0;
   padding: 0;
-  background: var(--bg);
-  color: var(--text);
+  /* Selo black background */
+  background: #000;
+  color: #fff;
   overflow-x: hidden;
   scroll-behavior: smooth;
 }
@@ -50,15 +79,14 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   transition: background-color 0.2s, color 0.2s;
-}
-
-.dark body {
-  background-image: radial-gradient(rgb(255 255 255 / 0.15) 1px, transparent 1px);
+  /* Selo dot-grid background — visible in both light and dark */
+  background-image: radial-gradient(rgb(0 0 0 / 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
-body:not(.dark) {
-  background-image: radial-gradient(rgb(0 0 0 / 0.08) 1px, transparent 1px);
+/* Ensure dot grid works in dark mode */
+.dark body {
+  background-image: radial-gradient(rgb(255 255 255 / 0.08) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
@@ -94,6 +122,25 @@ input::placeholder, textarea::placeholder {
 .text-pos         { color: var(--pos); }
 .text-neg         { color: var(--neg); }
 
+/* ── Selo-specific color utilities — theme-aware ────────────────── */
+.text-cyan { color: var(--cyan); }
+.bg-cyan { background-color: var(--cyan); }
+.bg-cyan-subtle { background-color: rgba(0, 240, 255, 0.08); }
+.dark .bg-cyan-subtle { background-color: rgba(0, 240, 255, 0.10); }
+.border-cyan { border-color: var(--cyan); }
+.border-cyan-subtle { border-color: rgba(0, 240, 255, 0.2); }
+.dark .border-cyan-subtle { border-color: rgba(0, 240, 255, 0.25); }
+.text-lime-500 { color: var(--lime-500); }
+.bg-lime-500 { background-color: var(--lime-500); }
+.bg-lime-500\/15 { background-color: rgba(216, 255, 79, 0.12); }
+.dark .bg-lime-500\/15 { background-color: rgba(216, 255, 79, 0.12); }
+.border-lime-500 { border-color: var(--lime-500); }
+.text-mint-500 { color: var(--mint-500); }
+.bg-mint-500 { background-color: var(--mint-500); }
+.bg-mint-500\/15 { background-color: rgba(112, 255, 186, 0.10); }
+.dark .bg-mint-500\/15 { background-color: rgba(112, 255, 186, 0.12); }
+.accent-lime { accent-color: var(--lime-500); }
+
 /* ── Glassmorphism modal classes ────────────────── */
 .glass-modal {
   backdrop-filter: blur(20px) saturate(180%);
@@ -123,7 +170,7 @@ input::placeholder, textarea::placeholder {
 
 /* ── Shimmer & Marquee Effects ────────────────── */
 .text-shimmer {
-  background: linear-gradient(90deg, #70ffba, #00f0ff, #70ffba);
+  background: linear-gradient(90deg, var(--mint-500), var(--cyan), var(--mint-500));
   background-size: 200% auto;
   color: transparent;
   -webkit-background-clip: text;
@@ -142,6 +189,10 @@ input::placeholder, textarea::placeholder {
   mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
 }
 
+.marquee-container.dark {
+  mask-image: linear-gradient(to right, transparent, white 4%, white 96%, transparent);
+}
+
 .marquee-content {
   display: inline-flex;
   animation: marquee 35s linear infinite;
@@ -151,3 +202,30 @@ input::placeholder, textarea::placeholder {
 .marquee-container:hover .marquee-content {
   animation-play-state: paused;
 }
+
+/* ── Step cards ────────────────── */
+.step-card {
+  transition: opacity 0.2s, transform 0.2s;
+}
+.step-card.done { opacity: 1; }
+.step-card.locked { opacity: 0.5; }
+
+/* ── View display ────────────────── */
+.view { display: none; }
+.view.active { display: block; }
+#toast-stack { pointer-events: none; }
+#toast-stack > * { pointer-events: auto; }
+.safe-bottom { padding-bottom: max(0.375rem, env(safe-area-inset-bottom, 0px)); }
+.keyline     { border-left: 2px solid var(--sub); }
+.keyline-pos { border-left: 2px solid var(--pos); }
+
+/* ── Animations ────────────────── */
+@keyframes fade-slide-in {
+  0% { opacity: 0; transform: translateY(30px); filter: blur(8px); }
+  100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.enter { animation: fade-slide-in 1s ease-out both; }
+
+kbd { font-family: "IBM Plex Mono", monospace; }
+.material-symbols-outlined { font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20; vertical-align: middle; }
+canvas { display: block; }
