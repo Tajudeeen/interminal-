@@ -41,7 +41,7 @@ export const JudgeTourBar: React.FC = () => {
         {
           ts: Date.now(),
           type: "sweep",
-          label: `Judge Demo Sweep: $${excessCash.toLocaleString()} USDC -> USYC T-Bills`,
+          label: `Interactive Sweep: $${excessCash.toLocaleString()} USDC -> USYC T-Bills`,
           detail: `Earns +$${(excessCash * 0.0495).toFixed(2)}/yr continuous yield @ 4.95% APY`,
         },
         ...s.activity,
@@ -84,16 +84,16 @@ export const JudgeTourBar: React.FC = () => {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:bottom-8 z-40 md:max-w-xl w-full animate-view-fade">
-      <div className="glass-modal rounded-2xl p-5 border border-lime-500/40 shadow-2xl space-y-4">
+      <div className="glass-modal rounded-2xl p-5 border border-cyan/40 shadow-2xl space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-lime-500 animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan animate-pulse" />
             <span className="font-display font-black text-xs sm:text-sm text-themed tracking-wide uppercase">
-              Arc Hackathon Judge Showcase Tour
+              Interminal Interactive Tour
             </span>
-            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-lime-500/15 text-lime-500 border border-lime-500/30 font-bold">
-              3-MIN EVALUATION
+            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-cyan/15 text-cyan border border-cyan/30 font-bold">
+              3-MIN WALKTHROUGH
             </span>
           </div>
           <button

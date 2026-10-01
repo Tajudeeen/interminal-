@@ -1,7 +1,9 @@
 # INTERMINAL — Autonomous Corporate Treasury & Liquidity Desk for Arc
 
-> **Arc Hackathon Submission** · Autonomous corporate cash management, 4.95% USYC Treasury sweeps, and just-in-time liquidity orchestration built natively for **Arc Mainnet (Chain ID: 5042)**.
+> **Live Deployment:** [https://useinterminal.vercel.app/](https://useinterminal.vercel.app/)  
+> **Arc Mainnet (Chain ID: 5042)** · Autonomous corporate cash management, 4.95% USYC Treasury sweeps, and just-in-time liquidity orchestration.
 
+[![Live App](https://img.shields.io/badge/Live%20App-useinterminal.vercel.app-blueviolet?style=flat-square)](https://useinterminal.vercel.app/)
 [![Arc Mainnet](https://img.shields.io/badge/Arc%20Mainnet-Chain%205042-00F0FF?style=flat-square)](https://explorer.arc.io)
 [![Smart Contract](https://img.shields.io/badge/Settlement%20Contract-0x2b38...ab36-10B981?style=flat-square)](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36)
 [![React 18 + TS](https://img.shields.io/badge/Stack-React%2018%20%7C%20TypeScript%20%7C%20Vite%20%7C%20Zustand-blue?style=flat-square)](https://react.dev)
@@ -47,11 +49,11 @@ Interminal solves this on Arc by leveraging Arc's sub-cent gas fees and determin
 
 ---
 
-## 3-Minute Hackathon Judge Showcase Tour
+## 3-Minute Interactive Product Tour
 
-To allow judges to evaluate the full institutional protocol in under 3 minutes, Interminal features an interactive **1-Click Judge Showcase Tour**:
+To evaluate the full institutional protocol in under 3 minutes, Interminal features an interactive **1-Click Guided Tour**:
 
-* **How to Launch:** Click the glowing **"Start Arc Judge Showcase Tour"** banner on the Landing page or the **"Judge Tour (3 min)"** button in the Desktop Sidebar.
+* **How to Launch:** Click the glowing **"Start Interactive Tour"** banner on the Landing page or the **"Tour (3 min)"** button in the Desktop Sidebar (or Mobile Header).
 * **Pre-Seeded State:** Pre-loaded with an institutional portfolio ($250,000 NAV: $15,000 liquid USDC, $185,000 USYC T-Bills, $25,000 EURC, 6.5 ETH, 0.35 cirBTC) and 3 verified audit certificates.
 
 ### The 3 Core Pillars Demonstrated in the Tour:

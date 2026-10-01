@@ -35,15 +35,15 @@ export const Header: React.FC = () => {
       </button>
 
       <div className="flex items-center gap-2">
-        {/* Judge Tour Button */}
+        {/* Interactive Tour Button */}
         <Button
           size="xs"
           variant="outline"
-          className="border-lime-500/40 text-lime-500 hover:bg-lime-500/10 font-bold"
+          className="border-cyan/40 text-cyan hover:bg-cyan/10 font-bold"
           onClick={startJudgeTour}
-          leftIcon={<span className="w-1.5 h-1.5 rounded-full bg-lime-500 animate-pulse" />}
+          leftIcon={<span className="w-1.5 h-1.5 rounded-full bg-cyan animate-pulse" />}
         >
-          Judge Tour
+          Tour
         </Button>
         {/* Gas Tank Pill */}
         <button

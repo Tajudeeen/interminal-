@@ -52,7 +52,7 @@ export const Sidebar: React.FC = () => {
         </button>
       </div>
 
-      {/* Arc Hackathon Judge Showcase Tour Button */}
+      {/* Interactive Tour Button */}
       <div className="px-3 pt-3 pb-1">
         <button
           onClick={startJudgeTour}
@@ -60,7 +60,7 @@ export const Sidebar: React.FC = () => {
         >
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-cyan animate-pulse" />
-            <span>Judge Tour (3 min)</span>
+            <span>Tour (3 min)</span>
           </div>
           <span className="material-symbols-outlined text-[15px] group-hover:translate-x-0.5 transition-transform">
             arrow_forward
