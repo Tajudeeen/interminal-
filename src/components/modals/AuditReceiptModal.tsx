@@ -3,7 +3,7 @@ import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
 import { ARC } from "../../constants/arc";
 import { verifyReceiptIntegrity } from "../../lib/crypto/eip712";
-import { anchorReceiptOnchain } from "../../lib/arc/receiptAnchor";
+import { anchorReceiptOnchain, checkReceiptAnchoredOnchain } from "../../lib/arc/receiptAnchor";
 import { shortAddr } from "../../lib/arc/wallet";
 import { Button } from "../ui/Button";
 
@@ -17,10 +17,32 @@ export const AuditReceiptModal: React.FC = () => {
   } = useAppStore();
   const [anchoring, setAnchoring] = useState(false);
   const [anchorStage, setAnchorStage] = useState<string>("");
+  const [verifyingOnchain, setVerifyingOnchain] = useState(false);
+  const [onchainStatusText, setOnchainStatusText] = useState<string | null>(null);
 
   if (!activeReceiptModal) return null;
 
   const isValid = verifyReceiptIntegrity(activeReceiptModal);
+
+  const handleVerifyOnchain = async () => {
+    setVerifyingOnchain(true);
+    setOnchainStatusText(null);
+    try {
+      const isAnchored = await checkReceiptAnchoredOnchain(activeReceiptModal, settlementContractAddress);
+      if (isAnchored) {
+        setOnchainStatusText("Anchored in Arc Mainnet State (Verified via isReceiptAnchored)");
+        setActiveReceiptModal({ ...activeReceiptModal, onchainAnchored: true });
+        addToast("On-Chain Verified", "Receipt hash verified in Arc settlement contract storage.", "ok");
+      } else {
+        setOnchainStatusText("Receipt hash not yet anchored in Arc settlement contract.");
+        addToast("Not Anchored", "Receipt hash is held in local audit storage.", "info");
+      }
+    } catch (e: any) {
+      setOnchainStatusText("Failed to query Arc RPC: " + (e?.message || String(e)));
+    } finally {
+      setVerifyingOnchain(false);
+    }
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(activeReceiptModal, null, 2));
@@ -147,8 +169,36 @@ export const AuditReceiptModal: React.FC = () => {
           </div>
         )}
 
+        {/* Integrity Digest Display */}
+        <div className="p-3 rounded-card bg-themed-card/50 border border-themed/30 space-y-1 font-mono text-xs">
+          <div className="flex items-center justify-between text-muted text-[10px] uppercase">
+            <span>SHA-256 Integrity Digest</span>
+            <span className="text-pos">Deterministic Hash</span>
+          </div>
+          <div className="text-[11px] text-themed break-all select-all font-mono bg-themed/5 p-1.5 rounded">
+            {activeReceiptModal.integrityDigest || "Digest not computed"}
+          </div>
+        </div>
+
+        {/* Live Arc State Query Result */}
+        {onchainStatusText && (
+          <div className="p-2.5 rounded-card bg-themed-card/60 border border-themed/30 font-mono text-xs text-themed flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px] text-cyan">travel_explore</span>
+            <span>{onchainStatusText}</span>
+          </div>
+        )}
+
         {/* Action Controls */}
         <div className="flex flex-wrap gap-2 pt-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleVerifyOnchain}
+            isLoading={verifyingOnchain}
+            leftIcon={<span className="material-symbols-outlined text-[15px]">travel_explore</span>}
+          >
+            Verify On-Chain RPC
+          </Button>
           <Button
             variant="secondary"
             size="sm"

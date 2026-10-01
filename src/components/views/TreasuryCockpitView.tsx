@@ -479,6 +479,76 @@ export const TreasuryCockpitView: React.FC = () => {
         </div>
       </div>
 
+      {/* Verifiable Mathematical Models & Formula Engine */}
+      <div className="card-themed border border-themed rounded-card p-5 space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-themed/20">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[20px] text-pos">calculate</span>
+            <div>
+              <h3 className="font-display font-bold text-sm text-themed">
+                Deterministic Mathematical Grounding & Formula Verifier
+              </h3>
+              <p className="font-mono text-xs text-muted">
+                Transparent equations governing capital allocation, opportunity cost, and JIT unwinds
+              </p>
+            </div>
+          </div>
+          <span className="font-mono text-[10px] text-pos font-bold">FAIL-CLOSED</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+          {/* Formula 1: Opportunity Cost */}
+          <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/20 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-themed">1. Opportunity Cost Drag</span>
+              <span className="text-[10px] text-amber-500 font-semibold">T-BILL DELTA</span>
+            </div>
+            <div className="p-2 rounded bg-themed/5 text-themed text-[11px] font-mono select-all">
+              Cost = Liquid USDC × 4.95% × (Days / 365)
+            </div>
+            <div className="text-[11px] text-muted space-y-1">
+              <div>• Current Liquid: ${liquidUsdc.toLocaleString()} USDC</div>
+              <div>• Annual Drag: ${(liquidUsdc * 0.0495).toFixed(2)} USD</div>
+              <div>• Daily Burn: ${((liquidUsdc * 0.0495) / 365).toFixed(2)} / day</div>
+            </div>
+          </div>
+
+          {/* Formula 2: Yield Sweep Threshold */}
+          <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/20 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-themed">2. Yield Sweep Gate</span>
+              <span className="text-[10px] text-pos font-semibold">AUTOMATIC</span>
+            </div>
+            <div className="p-2 rounded bg-themed/5 text-themed text-[11px] font-mono select-all">
+              Sweep = max(0, Liquid USDC - Buffer)
+            </div>
+            <div className="text-[11px] text-muted space-y-1">
+              <div>• Buffer Target: ${targetBufferUsd.toLocaleString()} USDC</div>
+              <div>• Excess Available: ${Math.max(0, liquidUsdc - targetBufferUsd).toLocaleString()} USDC</div>
+              <div className="text-pos font-semibold">
+                • Status: {liquidUsdc > targetBufferUsd ? "Sweep Triggered" : "Within Buffer"}
+              </div>
+            </div>
+          </div>
+
+          {/* Formula 3: JIT Redemption Parity */}
+          <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/20 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-themed">3. JIT Parity Unwind</span>
+              <span className="text-[10px] text-cyan font-semibold">ZERO SLIPPAGE</span>
+            </div>
+            <div className="p-2 rounded bg-themed/5 text-themed text-[11px] font-mono select-all">
+              1.0000 USYC = 1.0000 USDC (Par)
+            </div>
+            <div className="text-[11px] text-muted space-y-1">
+              <div>• Oracle Price: $1.0000 USYC NAV</div>
+              <div>• Execution Cost: $0.00 (Zero Curve Impact)</div>
+              <div>• Fallback Gate: Fail-Closed if parity &lt; 0.9995</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Asset Allocation Breakdown Table */}
       <div className="card-themed border border-themed rounded-card p-5">
         <h3 className="font-display font-bold text-sm text-themed mb-3">

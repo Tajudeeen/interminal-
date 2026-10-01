@@ -173,6 +173,45 @@ export async function verifyArcLive(): Promise<{
     block,
   });
 
+  // Verify Settlement Contract Bytecode
+  try {
+    const settCode = await publicRpc("eth_getCode", [ARC.settlement, "latest"]);
+    const hasSettCode = typeof settCode === "string" && settCode !== "0x" && settCode.length > 2;
+    rows.push({
+      id: "settlement-bytecode",
+      ok: hasSettCode,
+      detail: hasSettCode
+        ? `Settlement ${ARC.settlement} has ${(settCode.length - 2) / 2} bytes active bytecode (Block #${ARC.deployBlock})`
+        : `Settlement ${ARC.settlement} bytecode not found on RPC`,
+    });
+  } catch (err: any) {
+    rows.push({
+      id: "settlement-bytecode",
+      ok: false,
+      detail: `Settlement check failed: ${err?.message || "RPC error"}`,
+    });
+  }
+
+  // Verify Settlement Contract DOMAIN_SEPARATOR() (0x3644e515)
+  try {
+    const domRes = await publicRpc("eth_call", [{ to: ARC.settlement, data: "0x3644e515" }, "latest"]);
+    const expectedDomain = "0x9d8bb4d79ceb4795b26f8c3265ae5aac5492046989e8b74bc2b04d2c1853b190".toLowerCase();
+    const domOk = typeof domRes === "string" && domRes.toLowerCase() === expectedDomain;
+    rows.push({
+      id: "settlement-domain-separator",
+      ok: domOk,
+      detail: domOk
+        ? `DOMAIN_SEPARATOR() -> ${domRes.slice(0, 18)}... (Verified EIP-712 Interminal Chain 5042)`
+        : `DOMAIN_SEPARATOR() returned unexpected hash: ${domRes}`,
+    });
+  } catch (err: any) {
+    rows.push({
+      id: "settlement-domain-separator",
+      ok: false,
+      detail: `DOMAIN_SEPARATOR query failed: ${err?.message || "RPC error"}`,
+    });
+  }
+
   const tokens: Array<[string, string]> = [
     ["USDC", ARC.usdcErc20],
     ...Object.entries(ARC.tokens).map(([sym, meta]) => [sym, meta.address] as [string, string]),
@@ -192,4 +231,34 @@ export async function verifyArcLive(): Promise<{
   }
 
   return { chainId, chainOk: chainId === ARC.chainId, rows };
+}
+
+export async function querySettlementDetails(): Promise<{
+  contract: string;
+  bytecodeBytes: number;
+  domainSeparator: string;
+  isDomainMatch: boolean;
+  blockNumber: number;
+  latencyMs: number;
+}> {
+  const t0 = performance.now();
+  const [blockHex, codeHex, domainHex] = await Promise.all([
+    publicRpc("eth_blockNumber"),
+    publicRpc("eth_getCode", [ARC.settlement, "latest"]),
+    publicRpc("eth_call", [{ to: ARC.settlement, data: "0x3644e515" }, "latest"]),
+  ]);
+  const latencyMs = Math.round(performance.now() - t0);
+  const blockNumber = parseInt(blockHex, 16);
+  const bytecodeBytes = typeof codeHex === "string" && codeHex.startsWith("0x") ? (codeHex.length - 2) / 2 : 0;
+  const expectedDomain = "0x9d8bb4d79ceb4795b26f8c3265ae5aac5492046989e8b74bc2b04d2c1853b190".toLowerCase();
+  const isDomainMatch = typeof domainHex === "string" && domainHex.toLowerCase() === expectedDomain;
+
+  return {
+    contract: ARC.settlement,
+    bytecodeBytes,
+    domainSeparator: domainHex,
+    isDomainMatch,
+    blockNumber,
+    latencyMs,
+  };
 }

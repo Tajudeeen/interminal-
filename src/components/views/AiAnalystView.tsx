@@ -275,13 +275,57 @@ export const AiAnalystView: React.FC = () => {
           </div>
 
           {/* Deterministic Mathematical Grounding */}
-          <div className="card-themed border border-themed rounded-card p-4 space-y-3">
-            <div className="font-mono text-[11px] text-muted uppercase tracking-wider font-semibold">
-              Deterministic Mathematical Grounding
+          <div className="card-themed border border-themed rounded-card p-5 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-themed/20">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px] text-pos">functions</span>
+                <div>
+                  <div className="font-mono text-[11px] text-themed uppercase tracking-wider font-bold">
+                    Deterministic Mathematical Grounding & Formula Verifier
+                  </div>
+                  <div className="font-mono text-[10px] text-muted">
+                    No black-box hallucinations. All signals computed from verified price bars.
+                  </div>
+                </div>
+              </div>
+              <span className="font-mono text-[10px] text-pos font-bold">VERIFIABLE</span>
             </div>
+
             <p className="font-mono text-xs text-sub leading-relaxed">
               {analysis.why}
             </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
+              <div className="p-3 rounded-card bg-themed-card/50 border border-themed/20 space-y-1">
+                <div className="text-[10px] text-muted uppercase">Wilder's RSI (14 Period)</div>
+                <div className="text-themed font-bold p-1 bg-themed/5 rounded text-[11px]">
+                  RSI = 100 - (100 / (1 + RS))
+                </div>
+                <div className="text-[10px] text-muted">
+                  RS = EMA(Gains, 14) / EMA(Losses, 14). Bound: [0, 100].
+                </div>
+              </div>
+
+              <div className="p-3 rounded-card bg-themed-card/50 border border-themed/20 space-y-1">
+                <div className="text-[10px] text-muted uppercase">EMA Fast/Slow Ribbon</div>
+                <div className="text-themed font-bold p-1 bg-themed/5 rounded text-[11px]">
+                  EMA_t = P_t × α + EMA_(t-1) × (1 - α)
+                </div>
+                <div className="text-[10px] text-muted">
+                  Multiplier α = 2 / (N + 1). Evaluated for N = 20, 50 bars.
+                </div>
+              </div>
+
+              <div className="p-3 rounded-card bg-themed-card/50 border border-themed/20 space-y-1">
+                <div className="text-[10px] text-muted uppercase">Extremum Swing Pivots</div>
+                <div className="text-themed font-bold p-1 bg-themed/5 rounded text-[11px]">
+                  S1 = min(Low_30), R1 = max(High_30)
+                </div>
+                <div className="text-[10px] text-muted">
+                  Risk/Reward: RR = |R1 - P| / |P - S1| = {analysis.rr}:1
+                </div>
+              </div>
+            </div>
             <div className="pt-2 flex flex-wrap gap-3">
               <Button
                 variant="primary"

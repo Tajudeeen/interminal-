@@ -2,6 +2,8 @@ import React from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
+import { ARC } from "../../constants/arc";
+import { shortAddr } from "../../lib/arc/wallet";
 import { calculateJitUnwind } from "../../lib/math/treasury";
 import { Button } from "../ui/Button";
 
@@ -98,10 +100,46 @@ export const ReviewTradeModal: React.FC = () => {
           </div>
         )}
 
-        {/* Security / Verification Badge */}
-        <div className="flex items-center gap-2 px-3 py-2 rounded-card card-themed border border-themed/20 font-mono text-[10px] text-muted">
-          <span className="material-symbols-outlined text-[14px] text-pos">verified</span>
-          <span>EIP-712 Typed Data Digest bound to Chain ID 5042 & Arc Settlement</span>
+        {/* Cryptographic Verification Details Box */}
+        <div className="p-3 rounded-card bg-themed-card/50 border border-themed/30 space-y-2 font-mono text-[11px]">
+          <div className="flex items-center justify-between text-themed font-semibold border-b border-themed/20 pb-1.5">
+            <span className="flex items-center gap-1.5 text-pos">
+              <span className="material-symbols-outlined text-[15px]">verified</span>
+              <span>Cryptographic Verification</span>
+            </span>
+            <span className="text-[10px] text-muted">EIP-712 Standard</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-muted">
+            <div>
+              <span className="block text-[10px] uppercase text-muted/70">Verifying Contract</span>
+              <a
+                href={`${ARC.explorer}/address/${ARC.settlement}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-cyan hover:underline inline-flex items-center gap-1 font-bold"
+              >
+                <span>{shortAddr(ARC.settlement)}</span>
+                <span className="material-symbols-outlined text-[11px]">open_in_new</span>
+              </a>
+            </div>
+            <div>
+              <span className="block text-[10px] uppercase text-muted/70">Arc Chain ID</span>
+              <span className="text-themed font-bold">5042 (Mainnet)</span>
+            </div>
+          </div>
+
+          <div>
+            <span className="block text-[10px] uppercase text-muted/70">Domain Separator</span>
+            <div className="text-[10px] text-muted truncate bg-themed/5 p-1 rounded font-mono select-all">
+              0x9d8bb4d79ceb4795b26f8c3265ae5aac5492046989e8b74bc2b04d2c1853b190
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-[10px] text-muted pt-1 border-t border-themed/10">
+            <span>Custody: Non-custodial</span>
+            <span className="text-pos">Fail-Closed Authorization</span>
+          </div>
         </div>
 
         {/* Sign Button */}

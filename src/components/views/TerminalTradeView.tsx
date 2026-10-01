@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
+import { ARC } from "../../constants/arc";
+import { shortAddr } from "../../lib/arc/wallet";
 import { quoteTrade } from "../../lib/math/quotes";
 import { calculateJitUnwind } from "../../lib/math/treasury";
 import { Timeframe } from "../../types/market";
@@ -458,12 +460,26 @@ export const TerminalTradeView: React.FC = () => {
                 >
                   Authorize & Execute Trade
                 </Button>
-                <div className="flex items-center justify-between px-1 text-[10px] font-mono text-muted">
-                  <span className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-pos" />
-                    Zero-Custody EIP-712
-                  </span>
-                  <span>Gas: $0.0012 USDC</span>
+                <div className="flex flex-col gap-1 px-1 text-[10px] font-mono text-muted pt-1 border-t border-themed/20">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-pos" />
+                      Zero-Custody EIP-712
+                    </span>
+                    <span>Gas: ~$0.0012 USDC</span>
+                  </div>
+                  <div className="flex items-center justify-between text-muted/80">
+                    <span>Arc Settlement:</span>
+                    <a
+                      href={`${ARC.explorer}/address/${ARC.settlement}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-cyan hover:underline inline-flex items-center gap-0.5"
+                    >
+                      <span>{shortAddr(ARC.settlement)}</span>
+                      <span className="material-symbols-outlined text-[10px]">open_in_new</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
+import { ARC } from "../../constants/arc";
+import { shortAddr } from "../../lib/arc/wallet";
 import { Button } from "../ui/Button";
 
 export const MarketsView: React.FC = () => {
@@ -121,7 +123,27 @@ export const MarketsView: React.FC = () => {
                         <div className="w-6 h-6 rounded card-themed border border-themed/40 flex items-center justify-center font-display font-extrabold text-[10px]">
                           {data.base.slice(0, 3)}
                         </div>
-                        <span>{key}</span>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span>{key}</span>
+                            {ARC.tokens[data.base] && (
+                              <a
+                                href={`${ARC.explorer}/address/${ARC.tokens[data.base].address}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                title={`Verified Arc Mainnet Contract: ${ARC.tokens[data.base].address}`}
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-cyan/10 hover:bg-cyan/20 text-cyan text-[9px] font-mono border border-cyan/30 transition-colors"
+                              >
+                                <span>ON-CHAIN</span>
+                                <span className="material-symbols-outlined text-[10px]">open_in_new</span>
+                              </a>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-muted font-normal">
+                            {ARC.tokens[data.base] ? shortAddr(ARC.tokens[data.base].address) : "Arc AMM Pair"}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="py-3 px-4 text-muted uppercase text-[10px]">{data.cat}</td>
