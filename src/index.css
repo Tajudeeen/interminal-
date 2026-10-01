@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS variables for dark/light theming ────────────────── */
+:root {
+  --bg:      #FFFFFF;
+  --surface: #F8F8F8;
+  --card:    #F0F0F0;
+  --border:  #E5E5E5;
+  --text:    #171717;
+  --sub:     #666666;
+  --muted:   #888888;
+  --accent:  #F59E0B;
+  --pos:     #10B981;
+  --neg:     #EF4444;
+  --warn:    #F59E0B;
+}
+
+.dark {
+  --bg:      #000000;
+  --surface: #0A0A0A;
+  --card:    #111111;
+  --border:  #2A2A2A;
+  --text:    #FFFFFF;
+  --sub:     #A3A3A3;
+  --muted:   #7A7A7A;
+  --accent:  #F59E0B;
+  --pos:     #10B981;
+  --neg:     #EF4444;
+  --warn:    #F59E0B;
+}
+
+/* ── Base Styles ──────────────────────────── */
+html {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "IBM Plex Sans", sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.dark body {
+  background-image: radial-gradient(rgb(255 255 255 / 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+body:not(.dark) {
+  background-image: radial-gradient(rgb(0 0 0 / 0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+input, select, textarea {
+  background-color: var(--card);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--muted);
+}
+
+/* ── Typography & Tabular Numbers ────────────────── */
+.font-display  { font-family: Manrope, sans-serif; }
+.font-mono-num { font-family: "IBM Plex Mono", monospace; }
+.tnum {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Theme-aware utility classes ────────────────── */
+.bg-themed        { background: var(--bg); }
+.surface-themed   { background: var(--surface); }
+.card-themed      { background: var(--card); }
+.border-themed    { border-color: var(--border); }
+.text-themed      { color: var(--text); }
+.text-sub         { color: var(--sub); }
+.text-muted       { color: var(--muted); }
+.text-pos         { color: var(--pos); }
+.text-neg         { color: var(--neg); }
+
+/* ── Glassmorphism modal classes ────────────────── */
+.glass-modal {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background-color: rgba(10, 10, 10, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+:not(.dark) .glass-modal {
+  background-color: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.glass-surface {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:not(.dark) .glass-surface {
+  background-color: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* ── Shimmer & Marquee Effects ────────────────── */
+.text-shimmer {
+  background: linear-gradient(90deg, #70ffba, #00f0ff, #70ffba);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.marquee-container {
+  overflow: hidden;
+  white-space: nowrap;
+  mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+}
+
+.marquee-content {
+  display: inline-flex;
+  animation: marquee 35s linear infinite;
+  will-change: transform;
+}
+
+.marquee-container:hover .marquee-content {
+  animation-play-state: paused;
+}

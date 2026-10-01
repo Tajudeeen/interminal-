@@ -87,6 +87,15 @@
       --pos:     #10B981;
       --neg:     #EF4444;
       --warn:    #F59E0B;
+      /* Selo-specific theme-aware colors — light mode */
+      --cyan:     #0288B7;
+      --cyan-dim: #027499;
+      --blue-dim: #64748B;
+      --blue-400: #38BDF8;
+      --green-500: #10B981;
+      --red-500: #EF4444;
+      --amber-500: #F59E0B;
+      --mint-500: #0D9488;
     }
     .dark {
       --bg:      #000000;
@@ -100,14 +109,24 @@
       --pos:     #10B981;
       --neg:     #EF4444;
       --warn:    #F59E0B;
+      /* Selo-specific theme-aware colors */
+      --cyan:     #00F0FF;
+      --cyan-dim: #00B8D9;
+      --blue-dim: #64748B;
+      --blue-400: #38BDF8;
+      --green-500: #10B981;
+      --red-500: #EF4444;
+      --amber-500: #F59E0B;
+      --mint-500: #70FFBA;
     }
 
     /* ── Selo-inspired base styles ──────────────────────────── */
     html {
       margin: 0;
       padding: 0;
-      background: var(--bg);
-      color: var(--text);
+      /* Selo black background */
+      background: #000;
+      color: #fff;
       overflow-x: hidden;
       scroll-behavior: smooth;
     }
@@ -128,18 +147,15 @@
       min-height: 100vh;
       overflow-x: hidden;
       transition: background 0.2s, color 0.2s;
-      /* Selo dot-grid background */
-      background-image: radial-gradient(rgb(255 255 255 / 0.15) 1px, transparent 1px);
+      /* Selo dot-grid background — visible in both light and dark */
+      background-image: radial-gradient(rgb(0 0 0 / 0.12) 1px, transparent 1px);
       background-size: 20px 20px;
     }
 
-    /* Ensure dot grid works in both modes */
-    .dark body {
-      background-image: radial-gradient(rgb(255 255 255 / 0.15) 1px, transparent 1px);
-      background-size: 20px 20px;
-    }
-    body:not(.dark) {
-      background-image: radial-gradient(rgb(0 0 0 / 0.08) 1px, transparent 1px);
+    /* Ensure dot grid works in dark mode */
+    .dark body,
+    body.dark {
+      background-image: radial-gradient(rgb(255 255 255 / 0.12) 1px, transparent 1px);
       background-size: 20px 20px;
     }
 
@@ -297,6 +313,23 @@
     .keyline     { border-left: 2px solid var(--sub); }
     .keyline-pos { border-left: 2px solid var(--pos); }
 
+    /* Selo-specific color utilities — theme-aware */
+    .text-cyan { color: var(--cyan); }
+    .bg-cyan-subtle { background-color: rgba(0, 240, 255, 0.08); }
+    .border-cyan-subtle { border-color: rgba(0, 240, 255, 0.2); }
+    .text-amber-500 { color: var(--amber-500); }
+    .bg-amber-500 { background-color: var(--amber-500); }
+    .text-green-500 { color: var(--green-500); }
+    .bg-green-500 { background-color: var(--green-500); }
+    .bg-red-500 { background-color: var(--red-500); }
+    .text-red-500 { color: var(--red-500); }
+    .bg-blue-dim { background-color: var(--blue-dim); }
+    .bg-mint-500 { background-color: var(--mint-500); }
+    .text-mint-500 { color: var(--mint-500); }
+    .accent-cyan { accent-color: var(--cyan); }
+    .border-cyan { border-color: var(--cyan); }
+    .bg-cyan { background-color: var(--cyan); }
+
     /* Animations */
     @keyframes fade-slide-in {
       0% { opacity: 0; transform: translateY(30px); filter: blur(8px); }
@@ -311,25 +344,7 @@
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
 <body class="bg-themed text-themed antialiased min-h-screen">
-  <div id="app">
-    <!-- Loading fallback while app.js renders -->
-    <div class="min-h-screen flex items-center justify-center bg-black text-white">
-      <div class="text-center">
-        <svg class="animate-spin h-8 w-8 border-2 border-white border-t-transparent rounded-full mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <div class="font-mono text-xs text-gray-500">Booting Interminal</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Stack -->
-  <div id="toast-stack" class="fixed bottom-20 sm:bottom-4 right-2 sm:right-4 left-2 sm:left-auto z-[80] flex flex-col items-center sm:items-end gap-2"></div>
-
-  <!-- Modal Root -->
-  <div id="modal-root"></div>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
 </body>
-<script src="./contractArtifact.js"></script>
-<script src="./app.js"></script>
 </html>

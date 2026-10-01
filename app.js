@@ -1831,14 +1831,14 @@ function drawChart(canvas, candles, indicators) {
     };
     if (state.indicatorsOn.ema20) paint(indicators.series.e20, "#00F0FF");
     if (state.indicatorsOn.ema50) paint(indicators.series.e50, "#C084FC");
-    if (state.indicatorsOn.ema200) paint(indicators.series.e200, "#64748B");
+    if (state.indicatorsOn.ema200) paint(indicators.series.e200, state.theme === "dark" ? "#64748B" : "#94A3B8");
   }
 
   if (state.showLevels && state.analysis) {
     const levels = [
-      { p: state.analysis.resistance, c: "#FF3B57", l: "R1" },
-      { p: state.analysis.support, c: "#00E599", l: "S1" },
-      { p: state.analysis.invalidation, c: "#F59E0B", l: "INV" },
+      { p: state.analysis.resistance, c: "var(--red-500)", l: "R1" },
+      { p: state.analysis.support, c: "var(--green-500)", l: "S1" },
+      { p: state.analysis.invalidation, c: "var(--amber-500)", l: "INV" },
     ];
     levels.forEach((lv) => {
       if (!lv.p) return;
@@ -1882,8 +1882,8 @@ function drawChart(canvas, candles, indicators) {
     candles.forEach((c, i) => {
       const xx = x(i);
       const up = c.close >= c.open;
-      ctx.strokeStyle = up ? "#00E599" : "#FF3B57";
-      ctx.fillStyle = up ? "#00E599" : "#FF3B57";
+      ctx.strokeStyle = up ? "var(--green-500)" : "var(--red-500)";
+      ctx.fillStyle = up ? "var(--green-500)" : "var(--red-500)";
       ctx.beginPath();
       ctx.moveTo(xx, y(c.high));
       ctx.lineTo(xx, y(c.low));
@@ -2489,11 +2489,11 @@ function terminalView() {
       <div class="flex items-center gap-2 sm:gap-4 md:gap-6 flex-wrap">
         <div class="relative">
           <button data-act="pair-menu" class="flex items-center gap-2 card-themed border border-themed hover:card-themed px-2.5 sm:px-3 py-1.5 rounded">
-            <span class="w-6 h-6 rounded-full bg-[#00f0ff]/15 flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[15px] text-themed font-semibold">currency_exchange</span></span>
+            <span class="w-6 h-6 rounded-full bg-cyan-subtle flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[15px] text-themed font-semibold">currency_exchange</span></span>
             <div class="text-left">
               <div class="flex items-center gap-1.5">
                 <span class="font-display font-semibold text-[13px] sm:text-[14px]">${state.pair}</span>
-                <span class="text-[10px] px-1 bg-[#00f0ff]/15 text-themed font-semibold rounded">${state.pair==="EURC/USDC"?"FX SPOT":"ARC SPOT"}</span>
+                <span class="text-[10px] px-1 bg-cyan-subtle text-themed font-semibold rounded">${state.pair==="EURC/USDC"?"FX SPOT":"ARC SPOT"}</span>
                 <span class="material-symbols-outlined text-[14px] text-muted">expand_more</span>
               </div>
               <div class="text-[9px] sm:text-[10px] uppercase tracking-wider text-muted truncate max-w-[120px] sm:max-w-none">Arc Native Liquidity Hub</div>
@@ -2519,16 +2519,16 @@ function terminalView() {
         </div>
       </div>
       <div class="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-muted ml-auto sm:ml-0">
-        <span class="w-1.5 h-1.5 rounded-full bg-[#01e599]"></span> Oracle: <span class="text-themed font-semibold font-mono">${state.pair==="EURC/USDC"?"ECB · Pyth":"Pyth V2"}</span>
+        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Oracle: <span class="text-themed font-semibold font-mono">${state.pair==="EURC/USDC"?"ECB · Pyth":"Pyth V2"}</span>
       </div>
     </section>
 
     ${state.pair === "EURC/USDC" ? (() => {
       const fx = calculateFxParity(pair.price);
       return `
-      <div class="px-2 sm:px-4 py-2 bg-[#00f0ff]/5 border-b border-[#00f0ff]/20 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+      <div class="px-2 sm:px-4 py-2 bg-cyan-subtle border-b border-cyan-subtle flex flex-wrap items-center justify-between gap-2 text-[11px]">
         <div class="flex items-center gap-2">
-          <span class="px-1.5 py-0.5 rounded bg-[#00f0ff]/20 text-themed font-semibold font-bold text-[10px]">INSTITUTIONAL FX CORRIDOR</span>
+          <span class="px-1.5 py-0.5 rounded bg-cyan-subtle text-themed font-semibold font-bold text-[10px]">INSTITUTIONAL FX CORRIDOR</span>
           <span class="text-themed font-mono font-semibold">${pair.price.toFixed(4)} EUR/USD</span>
           <span class="text-muted">Spread: <span class="text-pos">${fx.pipSpread} pips</span></span>
           <span class="text-muted">Parity delta: <span class="${fx.pipsFromParity>=0?"text-pos":"text-neg"}">${fx.pipsFromParity>=0?"+":""}${fx.pipsFromParity} pips</span></span>
@@ -2544,19 +2544,19 @@ function terminalView() {
       <section class="md:col-span-7 lg:col-span-8 surface-themed border border-themed rounded overflow-hidden flex flex-col">
         <div class="px-2 sm:px-3 py-1.5 card-themed border border-themed flex flex-wrap items-center justify-between gap-2 border-b border-themed/40">
           <div class="flex items-center gap-1 overflow-x-auto max-w-full pb-0.5 sm:pb-0">
-            ${["1m","5m","15m","1h","4h","1D"].map((tf) => `<button data-tf="${tf}" class="px-2 py-0.5 text-[11px] rounded ${state.timeframe===tf?"bg-[#00f0ff] text-themed font-bold font-bold":"text-muted hover:text-themed"}">${tf}</button>`).join("")}
-            <span class="w-px h-4 bg-[#343538] mx-1"></span>
+            ${["1m","5m","15m","1h","4h","1D"].map((tf) => `<button data-tf="${tf}" class="px-2 py-0.5 text-[11px] rounded ${state.timeframe===tf?"bg-cyan text-themed font-bold":"text-muted hover:text-themed"}">${tf}</button>`).join("")}
+            <span class="w-px h-4 bg-themed/50 mx-1"></span>
             ${[["candles","candlestick_chart","Candles"],["line","show_chart","Line"]].map(([id,ic,lb]) => `<button data-mode="${id}" class="flex items-center gap-1 px-2 py-0.5 text-[11px] rounded ${state.chartMode===id?"card-themed border border-themed text-themed font-semibold":"text-muted"}"><span class="material-symbols-outlined text-[14px]">${ic}</span><span class="hidden sm:inline">${lb}</span></button>`).join("")}
           </div>
-          <button data-act="ai-analyze" class="flex items-center gap-1.5 px-2.5 py-1 card-themed border border-themed hover:bg-[#38393d] rounded text-themed font-semibold text-[12px] sm:text-[13px] font-display font-semibold">
+          <button data-act="ai-analyze" class="flex items-center gap-1.5 px-2.5 py-1 card-themed border border-themed hover:bg-themed/50 rounded text-themed font-semibold text-[12px] sm:text-[13px] font-display font-semibold">
             <span class="material-symbols-outlined text-[16px]">auto_awesome</span> AI Analyze
-            <span class="text-[9px] uppercase tracking-widest px-1 bg-[#00f0ff]/20 rounded hidden sm:inline">Sync: Fresh</span>
+            <span class="text-[9px] uppercase tracking-widest px-1 bg-cyan-subtle rounded hidden sm:inline">Sync: Fresh</span>
           </button>
         </div>
         <div class="px-2 sm:px-3 py-1 flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 tnum text-[10px] sm:text-[11px] border-b border-themed/20">
-          <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-[#00f0ff]"></span><span class="text-muted">EMA 20:</span><span class="text-themed font-semibold">${fmtUsd(ind.ema20)}</span></span>
+          <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-cyan"></span><span class="text-muted">EMA 20:</span><span class="text-themed font-semibold">${fmtUsd(ind.ema20)}</span></span>
           <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-purple-400"></span><span class="text-muted">EMA 50:</span><span class="text-purple-300">${fmtUsd(ind.ema50)}</span></span>
-          <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-[#64748B]"></span><span class="text-muted">EMA 200:</span><span class="text-muted">${fmtUsd(ind.ema200)}</span></span>
+          <span class="flex items-center gap-1"><span class="w-2 h-0.5 bg-blue-dim"></span><span class="text-muted">EMA 200:</span><span class="text-muted">${fmtUsd(ind.ema200)}</span></span>
           <span class="text-muted">RSI (14): <span class="text-pos font-semibold">${fmt(ind.rsi,2)}</span></span>
           <span class="text-muted">MACD hist: <span class="${ind.macdHist>=0?"text-pos":"text-neg"}">${fmt(ind.macdHist,2)}</span></span>
         </div>
@@ -2567,7 +2567,7 @@ function terminalView() {
           ${a ? `
           <div class="keyline pl-3">
             <div class="flex items-center justify-between">
-              <div class="font-display text-[11px] tracking-wider text-[#00F0FF]">AI ANALYSIS · ${a.pair} ${a.timeframe.toUpperCase()}</div>
+              <div class="font-display text-[11px] tracking-wider text-cyan">AI ANALYSIS · ${a.pair} ${a.timeframe.toUpperCase()}</div>
               <button data-act="apply-levels" class="text-[11px] text-themed font-semibold hover:underline">Apply levels to chart</button>
             </div>
             <p class="text-[13px] mt-1 text-themed">${a.setup}</p>
@@ -2576,7 +2576,7 @@ function terminalView() {
               <div><div class="text-muted uppercase text-[10px]">Momentum</div><div>${a.momentum}</div></div>
               <div><div class="text-muted uppercase text-[10px]">Support</div><div>${fmtUsd(a.support)}</div></div>
               <div><div class="text-muted uppercase text-[10px]">Resistance</div><div>${fmtUsd(a.resistance)}</div></div>
-              <div><div class="text-muted uppercase text-[10px]">Invalidation</div><div class="text-[#F59E0B]">${fmtUsd(a.invalidation)}</div></div>
+              <div><div class="text-muted uppercase text-[10px]">Invalidation</div><div class="text-amber-500">${fmtUsd(a.invalidation)}</div></div>
               <div><div class="text-muted uppercase text-[10px]">Risk</div><div>${a.risk}</div></div>
             </div>
           </div>` : `<div class="text-[12px] text-muted">Click <span class="text-themed font-semibold">AI Analyze</span> to bind structure, support and invalidation to the live candle set. Numbers come from the market engine — the model only interprets them.</div>`}
@@ -2597,7 +2597,7 @@ function terminalView() {
         <div class="space-y-3 card-themed border border-themed rounded p-3">
           <div class="flex items-center justify-between">
             <span class="font-display font-bold text-[12px] text-themed">Autonomous DCA Mandate</span>
-            <span class="font-mono text-[9px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 font-semibold">EIP-712 Bounded</span>
+            <span class="font-mono text-[9px] px-1.5 py-0.5 rounded bg-cyan-subtle text-cyan font-semibold">EIP-712 Bounded</span>
           </div>
 
           <div>
@@ -2644,10 +2644,10 @@ function terminalView() {
         ` : `
         <!-- Instant Market Mode -->
         <div class="grid grid-cols-2 p-1 card-themed rounded border border-themed gap-1">
-          <button data-side="buy" class="py-2 text-[12px] sm:text-[13px] font-display font-bold rounded transition cursor-pointer flex items-center justify-center gap-1.5 ${state.side==='buy' ? 'bg-[#00E599] text-[#08090C] shadow' : 'card-themed border border-themed text-muted hover:text-themed'}">
+          <button data-side="buy" class="py-2 text-[12px] sm:text-[13px] font-display font-bold rounded transition cursor-pointer flex items-center justify-center gap-1.5 ${state.side==='buy' ? 'bg-[var(--green-500)] text-[#08090C] shadow' : 'card-themed border border-themed text-muted hover:text-themed'}">
             <span class="material-symbols-outlined text-[15px]">arrow_downward</span> Buy ${pair.base}
           </button>
-          <button data-side="sell" class="py-2 text-[12px] sm:text-[13px] font-display font-bold rounded transition cursor-pointer flex items-center justify-center gap-1.5 ${state.side==='sell' ? 'bg-[#FF3B57] text-white shadow' : 'card-themed border border-themed text-muted hover:text-themed'}">
+          <button data-side="sell" class="py-2 text-[12px] sm:text-[13px] font-display font-bold rounded transition cursor-pointer flex items-center justify-center gap-1.5 ${state.side==='sell' ? 'bg-red-500 text-white shadow' : 'card-themed border border-themed text-muted hover:text-themed'}">
             <span class="material-symbols-outlined text-[15px]">arrow_upward</span> Sell ${pair.base}
           </button>
         </div>
@@ -2662,12 +2662,12 @@ function terminalView() {
         </div>
         <div>
           <div class="flex items-center justify-between text-[11px] text-muted mb-1"><span>Slippage</span><span id="slip-val" class="tnum">${state.slippage}%</span></div>
-          <input id="slip" type="range" min="0.1" max="2" step="0.1" value="${state.slippage}" class="w-full accent-[#00F0FF]" />
+          <input id="slip" type="range" min="0.1" max="2" step="0.1" value="${state.slippage}" class="w-full accent-cyan" />
         </div>
         <div id="order-preview" class="card-themed rounded p-2 tnum text-[12px] space-y-1">
           ${renderOrderPreviewContent()}
         </div>
-        <button data-act="review" class="w-full py-2.5 rounded ${state.side==='buy' ? 'bg-[#00E599] text-[#08090C] hover:bg-[#10f5a9]' : 'bg-[#FF3B57] text-white hover:bg-[#ff526c]'} font-display font-bold text-[13px] shadow-lg transition cursor-pointer">
+        <button data-act="review" class="w-full py-2.5 rounded ${state.side==='buy' ? 'bg-green-500 text-[#08090C] hover:bg-pos' : 'bg-red-500 text-white hover:bg-neg'} font-display font-bold text-[13px] shadow-lg transition cursor-pointer">
           Review ${state.side === "buy" ? "Buy " + pair.base : "Sell " + pair.base}
         </button>
         <div class="text-[10px] text-muted leading-relaxed">AI recommends. Trading engine validates. Wallet authorizes. Arc executes. No private keys leave the wallet.</div>
@@ -2692,7 +2692,7 @@ function terminalView() {
                     <span>Spent: ${fmt(o.totalSpent, 2)} / ${fmt(o.totalBudget, 2)}</span>
                   </div>
                   <div class="h-1.5 bg-themed/10 rounded-full overflow-hidden">
-                    <div class="h-full bg-blue-500 transition-all" style="width:${Math.min(100, (o.slicesExecuted / o.totalSlices) * 100)}%"></div>
+                    <div class="h-full bg-cyan transition-all" style="width:${Math.min(100, (o.slicesExecuted / o.totalSlices) * 100)}%"></div>
                   </div>
                   ${o.status === "active" ? `
                     <div class="flex justify-between items-center mt-2 text-[9px]">
@@ -2863,7 +2863,7 @@ function portfolioView() {
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
           <span class="text-[10px] uppercase tracking-wider font-mono text-muted">Arc Corporate Treasury Desk · Settlement Chain 5042</span>
-          <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-400 font-mono font-semibold">T-BILL VAULT ACTIVE</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-subtle text-cyan font-mono font-semibold">T-BILL VAULT ACTIVE</span>
         </div>
         <div class="flex items-baseline gap-3 mt-1.5">
           <span class="font-display text-[28px] sm:text-[36px] font-bold text-themed">${fmtUsd(p.total)}</span>
@@ -2893,19 +2893,19 @@ function portfolioView() {
 
     <!-- PRIMARY PILLAR: Smart Idle Treasury Engine & Autonomous Auto-Sweep Controller -->
     <div class="card-themed border border-themed rounded-lg p-4 sm:p-5 relative overflow-hidden">
-      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-[#70ffba] to-green-500"></div>
+      <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-[var(--mint-500)] to-green-500"></div>
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-themed/60">
         <div>
           <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-[#70ffba] shadow-[0_0_10px_rgba(112,255,186,0.6)]"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-mint-500 shadow-[0_0_10px_rgba(112,255,186,0.6)]"></span>
             <span class="font-display font-bold text-[15px] sm:text-[16px] text-themed uppercase tracking-wide">Autonomous Cash Management & Yield Sweep</span>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-[#70ffba]/15 text-pos font-bold">4.95% USYC APY</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-mint-500/15 text-pos font-bold">4.95% USYC APY</span>
           </div>
           <div class="text-[11px] text-muted mt-0.5">Circle & Hashnote USYC · Tokenized US Short-Term Treasuries on Arc Mainnet</div>
         </div>
         <div class="flex items-center gap-2">
           ${sweep.recommended && sweep.sweepAmount > 0 ? `
-            <button data-act="sweep-yield" class="px-4 py-2 rounded-pill bg-[#70ffba] hover:bg-[#85ffc7] text-[#003822] font-display font-bold text-[12px] flex items-center gap-1.5 shadow-lg transition">
+            <button data-act="sweep-yield" class="px-4 py-2 rounded-pill bg-mint-500 hover:bg-mint-500/90 text-[var(--cyan)] font-display font-bold text-[12px] flex items-center gap-1.5 shadow-lg transition">
               <span class="material-symbols-outlined text-[16px]">savings</span> Execute Sweep ($${fmt(sweep.sweepAmount, 0)} USDC -> USYC)
             </button>` : `
             <span class="text-[11px] text-muted px-3 py-1.5 card-themed rounded-pill border border-themed flex items-center gap-1">
@@ -2943,7 +2943,7 @@ function portfolioView() {
           </div>
           <div class="h-2.5 bg-themed/10 rounded-full overflow-hidden flex">
             <div class="bg-amber-500 h-full transition-all" style="width:${Math.min(100, (Math.min(idleUsdc, targetBuffer) / Math.max(1, p.total)) * 100)}%" title="Operating Reserve"></div>
-            <div class="bg-[#70ffba] h-full transition-all" style="width:${Math.min(100, (Math.max(0, idleUsdc - targetBuffer) / Math.max(1, p.total)) * 100)}%" title="Sweep Pool"></div>
+            <div class="bg-mint-500 h-full transition-all" style="width:${Math.min(100, (Math.max(0, idleUsdc - targetBuffer) / Math.max(1, p.total)) * 100)}%" title="Sweep Pool"></div>
             <div class="bg-blue-500 h-full transition-all" style="width:${Math.min(100, (usycBal / Math.max(1, p.total)) * 100)}%" title="USYC Vault"></div>
           </div>
         </div>
@@ -3042,7 +3042,7 @@ function portfolioView() {
           ].map(([l,v,w]) => `
             <div>
               <div class="flex justify-between"><span class="text-muted">${l}</span><span class="tnum font-mono">${v}</span></div>
-              <div class="h-1 card-themed mt-1 rounded overflow-hidden"><div class="h-full ${Number(w)>50?"bg-amber-500":"bg-[#00f0ff]"}" style="width:${clamp(Number(w),4,100)}%"></div></div>
+              <div class="h-1 card-themed mt-1 rounded overflow-hidden"><div class="h-full ${Number(w)>50?"bg-amber-500":"bg-cyan"}" style="width:${clamp(Number(w),4,100)}%"></div></div>
             </div>`).join("")}
         </div>
         <div class="mt-3 keyline pl-3 text-[11px] text-sub">
@@ -3077,7 +3077,7 @@ function portfolioView() {
                   <div class="flex items-center gap-2"><div class="w-20 h-1.5 card-themed border border-themed rounded-full overflow-hidden"><div class="h-full bg-blue-500" style="width:${r.alloc}%"></div></div><span class="font-mono text-[11px]">${fmt(r.alloc,1)}%</span></div>
                 </td>
                 <td class="pr-4">
-                  ${r.sym==="WETH"?`<button data-trade="ETH/USDC" class="px-2.5 py-1 rounded-pill card-themed border border-themed text-[11px] font-display font-semibold hover:border-themed">Trade</button>`:r.sym==="cirBTC"?`<button data-trade="BTC/USDC" class="px-2.5 py-1 rounded-pill card-themed border border-themed text-[11px] font-display font-semibold hover:border-themed">Trade</button>`:PAIRS[r.sym+"/USDC"]?`<button data-trade="${r.sym}/USDC" class="px-2.5 py-1 rounded-pill card-themed border border-themed text-[11px] font-display font-semibold hover:border-themed">Trade</button>`:r.sym==="USYC"?`<button data-act="test-jit-payout" class="px-2.5 py-1 rounded-pill bg-blue-500/15 text-blue-400 font-display font-semibold text-[11px] hover:bg-blue-500/25">JIT Unwind</button>`:""}
+                  ${r.sym==="WETH"?`<button data-trade="ETH/USDC" class="px-2.5 py-1 rounded-pill card-themed border border-themed text-[11px] font-display font-semibold hover:border-themed">Trade</button>`:r.sym==="cirBTC"?`<button data-trade="BTC/USDC" class="px-2.5 py-1 rounded-pill card-themed border border-themed text-[11px] font-display font-semibold hover:border-themed">Trade</button>`:PAIRS[r.sym+"/USDC"]?`<button data-trade="${r.sym}/USDC" class="px-2.5 py-1 rounded-pill card-themed border border-themed text-[11px] font-display font-semibold hover:border-themed">Trade</button>`:r.sym==="USYC"?`<button data-act="test-jit-payout" class="px-2.5 py-1 rounded-pill bg-cyan-subtle text-cyan font-display font-semibold text-[11px] hover:bg-blue-500/25">JIT Unwind</button>`:""}
                 </td>
               </tr>`).join("")}
           </tbody>
@@ -3106,7 +3106,7 @@ function aiView() {
   <main class="pt-16 sm:pt-20 lg:pt-24 pb-24 md:pb-8 min-h-screen px-2 sm:px-4 max-w-7xl mx-auto">
     <div class="px-3 sm:px-4 py-2 surface-themed border border-themed flex flex-wrap items-center justify-between gap-2 border-b border-themed">
       <div class="flex items-center gap-2">
-        <span class="w-2 h-2 rounded-full bg-[#00f0ff] shadow-[0_0_8px_rgba(0,240,255,0.6)]"></span>
+        <span class="w-2 h-2 rounded-full bg-cyan shadow-[0_0_8px_rgba(0,240,255,0.6)]"></span>
         <span class="font-display text-[12px] sm:text-[13px] uppercase tracking-tight text-themed">Arc AI Market & Portfolio Analyst</span>
         <span class="text-[10px] sm:text-[11px] px-1 card-themed border border-themed rounded text-muted">TELEMETRY_v4.2</span>
       </div>
@@ -3275,7 +3275,7 @@ function renderTreasuryAnalysis() {
       </div>
       <div class="card-themed border border-themed p-3 rounded">
         <div class="text-[10px] text-muted">FORFEITED DRAG</div>
-        <div class="text-[20px] font-semibold ${opp.dailyForfeited > 0.05 ? "text-[#F59E0B]" : "text-muted"} mt-1">-${fmtUsd(opp.dailyForfeited)}/d</div>
+        <div class="text-[20px] font-semibold ${opp.dailyForfeited > 0.05 ? "text-amber-500" : "text-muted"} mt-1">-${fmtUsd(opp.dailyForfeited)}/d</div>
         <div class="text-[11px] text-muted mt-0.5">-$${fmt(opp.annualForfeited, 2)}/yr</div>
       </div>
       <div class="card-themed border border-themed p-3 rounded">
@@ -3296,7 +3296,7 @@ function renderTreasuryAnalysis() {
       </p>
     </div>
     <div class="mt-4 flex gap-3">
-      ${sweep.recommended ? `<button data-act="sweep-yield" class="px-4 py-2 rounded bg-[#70ffba] text-[#003822] font-display font-bold text-[13px] flex items-center gap-1.5"><span class="material-symbols-outlined text-[17px]">savings</span> Execute Sweep to USYC</button>` : ""}
+      ${sweep.recommended ? `<button data-act="sweep-yield" class="px-4 py-2 rounded bg-mint-500 text-[var(--cyan)] font-display font-bold text-[13px] flex items-center gap-1.5"><span class="material-symbols-outlined text-[17px]">savings</span> Execute Sweep to USYC</button>` : ""}
       <button data-nav="portfolio" class="px-4 py-2 rounded card-themed border border-themed text-[13px] font-display">View Portfolio Balances</button>
     </div>
   `;
@@ -3312,7 +3312,7 @@ function renderMandatesPanel() {
         </div>
         <div class="text-[12px] text-muted mt-0.5">EIP-712 Scoped Delegation Permits for Autonomous Agents & Trading Bots</div>
       </div>
-      <button data-act="open-mandate-modal" class="self-start sm:self-auto px-3 py-1.5 rounded bg-[#00f0ff] text-themed font-bold font-display font-bold text-[12px] flex items-center gap-1">
+      <button data-act="open-mandate-modal" class="self-start sm:self-auto px-3 py-1.5 rounded bg-cyan text-themed font-bold font-display font-bold text-[12px] flex items-center gap-1">
         <span class="material-symbols-outlined text-[16px]">add</span> Issue New Mandate
       </button>
     </div>
@@ -3367,13 +3367,13 @@ function renderMandatesPanel() {
                   <td>${m.maxSlippageBps} bps</td>
                   <td>${expired ? `<span class="text-muted">Expired</span>` : `<span class="text-pos">${remainingMin}m left</span>`}</td>
                   <td>
-                    ${active ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#70ffba]/15 text-pos rounded font-bold">ARMED</span>` : m.revoked ? `<span class="text-[10px] px-1.5 py-0.5 bg-[#ffb4ab]/15 text-neg rounded">REVOKED</span>` : `<span class="text-[10px] px-1.5 py-0.5 card-themed border border-themed text-muted rounded">EXPIRED</span>`}
+                    ${active ? `<span class="text-[10px] px-1.5 py-0.5 bg-mint-500/15 text-pos rounded font-bold">ARMED</span>` : m.revoked ? `<span class="text-[10px] px-1.5 py-0.5 bg-neg/20/15 text-neg rounded">REVOKED</span>` : `<span class="text-[10px] px-1.5 py-0.5 card-themed border border-themed text-muted rounded">EXPIRED</span>`}
                   </td>
                   <td>
                     ${active ? `
                       <div class="flex items-center gap-1.5">
-                        <button data-test-mandate="${m.id}" class="px-2 py-0.5 rounded bg-[#00f0ff]/20 hover:bg-[#00f0ff]/30 text-themed font-semibold font-semibold text-[10px] transition" title="Test execute a bounded trade as the agent">Test Exec</button>
-                        <button data-revoke-mandate="${m.id}" class="px-2 py-0.5 rounded bg-[#ffb4ab]/20 text-neg text-[10px] hover:bg-[#ffb4ab]/30">Revoke</button>
+                        <button data-test-mandate="${m.id}" class="px-2 py-0.5 rounded bg-cyan-subtle hover:bg-cyan/30 text-themed font-semibold font-semibold text-[10px] transition" title="Test execute a bounded trade as the agent">Test Exec</button>
+                        <button data-revoke-mandate="${m.id}" class="px-2 py-0.5 rounded bg-neg/20/20 text-neg text-[10px] hover:bg-neg/20/30">Revoke</button>
                       </div>` : ""}
                   </td>
                 </tr>`;
@@ -3402,7 +3402,7 @@ function renderTradeAnalysis() {
       <div class="card-themed border border-themed p-3 rounded"><div class="text-[10px] text-muted">IMPACT</div>${fmt(t.impact,2)}%</div>
     </div>
     <p class="mt-4 text-[14px]">${t.note}</p>
-    <button data-nav="terminal" class="mt-4 px-3 py-1.5 rounded bg-[#00E599] text-[#08090C] text-[12px] font-display font-bold">Open order panel</button>
+    <button data-nav="terminal" class="mt-4 px-3 py-1.5 rounded bg-[var(--green-500)] text-[#08090C] text-[12px] font-display font-bold">Open order panel</button>
   `;
 }
 
@@ -3525,7 +3525,7 @@ function proofView() {
     <div class="mt-4 grid md:grid-cols-2 gap-3">
       <section class="surface-themed border border-themed rounded p-4">
         <div class="font-display text-[12px] uppercase text-themed font-semibold">Live Arc RPC</div>
-        <div class="mt-1 text-[12px] ${chainOk ? "text-pos" : "text-[#F59E0B]"}">${chainOk ? "Chain ID matches 5042." : "Chain not confirmed this session."}</div>
+        <div class="mt-1 text-[12px] ${chainOk ? "text-pos" : "text-amber-500"}">${chainOk ? "Chain ID matches 5042." : "Chain not confirmed this session."}</div>
         <div class="mt-2">${live.length ? live.map(row).join("") : `<div class="text-[12px] text-muted py-3">Not queried yet.</div>`}</div>
       </section>
       <section class="surface-themed border border-themed rounded p-4">
@@ -3545,8 +3545,8 @@ function proofView() {
         </div>
         <div class="flex items-center gap-2">
           ${state.settlementContractAddress ? `
-            <span class="px-2.5 py-1 rounded bg-[#00E599]/15 text-pos border border-[#00E599]/30 text-[11px] font-mono flex items-center gap-1.5 font-semibold">
-              <span class="w-2 h-2 rounded-full bg-[#00E599] animate-pulse"></span> DEPLOYED ON ARC
+            <span class="px-2.5 py-1 rounded bg-[var(--green-500)]/15 text-pos border border-[var(--green-500)]/30 text-[11px] font-mono flex items-center gap-1.5 font-semibold">
+              <span class="w-2 h-2 rounded-full bg-[var(--green-500)] animate-pulse"></span> DEPLOYED ON ARC
             </span>
           ` : `
             <button data-act="deploy-settlement" ${state.deployingContract ? "disabled" : ""} class="px-4 py-2 rounded bg-[#00F0FF] hover:bg-[#38BDF8] disabled:opacity-60 text-[#08090C] font-display font-bold text-[12px] transition flex items-center gap-1.5 shadow-lg shadow-[#00F0FF]/10">
@@ -3575,7 +3575,7 @@ function proofView() {
         </div>
         <div class="card-themed border border-themed p-3 rounded border border-themed/60">
           <div class="text-[10px] uppercase text-muted">Settlement Address</div>
-          <div class="font-mono text-[11px] ${state.settlementContractAddress ? "text-pos" : "text-[#F59E0B]"} mt-0.5 truncate">
+          <div class="font-mono text-[11px] ${state.settlementContractAddress ? "text-pos" : "text-amber-500"} mt-0.5 truncate">
             ${state.settlementContractAddress ? shortAddr(state.settlementContractAddress) : "Not deployed yet"}
           </div>
           <div class="text-[10px] text-muted mt-1">
@@ -3606,11 +3606,11 @@ function proofView() {
           <p class="text-[12px] text-muted mt-0.5">Streaming institutional price feeds from Uniswap V3 on Ethereum & verified DEX oracles.</p>
         </div>
         <div class="flex items-center gap-2">
-          <span class="px-2.5 py-1 rounded bg-[#00E599]/15 text-pos border border-[#00E599]/30 text-[11px] font-mono flex items-center gap-1.5 font-semibold">
-            <span class="w-2 h-2 rounded-full bg-[#00E599] ${state.marketFeedStatus?.live ? 'animate-pulse' : ''}"></span>
+          <span class="px-2.5 py-1 rounded bg-[var(--green-500)]/15 text-pos border border-[var(--green-500)]/30 text-[11px] font-mono flex items-center gap-1.5 font-semibold">
+            <span class="w-2 h-2 rounded-full bg-[var(--green-500)] ${state.marketFeedStatus?.live ? 'animate-pulse' : ''}"></span>
             ${state.marketFeedStatus?.live ? "LIVE DEX FEED ACTIVE" : "CONNECTING TO DEX"}
           </span>
-          <button data-act="sync-market" class="px-3 py-1 rounded card-themed border border-themed hover:bg-[#343538] text-[11px] text-themed flex items-center gap-1">
+          <button data-act="sync-market" class="px-3 py-1 rounded card-themed border border-themed hover:bg-themed/50 text-[11px] text-themed flex items-center gap-1">
             <span class="material-symbols-outlined text-[14px]">refresh</span> Refresh Feeds
           </button>
         </div>
@@ -3647,7 +3647,7 @@ function proofView() {
       </div>
     </section>
     <section class="mt-3 surface-themed border border-themed rounded p-4">
-      <div class="font-display text-[12px] uppercase text-[#F59E0B]">Known limitations</div>
+      <div class="font-display text-[12px] uppercase text-amber-500">Known limitations</div>
       <ul class="mt-2 space-y-1 text-[12px] text-sub list-disc pl-4">
         ${LIMITATIONS.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}
       </ul>
@@ -3718,13 +3718,13 @@ function reviewModal() {
     <div class="absolute inset-0 surface-themed border border-themed/85 backdrop-blur-md" data-act="close-review"></div>
     <div class="relative z-10 w-full max-w-5xl max-h-[90vh] overflow-y-auto flex flex-col lg:flex-row gap-3">
       <div class="flex-1 card-themed border border-themed rounded-lg p-4 sm:p-6 relative overflow-hidden">
-        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#00f0ff] via-[#dbfcff] to-[#01e599]"></div>
+        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan via-blue-400 to-green-500"></div>
         <div class="flex items-start justify-between gap-2">
           <div>
             <div class="flex items-center gap-1 text-themed font-semibold"><span class="material-symbols-outlined text-[18px]">verified_user</span><span class="font-display text-[16px] sm:text-[18px] uppercase">Review & Confirm Trade</span></div>
             <div class="text-[10px] uppercase tracking-wider text-muted mt-1">EIP-712 ticket · no router broadcast</div>
           </div>
-          <div class="text-[10px] sm:text-[11px] px-2 py-0.5 rounded card-themed border border-themed shrink-0"><span class="w-2 h-2 inline-block rounded-full bg-[#01e599] animate-pulse mr-1"></span>Arc · ${ARC.chainId}</div>
+          <div class="text-[10px] sm:text-[11px] px-2 py-0.5 rounded card-themed border border-themed shrink-0"><span class="w-2 h-2 inline-block rounded-full bg-green-500 animate-pulse mr-1"></span>Arc · ${ARC.chainId}</div>
         </div>
         <div class="mt-4 surface-themed border border-themed p-3 rounded">
           <div class="text-[10px] uppercase text-muted">You send</div>
@@ -3746,7 +3746,7 @@ function reviewModal() {
             });
             if (jit.needed && jit.canCover) {
               return `
-              <div class="mt-3 bg-[#00f0ff]/10 border border-[#00f0ff]/30 p-2.5 rounded text-[12px] text-themed">
+              <div class="mt-3 bg-cyan/10 border border-[#38BDF8]/30 p-2.5 rounded text-[12px] text-themed">
                 <div class="flex items-center gap-1.5 text-themed font-semibold font-semibold text-[11px] uppercase">
                   <span class="material-symbols-outlined text-[16px]">swap_calls</span> Smart Treasury JIT Unwind Armed
                 </div>
@@ -3766,7 +3766,7 @@ function reviewModal() {
         </div>
         <div class="mt-4 flex flex-col sm:flex-row gap-2">
           <button data-act="close-review" class="w-full sm:w-1/3 py-2 rounded card-themed border border-themed font-display text-[13px]">Cancel & Adjust</button>
-          <button data-act="sign" class="w-full sm:w-2/3 py-2 rounded bg-[#00f0ff] text-themed font-bold font-display font-bold text-[13px] flex items-center justify-center gap-1">
+          <button data-act="sign" class="w-full sm:w-2/3 py-2 rounded bg-cyan text-themed font-bold font-display font-bold text-[13px] flex items-center justify-center gap-1">
             <span class="material-symbols-outlined text-[18px]">verified_user</span> Authorize & Sign (${shortAddr(state.address)})
           </button>
         </div>
@@ -3802,10 +3802,10 @@ function executedModal() {
         <div class="flex justify-between gap-2"><span>Signature</span><span class="text-themed font-semibold font-mono text-[11px] truncate text-right">${typeof tx.hash === "string" && tx.hash.length > 20 ? tx.hash.slice(0, 10) + "…" + tx.hash.slice(-8) : tx.hash}</span></div>
       </div>
       <div class="mt-4 flex flex-col gap-2">
-        <button data-act="view-tx-receipt" class="w-full py-2 rounded surface-themed border border-themed hover:card-themed border border-[#00f0ff]/40 text-themed font-semibold font-display text-[12px] flex items-center justify-center gap-1.5 transition">
+        <button data-act="view-tx-receipt" class="w-full py-2 rounded surface-themed border border-themed hover:card-themed border border-[#38BDF8]/40 text-themed font-semibold font-display text-[12px] flex items-center justify-center gap-1.5 transition">
           <span class="material-symbols-outlined text-[16px]">verified</span> View Cryptographic Audit Receipt
         </button>
-        <button data-act="close-tx" class="w-full py-2 rounded bg-[#00f0ff] text-themed font-bold font-display font-bold text-[13px]">View portfolio</button>
+        <button data-act="close-tx" class="w-full py-2 rounded bg-cyan text-themed font-bold font-display font-bold text-[13px]">View portfolio</button>
       </div>
     </div>
   </div>`;
@@ -3824,7 +3824,7 @@ function searchModal() {
     <div class="relative w-full max-w-lg card-themed border border-themed rounded-lg p-3 shadow-2xl border border-themed">
       <div class="relative">
         <span class="material-symbols-outlined text-[18px] text-muted absolute left-2.5 top-2.5">search</span>
-        <input id="search-in" value="${escapeHtml(state.searchQuery)}" class="w-full surface-themed border border-themed border border-themed rounded pl-9 pr-3 py-2 outline-none focus:border-[#00f0ff] text-[14px] text-themed" placeholder="Search markets (e.g. ETH, EURC, USYC, BTC)…" />
+        <input id="search-in" value="${escapeHtml(state.searchQuery)}" class="w-full surface-themed border border-themed border border-themed rounded pl-9 pr-3 py-2 outline-none focus:border-[#38BDF8] text-[14px] text-themed" placeholder="Search markets (e.g. ETH, EURC, USYC, BTC)…" />
       </div>
       <div class="mt-2 max-h-72 overflow-y-auto space-y-1">
         ${pairs.length ? pairs.map(([k, v]) => `
@@ -3881,7 +3881,7 @@ function receiptModal() {
           <div class="text-[11px] text-muted mt-0.5">Arc Mainnet (Chain 5042) · Tamper-Evident SHA-256 Digest</div>
         </div>
         <div class="flex items-center gap-2">
-          <span class="text-[10px] px-2 py-0.5 rounded ${isOk ? "bg-[#70ffba]/15 text-pos font-bold border border-[#70ffba]/30" : "bg-[#ffb4ab]/15 text-neg font-bold"}">
+          <span class="text-[10px] px-2 py-0.5 rounded ${isOk ? "bg-mint-500/15 text-pos font-bold border border-[var(--mint-500)]/30" : "bg-neg/20/15 text-neg font-bold"}">
             ${isOk ? "INTEGRITY VERIFIED" : "DIGEST MISMATCH"}
           </span>
           <button data-act="close-receipt" class="text-muted hover:text-themed p-1"><span class="material-symbols-outlined text-[18px]">close</span></button>
@@ -3919,19 +3919,19 @@ function receiptModal() {
       </div>
 
       <div class="mt-5 flex flex-col sm:flex-row gap-2">
-        <button data-act="copy-receipt" class="flex-1 py-2 rounded card-themed border border-themed hover:bg-[#343538] font-display text-[12px] flex items-center justify-center gap-1.5">
+        <button data-act="copy-receipt" class="flex-1 py-2 rounded card-themed border border-themed hover:bg-themed/50 font-display text-[12px] flex items-center justify-center gap-1.5">
           <span class="material-symbols-outlined text-[16px]">content_copy</span> Copy JSON-LD
         </button>
-        <button data-act="download-receipt" class="flex-1 py-2 rounded card-themed border border-themed hover:bg-[#343538] font-display text-[12px] flex items-center justify-center gap-1.5">
+        <button data-act="download-receipt" class="flex-1 py-2 rounded card-themed border border-themed hover:bg-themed/50 font-display text-[12px] flex items-center justify-center gap-1.5">
           <span class="material-symbols-outlined text-[16px]">download</span> Download (.json)
         </button>
         ${state.settlementContractAddress ? `
-          <button data-act="anchor-receipt" ${state.anchoringReceipt || r.onchainAnchored ? "disabled" : ""} class="flex-1 py-2 rounded ${r.onchainAnchored ? "bg-[#01e599]/20 text-pos border border-[#01e599]/40" : "bg-[#01e599] text-[#003822] hover:bg-[#70ffba]"} disabled:opacity-60 font-display font-bold text-[12px] flex items-center justify-center gap-1.5">
+          <button data-act="anchor-receipt" ${state.anchoringReceipt || r.onchainAnchored ? "disabled" : ""} class="flex-1 py-2 rounded ${r.onchainAnchored ? "bg-green-500/20 text-pos border border-[var(--green-500)]/40" : "bg-green-500 text-[var(--cyan)] hover:bg-mint-500"} disabled:opacity-60 font-display font-bold text-[12px] flex items-center justify-center gap-1.5">
             <span class="material-symbols-outlined text-[16px]">${state.anchoringReceipt ? "sync" : "anchor"}</span>
             ${state.anchoringReceipt ? "Anchoring..." : (r.onchainAnchored ? "Anchored on Arc" : "Anchor to Arc Mainnet")}
           </button>
         ` : `
-          <button data-act="deploy-settlement" class="flex-1 py-2 rounded bg-[#00f0ff] text-themed font-bold hover:bg-[#38bdf8] font-display font-bold text-[12px] flex items-center justify-center gap-1.5">
+          <button data-act="deploy-settlement" class="flex-1 py-2 rounded bg-cyan text-themed font-bold hover:bg-blue-400 font-display font-bold text-[12px] flex items-center justify-center gap-1.5">
             <span class="material-symbols-outlined text-[16px]">rocket_launch</span> Deploy Settlement Contract
           </button>
         `}
@@ -3961,14 +3961,14 @@ function mandateModal() {
       <div class="mt-4 space-y-3 text-[12px]">
         <div>
           <label class="block text-[10px] uppercase text-muted mb-1">Target Agent / Smart Account Address</label>
-          <input id="mandate-agent-input" class="w-full surface-themed border border-themed border border-themed focus:border-[#00f0ff] rounded px-3 py-2 font-mono text-[12px] text-themed outline-none" value="${defaultAgent}" />
+          <input id="mandate-agent-input" class="w-full surface-themed border border-themed border border-themed focus:border-[#38BDF8] rounded px-3 py-2 font-mono text-[12px] text-themed outline-none" value="${defaultAgent}" />
         </div>
 
         <div>
           <label class="block text-[10px] uppercase text-muted mb-1">Authorized Spend Budget (USDC)</label>
           <div class="grid grid-cols-4 gap-2">
             ${[50, 100, 250, 500].map((amt) => `
-              <button data-mandate-spend="${amt}" class="mandate-spend-btn py-1.5 rounded surface-themed border border-themed hover:card-themed border border-themed border border-themed text-center font-display font-semibold transition ${amt===(state.mandateSpend||250)?"border-[#00f0ff] text-themed font-semibold":""}">$${amt}</button>
+              <button data-mandate-spend="${amt}" class="mandate-spend-btn py-1.5 rounded surface-themed border border-themed hover:card-themed border border-themed border border-themed text-center font-display font-semibold transition ${amt===(state.mandateSpend||250)?"border-[#38BDF8] text-themed font-semibold":""}">$${amt}</button>
             `).join("")}
           </div>
         </div>
@@ -3977,7 +3977,7 @@ function mandateModal() {
           <label class="block text-[10px] uppercase text-muted mb-1">Max Slippage Band</label>
           <div class="grid grid-cols-3 gap-2">
             ${[[20,"20 bps (0.2%)"],[30,"30 bps (0.3%)"],[50,"50 bps (0.5%)"]].map(([bps, label]) => `
-              <button data-mandate-slip="${bps}" class="mandate-slip-btn py-1.5 rounded surface-themed border border-themed hover:card-themed border border-themed border border-themed text-center font-display transition ${bps===(state.mandateSlip||30)?"border-[#00f0ff] text-themed font-semibold font-semibold":""}">${label}</button>
+              <button data-mandate-slip="${bps}" class="mandate-slip-btn py-1.5 rounded surface-themed border border-themed hover:card-themed border border-themed border border-themed text-center font-display transition ${bps===(state.mandateSlip||30)?"border-[#38BDF8] text-themed font-semibold font-semibold":""}">${label}</button>
             `).join("")}
           </div>
         </div>
@@ -3986,7 +3986,7 @@ function mandateModal() {
           <label class="block text-[10px] uppercase text-muted mb-1">Session Duration (Time-to-Live)</label>
           <div class="grid grid-cols-4 gap-2">
             ${[[3600,"1 hour"],[14400,"4 hours"],[43200,"12 hours"],[86400,"24 hours"]].map(([sec, label]) => `
-              <button data-mandate-ttl="${sec}" class="mandate-ttl-btn py-1.5 rounded surface-themed border border-themed hover:card-themed border border-themed border border-themed text-center font-display transition ${sec===(state.mandateTtl||14400)?"border-[#00f0ff] text-themed font-semibold font-semibold":""}">${label}</button>
+              <button data-mandate-ttl="${sec}" class="mandate-ttl-btn py-1.5 rounded surface-themed border border-themed hover:card-themed border border-themed border border-themed text-center font-display transition ${sec===(state.mandateTtl||14400)?"border-[#38BDF8] text-themed font-semibold font-semibold":""}">${label}</button>
             `).join("")}
           </div>
         </div>
@@ -3999,7 +3999,7 @@ function mandateModal() {
 
       <div class="mt-5 flex gap-2">
         <button data-act="close-mandate-modal" class="w-1/3 py-2 rounded card-themed border border-themed font-display text-[12px]">Cancel</button>
-        <button data-act="sign-mandate" class="w-2/3 py-2 rounded bg-[#00f0ff] text-themed font-bold font-display font-bold text-[12px] flex items-center justify-center gap-1">
+        <button data-act="sign-mandate" class="w-2/3 py-2 rounded bg-cyan text-themed font-bold font-display font-bold text-[12px] flex items-center justify-center gap-1">
           <span class="material-symbols-outlined text-[16px]">fingerprint</span> Sign & Arm Mandate
         </button>
       </div>

@@ -1,0 +1,32 @@
+export interface TradeReceipt {
+  receiptVersion: string;
+  network: string;
+  chainId: number;
+  rpc: string;
+  receiptId: string;
+  timestamp: string;
+  blockNumber: number;
+  trader: string;
+  pair: string;
+  baseSymbol: string;
+  quoteSymbol: string;
+  baseContract: string;
+  quoteContract: string;
+  side: "buy" | "sell";
+  amountUsd: number;
+  amount: number;
+  effectivePrice: number;
+  quotedPrice: number;
+  estimatedReceived: number;
+  minReceived: number;
+  priceImpactPct: number;
+  slippageBps: number;
+  gasToken: string;
+  gasUsd: number | string;
+  mandateId: string;
+  signature: string;
+  integrityDigest: string;
+  onchainAnchored?: boolean;
+  anchorTx?: string;
+  anchoredAt?: number;
+}

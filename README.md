@@ -4,7 +4,7 @@ Autonomous corporate cash management, 4.95% USYC Treasury sweeps, and just-in-ti
 
 Interminal is the on-chain Brex / Mercury workstation for digital-native enterprises, DAOs, and protocol treasuries operating on Arc. It eliminates idle cash drag by continuously sweeping excess liquid capital into tokenized US Treasuries (Hashnote USYC @ ~4.95% APY), maintains configurable working-capital operating reserves, unwinds liquidity just-in-time for outgoing obligations, and anchors tamper-evident cryptographic audit certificates directly on Arc L1.
 
-There is no compile step. Interminal is a zero-build static terminal: open `index.html` and the desk boots. Tailwind CSS and Google fonts load via CDN. All treasury math, technical indicators, risk scores, gas tank wrapping, and wallet calls run purely client-side in the browser.
+Built with **React 18 + TypeScript + Vite + Tailwind CSS + Zustand**, featuring an institutional desktop sidebar, glassmorphic modals, streaming market marquee, and a zero-custody EIP-712 execution engine.
 
 ```
 Deposit -> Monitor NAV -> Allocate Buffer -> Auto-Sweep Yield -> JIT Unwind -> Audit On-Chain
@@ -12,15 +12,24 @@ Deposit -> Monitor NAV -> Allocate Buffer -> Auto-Sweep Yield -> JIT Unwind -> A
 
 AI recommends. Treasury engine validates. Wallet authorizes. Arc executes.
 
-## Quickstart
+## Quickstart (React 18 + TypeScript)
 
 ```bash
 git clone https://github.com/Tajudeeen/interminal-.git
 cd interminal-
-python3 -m http.server 8765
+npm install
+npm run dev
 ```
 
-Open `http://localhost:8765` in your browser.
+Open `http://localhost:5173` in your browser.
+
+### Build & Typecheck
+
+```bash
+npm run build        # Typecheck via tsc & compile bundle via Vite
+npx vitest run       # Run Vitest unit test suite (12/12 passing)
+node test.mjs        # Run core protocol verification tests (28/28 passing)
+```
 
 Run automated verification tests:
 
