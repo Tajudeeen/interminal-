@@ -7,7 +7,7 @@ import path from "path";
 import { ethers } from "ethers";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-const src = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const src = fs.readFileSync(path.join(root, "legacy", "app.js"), "utf8");
 const sandbox = {
   window: {},
   fetch,
@@ -387,7 +387,7 @@ test("Smart Contract: Compiled InterminalSettlement artifact is production ready
 });
 
 test("Smart Contract: contractArtifact.js is synced for browser execution", () => {
-  const jsPath = path.join(root, "contractArtifact.js");
+  const jsPath = path.join(root, "legacy", "contractArtifact.js");
   assert.ok(fs.existsSync(jsPath), "contractArtifact.js must exist for browser wallet deployment");
   const content = fs.readFileSync(jsPath, "utf8");
   assert.ok(content.includes("SETTLEMENT_ARTIFACT"), "Must declare SETTLEMENT_ARTIFACT");

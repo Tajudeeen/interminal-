@@ -2,12 +2,12 @@
   "name": "interminal",
   "version": "1.0.0",
   "description": "Arc-native trading workstation.",
-  "main": "app.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "node test.mjs",
+    "test": "vitest run",
+    "test:legacy": "node test.mjs",
     "compile": "node scripts/compile.mjs",
     "deploy": "node scripts/deploy.mjs"
   },

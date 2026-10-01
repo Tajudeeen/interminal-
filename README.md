@@ -23,22 +23,15 @@ npm run dev
 
 Open `http://localhost:5173` in your browser.
 
-### Build & Typecheck
+### Build & Verification
 
 ```bash
 npm run build        # Typecheck via tsc & compile bundle via Vite
-npx vitest run       # Run Vitest unit test suite (12/12 passing)
-node test.mjs        # Run core protocol verification tests (28/28 passing)
+npm test             # Run Vitest unit test suite (13/13 passing)
+npm run test:legacy  # Run core protocol verification tests (28/28 passing)
 ```
 
-Run automated verification tests:
-
-```bash
-node test.mjs
-node test-dom.mjs
-```
-
-This re-queries Arc Mainnet (`eth_chainId` must equal `5042`), tests on-chain contract bytecode, verifies mathematical formulas, checks DCA slices and treasury buffers, and exercises all 14 fail-closed gates.
+This verifies Arc Mainnet connectivity (`eth_chainId` equals `5042`), tests on-chain contract bytecode, verifies mathematical formulas, checks DCA slices and treasury buffers, and exercises all 14 fail-closed gates.
 
 Connect MetaMask, Rabby, or any injected EIP-1193 wallet. Interminal automatically requests Arc Mainnet and refuses execution on any other chain.
 
