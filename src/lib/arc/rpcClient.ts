@@ -19,6 +19,7 @@ export async function publicRpc(method: string, params: any[] = [], retries = 2)
     }
     const data = params[0]?.data;
     const isErc20Balance = typeof data === "string" && data.startsWith("0x70a08231") && data.length === 74;
+    const isErc20Allowance = typeof data === "string" && data.startsWith("0xdd62ed3e") && data.length === 138;
     const isErc20Meta =
       typeof data === "string" &&
       (data === "0x06fdde03" || // name()
@@ -32,7 +33,7 @@ export async function publicRpc(method: string, params: any[] = [], retries = 2)
         (data.startsWith("0x5ac3de83") && data.length === 74) || // mandateCumulativeSpend(bytes32)
         (data.startsWith("0x3644e515") && data.length === 10)); // DOMAIN_SEPARATOR()
 
-    if (!isErc20Balance && !isErc20Meta && !isSettlementQuery) {
+    if (!isErc20Balance && !isErc20Allowance && !isErc20Meta && !isSettlementQuery) {
       throw new Error("eth_call data blocked");
     }
   }
@@ -261,4 +262,43 @@ export async function querySettlementDetails(): Promise<{
     blockNumber,
     latencyMs,
   };
+}
+
+/**
+ * Read the current ERC-20 allowance the owner has granted to `spender`.
+ */
+export async function erc20Allowance(
+  tokenAddress: string,
+  owner: string,
+  spender: string,
+): Promise<bigint> {
+  // allowance(address,address) selector = 0xdd62ed3e
+  const data =
+    "0xdd62ed3e" +
+    owner.replace(/^0x/i, "").toLowerCase().padStart(64, "0") +
+    spender.replace(/^0x/i, "").toLowerCase().padStart(64, "0");
+  try {
+    const hex = await publicRpc("eth_call", [{ to: tokenAddress, data }, "latest"]);
+    return hex && hex !== "0x" ? BigInt(hex) : 0n;
+  } catch {
+    return 0n;
+  }
+}
+
+/**
+ * Broadcast an ERC-20 approve(spender, amount) transaction via the injected wallet.
+ * Returns the tx hash.
+ */
+export async function sendApproval(
+  from: string,
+  tokenAddress: string,
+  spender: string,
+  amount: bigint,
+): Promise<string> {
+  const amountHex = amount.toString(16).padStart(64, "0");
+  const spenderPadded = spender.replace(/^0x/i, "").toLowerCase().padStart(64, "0");
+  const data = "0x095ea7b3" + spenderPadded + amountHex; // approve(address,uint256)
+  return walletRpc("eth_sendTransaction", [
+    { from, to: tokenAddress, data, gas: "0xC350" }, // 50 000 gas
+  ]);
 }

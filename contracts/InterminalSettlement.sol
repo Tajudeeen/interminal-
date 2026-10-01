@@ -354,8 +354,9 @@ contract InterminalSettlement {
         require(msg.sender == mandate.authorizer, "Interminal: unauthorized revocation");
         bytes32 mandateDigest = hashAgentMandate(mandate);
         revokedMandates[mandateDigest] = true;
+        uint256 revokedNonce = mandateNonces[msg.sender];
         mandateNonces[msg.sender]++;
-        emit MandateRevoked(msg.sender, mandateDigest, mandateNonces[msg.sender]);
+        emit MandateRevoked(msg.sender, mandateDigest, revokedNonce);
     }
 
     // --- Immutable Receipt Anchoring ---

@@ -8,6 +8,18 @@
 [![Smart Contract](https://img.shields.io/badge/Settlement%20Contract-0x2b38...ab36-10B981?style=flat-square)](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36)
 [![React 18 + TS](https://img.shields.io/badge/Stack-React%2018%20%7C%20TypeScript%20%7C%20Vite%20%7C%20Zustand-blue?style=flat-square)](https://react.dev)
 [![Tests Passing](https://img.shields.io/badge/Tests-41%2F41%20Passing-brightgreen?style=flat-square)](test.mjs)
+[![X / Twitter](https://img.shields.io/badge/Builder-%40Deeen__Codes-000000?style=flat-square&logo=x)](https://x.com/Deeen_Codes)
+[![GitHub](https://img.shields.io/badge/GitHub-Tajudeeen-181717?style=flat-square&logo=github)](https://github.com/Tajudeeen)
+
+---
+
+## Builder
+
+| | |
+|---|---|
+| **X / Twitter** | [@Deeen_Codes](https://x.com/Deeen_Codes) |
+| **GitHub** | [github.com/Tajudeeen](https://github.com/Tajudeeen) |
+| **Repo** | [github.com/Tajudeeen/interminal-](https://github.com/Tajudeeen/interminal-) |
 
 ---
 

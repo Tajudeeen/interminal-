@@ -22,6 +22,8 @@ export const TreasuryCockpitView: React.FC = () => {
     connectWallet,
     addToast,
     setView,
+    executing,
+    executeSweepOnchain,
   } = useAppStore();
 
   const [simHorizonDays, setSimHorizonDays] = useState<number>(365);
@@ -48,28 +50,19 @@ export const TreasuryCockpitView: React.FC = () => {
       addToast("Sweep Not Needed", "Liquid USDC is within the target operating cash buffer.", "info");
       return;
     }
-    const sweepAmt = sweep.sweepAmount;
-    useAppStore.setState((s) => ({
-      balances: {
-        ...s.balances,
-        USDC: Math.max(0, (s.balances.USDC || 0) - sweepAmt),
-        USYC: (s.balances.USYC || 0) + sweepAmt,
-      },
-      activity: [
-        {
-          ts: Date.now(),
-          type: "sweep",
-          label: `Yield Sweep: $${sweepAmt.toLocaleString()} USDC -> USYC T-Bills`,
-          detail: `Earns +$${sweep.annualExtraYield.toFixed(2)}/yr @ 4.95% APY`,
-        },
-        ...s.activity,
-      ],
-    }));
-    addToast(
-      "Yield Sweep Complete",
-      `Swept $${sweepAmt.toLocaleString()} USDC into USYC T-Bills (+4.95% APY).`,
-      "ok"
-    );
+    executeSweepOnchain(sweep.sweepAmount, "sweep");
+  };
+
+  const handleJitUnwind = () => {
+    if (!jit.needed || jit.usycToRedeem <= 0) {
+      addToast("No Unwind Needed", "Liquid USDC already covers the stress-test amount.", "info");
+      return;
+    }
+    if (!jit.canCover) {
+      addToast("Insufficient USYC", "Combined USDC + USYC cannot cover the disbursement.", "err");
+      return;
+    }
+    executeSweepOnchain(jit.usycToRedeem, "unwind");
   };
 
   const handleSimulateInflow = (amt: number) => {
@@ -324,11 +317,12 @@ export const TreasuryCockpitView: React.FC = () => {
                 fullWidth
                 size="md"
                 onClick={handleSweepNow}
-                disabled={!sweep.recommended}
+                disabled={!sweep.recommended || executing}
+                isLoading={executing && sweep.recommended}
                 leftIcon={<span className="material-symbols-outlined text-[16px]">bolt</span>}
               >
                 {sweep.recommended
-                  ? `Sweep $${sweep.sweepAmount.toLocaleString()} USDC to USYC T-Bills`
+                  ? `Sweep $${sweep.sweepAmount.toLocaleString()} USDC → USYC T-Bills${livePortfolio ? " (On-Chain)" : " (Sim)"}`
                   : "Cash Buffer Fully Balanced"}
               </Button>
             </div>
@@ -408,6 +402,21 @@ export const TreasuryCockpitView: React.FC = () => {
             <span className="material-symbols-outlined text-[15px] text-pos">verified</span>
             Zero capital drag: funds remain 100% productive in T-Bills until millisecond of settlement.
           </div>
+
+          {/* JIT Unwind Execute Button */}
+          {jit.needed && jit.canCover && (
+            <Button
+              variant="primary"
+              fullWidth
+              size="md"
+              onClick={handleJitUnwind}
+              disabled={executing}
+              isLoading={executing}
+              leftIcon={<span className="material-symbols-outlined text-[16px]">swap_horiz</span>}
+            >
+              Execute JIT Unwind: ${jit.usycToRedeem.toLocaleString()} USYC → USDC{livePortfolio ? " (On-Chain)" : " (Sim)"}
+            </Button>
+          )}
         </div>
       </div>
 

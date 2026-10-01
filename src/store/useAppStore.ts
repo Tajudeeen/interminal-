@@ -28,6 +28,8 @@ import {
   publicRpc,
   readChainId,
   verifyArcLive,
+  erc20Allowance,
+  sendApproval,
 } from "../lib/arc/rpcClient";
 
 export interface ToastItem {
@@ -136,6 +138,7 @@ export interface AppState {
   createAgentMandate: (params: { spendUsd: number; slipBps: number; ttlHours: number; pairs: string[] }) => Promise<void>;
   runProof: () => Promise<void>;
   importCustomToken: (address: string) => Promise<void>;
+  executeSweepOnchain: (sweepAmountUsdc: number, direction: "sweep" | "unwind") => Promise<void>;
   judgeTourOpen: boolean;
   judgeTourStep: number;
   setJudgeTourOpen: (open: boolean) => void;
@@ -819,6 +822,233 @@ export const useAppStore = create<AppState>((set, get) => {
             checkedAt: Date.now(),
           },
         });
+      }
+    },
+
+    executeSweepOnchain: async (sweepAmountUsdc: number, direction: "sweep" | "unwind") => {
+      const { address, livePortfolio, balances, ticketNonce, activity } = get();
+
+      if (!sweepAmountUsdc || sweepAmountUsdc <= 0) {
+        get().addToast("Nothing to sweep", "Amount must be greater than zero.", "warn");
+        return;
+      }
+
+      // ── SIMULATION PATH (no live wallet) ──────────────────────────────────
+      if (!livePortfolio || !address) {
+        if (direction === "sweep") {
+          useAppStore.setState((s) => ({
+            balances: {
+              ...s.balances,
+              USDC: Math.max(0, (s.balances.USDC || 0) - sweepAmountUsdc),
+              USYC: (s.balances.USYC || 0) + sweepAmountUsdc,
+            },
+            activity: [
+              {
+                ts: Date.now(),
+                type: "sweep",
+                label: `Yield Sweep: $${sweepAmountUsdc.toLocaleString()} USDC → USYC T-Bills`,
+                detail: `Simulation: +$${(sweepAmountUsdc * 0.0495).toFixed(2)}/yr @ 4.95% APY`,
+              },
+              ...s.activity,
+            ],
+          }));
+          get().addToast("Yield Sweep (Sim)", `Swept $${sweepAmountUsdc.toLocaleString()} USDC → USYC.`, "ok");
+        } else {
+          useAppStore.setState((s) => ({
+            balances: {
+              ...s.balances,
+              USDC: (s.balances.USDC || 0) + sweepAmountUsdc,
+              USYC: Math.max(0, (s.balances.USYC || 0) - sweepAmountUsdc),
+            },
+            activity: [
+              {
+                ts: Date.now(),
+                type: "sweep",
+                label: `JIT Unwind: $${sweepAmountUsdc.toLocaleString()} USYC → USDC (Par)`,
+                detail: "Simulation: redeemed at 1:1 parity with zero slippage",
+              },
+              ...s.activity,
+            ],
+          }));
+          get().addToast("JIT Unwind (Sim)", `Redeemed $${sweepAmountUsdc.toLocaleString()} USYC → USDC.`, "ok");
+        }
+        return;
+      }
+
+      // ── LIVE ARC MAINNET PATH ─────────────────────────────────────────────
+      set({ executing: true });
+      try {
+        const trader = normalizeAddress(address);
+        const settlement = ARC.settlement.toLowerCase();
+
+        // Which token goes IN, which goes OUT
+        const isSweep = direction === "sweep"; // USDC → USYC
+        const tokenInAddr = isSweep ? ARC.usdcErc20 : ARC.tokens.USYC.address;
+        const tokenOutAddr = isSweep ? ARC.tokens.USYC.address : ARC.usdcErc20;
+        const decimalsIn = isSweep ? 6 : ARC.tokens.USYC.decimals; // both 6 on Arc
+
+        // Convert dollar amount to raw units (6 decimals for both USDC ERC-20 and USYC)
+        const amountInRaw = BigInt(Math.round(sweepAmountUsdc * 10 ** decimalsIn));
+        // 0.05% slippage for par-pegged assets — tighter than the trading terminal
+        const minOutRaw = (amountInRaw * 9995n) / 10000n;
+
+        // ── Step 1: Check and set ERC-20 allowance if needed ────────────────
+        get().addToast(
+          "Step 1/3 — Checking Allowance",
+          `Verifying ${isSweep ? "USDC" : "USYC"} spending approval for the settlement contract.`,
+          "info",
+        );
+        const currentAllowance = await erc20Allowance(tokenInAddr, trader, settlement);
+        if (currentAllowance < amountInRaw) {
+          get().addToast(
+            "Approval Required",
+            `Please approve the settlement contract to spend your ${isSweep ? "USDC" : "USYC"}.`,
+            "info",
+          );
+          // uint256 max approval so user doesn't need to approve every sweep
+          const maxUint256 =
+            115792089237316195423570985008687907853269984665640564039457584007913129639935n;
+          await sendApproval(trader, tokenInAddr, settlement, maxUint256);
+          get().addToast("Approval Confirmed", "Spending approved. Proceeding to sign trade.", "ok");
+        }
+
+        // ── Step 2: Build and sign EIP-712 TradeTicket ──────────────────────
+        get().addToast(
+          "Step 2/3 — Sign Trade Ticket",
+          "Please sign the EIP-712 TradeTicket in your wallet.",
+          "info",
+        );
+        const deadline = Math.floor(Date.now() / 1000) + 600; // 10 min
+        const nonce = ticketNonce;
+
+        const eip712Payload = {
+          types: {
+            EIP712Domain: [
+              { name: "name", type: "string" },
+              { name: "version", type: "string" },
+              { name: "chainId", type: "uint256" },
+              { name: "verifyingContract", type: "address" },
+            ],
+            TradeTicket: [
+              { name: "trader", type: "address" },
+              { name: "tokenIn", type: "address" },
+              { name: "tokenOut", type: "address" },
+              { name: "amountIn", type: "uint256" },
+              { name: "minAmountOut", type: "uint256" },
+              { name: "nonce", type: "uint256" },
+              { name: "deadline", type: "uint256" },
+            ],
+          },
+          primaryType: "TradeTicket",
+          domain: {
+            name: "Interminal",
+            version: "1",
+            chainId: ARC.chainId,
+            verifyingContract: ARC.settlement,
+          },
+          message: {
+            trader,
+            tokenIn: tokenInAddr.toLowerCase(),
+            tokenOut: tokenOutAddr.toLowerCase(),
+            amountIn: amountInRaw.toString(),
+            minAmountOut: minOutRaw.toString(),
+            nonce,
+            deadline,
+          },
+        };
+
+        const serialized = JSON.stringify(eip712Payload);
+        let sig: string;
+        try {
+          sig = await walletRpc("eth_signTypedData_v4", [trader, serialized]);
+        } catch (signErr: any) {
+          if (signErr?.message?.includes("JSON") || signErr?.message?.includes("parse")) {
+            sig = await walletRpc("eth_signTypedData_v4", [trader, eip712Payload]);
+          } else {
+            throw signErr;
+          }
+        }
+        if (typeof sig !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(sig)) {
+          throw new Error("Wallet returned malformed EIP-712 signature");
+        }
+
+        // ── Step 3: Encode and broadcast executeTradeTicket ─────────────────
+        get().addToast(
+          "Step 3/3 — Broadcasting Swap",
+          "Sending executeTradeTicket to Arc Mainnet...",
+          "info",
+        );
+
+        // ABI-encode executeTradeTicket(TradeTicket calldata ticket, bytes calldata signature)
+        // selector: 0x254f432b
+        const pad32 = (v: bigint | number | string) => {
+          if (typeof v === "bigint" || typeof v === "number") {
+            return BigInt(v).toString(16).padStart(64, "0");
+          }
+          return String(v).replace(/^0x/i, "").toLowerCase().padStart(64, "0");
+        };
+
+        const cleanSig = sig.replace(/^0x/i, "");
+        const sigLen = (cleanSig.length / 2).toString(16).padStart(64, "0");
+        const sigPadded = cleanSig.padEnd(Math.ceil(cleanSig.length / 64) * 64, "0");
+        const calldata =
+          "0x254f432b" +
+          pad32(trader) +
+          pad32(tokenInAddr) +
+          pad32(tokenOutAddr) +
+          pad32(amountInRaw) +
+          pad32(minOutRaw) +
+          pad32(nonce) +
+          pad32(deadline) +
+          (256).toString(16).padStart(64, "0") + // sig bytes offset
+          sigLen +
+          sigPadded;
+
+        const txHash = await walletRpc("eth_sendTransaction", [
+          { from: trader, to: ARC.settlement, data: calldata, gas: "0x55730" }, // ~350 000 gas
+        ]);
+
+        // ── Update local state optimistically ───────────────────────────────
+        const label = isSweep
+          ? `On-Chain Yield Sweep: $${sweepAmountUsdc.toLocaleString()} USDC → USYC T-Bills`
+          : `On-Chain JIT Unwind: $${sweepAmountUsdc.toLocaleString()} USYC → USDC (Par)`;
+
+        const newActivity = [
+          {
+            ts: Date.now(),
+            type: "sweep",
+            label,
+            detail: `Arc Mainnet · Tx: ${txHash.slice(0, 18)}… · EIP-712 ${sig.slice(0, 10)}…`,
+            hash: txHash,
+          },
+          ...activity,
+        ];
+
+        const nextBalances = { ...balances };
+        if (isSweep) {
+          nextBalances.USDC = Math.max(0, (nextBalances.USDC || 0) - sweepAmountUsdc);
+          nextBalances.USYC = (nextBalances.USYC || 0) + sweepAmountUsdc;
+        } else {
+          nextBalances.USYC = Math.max(0, (nextBalances.USYC || 0) - sweepAmountUsdc);
+          nextBalances.USDC = (nextBalances.USDC || 0) + sweepAmountUsdc;
+        }
+
+        set({
+          balances: nextBalances,
+          ticketNonce: ticketNonce + 1,
+          activity: newActivity,
+          executing: false,
+        });
+
+        get().addToast(
+          isSweep ? "Yield Sweep Sent ✓" : "JIT Unwind Sent ✓",
+          `Tx: ${txHash.slice(0, 18)}… — view on Arc Explorer.`,
+          "ok",
+        );
+      } catch (err: any) {
+        set({ executing: false });
+        const msg = err?.code === 4001 ? "Signature rejected by user." : (err?.message || String(err));
+        get().addToast("Sweep Failed", msg, "err");
       }
     },
 
