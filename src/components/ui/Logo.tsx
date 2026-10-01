@@ -41,7 +41,7 @@ export const Logo: React.FC<LogoProps> = ({ size = 32, showText = false, classNa
             <span className="font-display font-black text-sm tracking-wider text-themed">
               INTERMINAL
             </span>
-            <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan/15 text-cyan border border-cyan/30">
+            <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-lime-500/15 text-lime-500 border border-lime-500/30">
               ARC
             </span>
           </div>

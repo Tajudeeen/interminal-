@@ -8,6 +8,7 @@ import {
 } from "../../lib/math/treasury";
 import { portfolioSnapshot } from "../../lib/math/risk";
 import { Button } from "../ui/Button";
+import { CapitalFlowDiagram } from "../treasury/CapitalFlowDiagram";
 
 export const TreasuryCockpitView: React.FC = () => {
   const {
@@ -188,6 +189,9 @@ export const TreasuryCockpitView: React.FC = () => {
         </div>
       </div>
 
+      {/* Autonomous Capital Flow Topography Diagram */}
+      <CapitalFlowDiagram />
+
       {/* Main Interactive Controls: Target Operating Buffer & Yield Sweep */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Module 1: Target Operating Cash Buffer Selector */}
@@ -219,8 +223,8 @@ export const TreasuryCockpitView: React.FC = () => {
                   onClick={() => setTargetBufferUsd(val)}
                   className={`py-2 px-3 rounded-card font-mono text-xs transition-all ${
                     targetBufferUsd === val
-                      ? "bg-cyan text-black font-black shadow-md scale-102"
-                      : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-cyan/40"
+                      ? "bg-lime-500 text-black font-black shadow-md scale-102"
+                      : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-lime-500/40"
                   }`}
                 >
                   ${val}
@@ -242,7 +246,7 @@ export const TreasuryCockpitView: React.FC = () => {
               step={100}
               value={targetBufferUsd}
               onChange={(e) => setTargetBufferUsd(Number(e.target.value))}
-              className="w-full accent-cyan cursor-pointer"
+              className="w-full accent-lime-500 cursor-pointer"
             />
           </div>
 
@@ -312,8 +316,8 @@ export const TreasuryCockpitView: React.FC = () => {
                   onClick={() => setStressTestAmount(val)}
                   className={`py-2 px-3 rounded-card font-mono text-xs transition-all ${
                     stressTestAmount === val
-                      ? "bg-cyan text-black font-black shadow-md scale-102"
-                      : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-cyan/40"
+                      ? "bg-lime-500 text-black font-black shadow-md scale-102"
+                      : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-lime-500/40"
                   }`}
                 >
                   ${val >= 1000 ? `${val / 1000}k` : val}
@@ -357,7 +361,7 @@ export const TreasuryCockpitView: React.FC = () => {
       <div className="card-themed border border-themed rounded-card p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="font-mono text-[10px] uppercase tracking-widest text-cyan font-bold">
+            <div className="font-mono text-[10px] uppercase tracking-widest text-lime-500 font-bold">
               Treasury Horizon Projection
             </div>
             <h3 className="font-display font-bold text-base text-themed mt-0.5">
@@ -378,8 +382,8 @@ export const TreasuryCockpitView: React.FC = () => {
                 onClick={() => setSimHorizonDays(p.days)}
                 className={`px-3 py-1.5 rounded-card transition-all ${
                   simHorizonDays === p.days
-                    ? "bg-cyan text-black font-bold shadow-xs"
-                    : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-cyan/30"
+                    ? "bg-lime-500 text-black font-bold shadow-xs"
+                    : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-lime-500/30"
                 }`}
               >
                 {p.label}

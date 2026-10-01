@@ -1,5 +1,6 @@
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
+import { ARC } from "../../constants/arc";
 import { shortAddr } from "../../lib/arc/wallet";
 import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
@@ -19,6 +20,7 @@ export const Sidebar: React.FC = () => {
     setGasTankModalOpen,
     setSearchOpen,
     launchDemo,
+    startJudgeTour,
   } = useAppStore();
 
   const navItems = [
@@ -40,7 +42,7 @@ export const Sidebar: React.FC = () => {
         >
           <Logo size={32} />
           <div>
-            <div className="font-display font-extrabold text-[15px] tracking-tight leading-none text-themed group-hover:text-cyan transition-colors">
+            <div className="font-display font-extrabold text-[15px] tracking-tight leading-none text-themed group-hover:text-lime-500 transition-colors">
               INTERMINAL
             </div>
             <div className="font-mono text-[9px] text-muted tracking-widest uppercase mt-1">
@@ -50,8 +52,24 @@ export const Sidebar: React.FC = () => {
         </button>
       </div>
 
+      {/* Arc Hackathon Judge Showcase Tour Button */}
+      <div className="px-3 pt-3 pb-1">
+        <button
+          onClick={startJudgeTour}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-card bg-cyan/10 hover:bg-cyan/20 border border-cyan/40 text-cyan text-xs font-display font-bold transition-all shadow-sm group"
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-cyan animate-pulse" />
+            <span>Judge Tour (3 min)</span>
+          </div>
+          <span className="material-symbols-outlined text-[15px] group-hover:translate-x-0.5 transition-transform">
+            arrow_forward
+          </span>
+        </button>
+      </div>
+
       {/* Primary Navigation Links */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
         <div className="px-3 pb-2 text-[10px] font-mono uppercase tracking-widest text-muted">
           Institutional Desk
         </div>
@@ -185,6 +203,21 @@ export const Sidebar: React.FC = () => {
             </Button>
           </div>
         )}
+
+        {/* Verified Arc Contract Explorer Link */}
+        <a
+          href={`https://explorer.arc.network/address/${ARC.settlement}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between px-2.5 py-1.5 rounded-card bg-themed-card/40 hover:bg-cyan/10 border border-dashed border-themed/40 hover:border-cyan/40 text-[10px] font-mono text-muted hover:text-cyan transition-colors"
+          title="Inspect verified contract on Arc Mainnet Explorer"
+        >
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="material-symbols-outlined text-[13px] text-pos">verified</span>
+            <span className="truncate">Settlement: {shortAddr(ARC.settlement)}</span>
+          </div>
+          <span className="material-symbols-outlined text-[12px] shrink-0">open_in_new</span>
+        </a>
 
         {/* Footer info & Theme toggle */}
         <div className="flex items-center justify-between px-1 pt-1">

@@ -1,0 +1,212 @@
+import React from "react";
+import { useAppStore } from "../../store/useAppStore";
+import { ARC } from "../../constants/arc";
+import { shortAddr } from "../../lib/arc/wallet";
+import { Button } from "../ui/Button";
+
+export const JudgeTourBar: React.FC = () => {
+  const {
+    judgeTourOpen,
+    judgeTourStep,
+    setJudgeTourOpen,
+    setJudgeTourStep,
+    setView,
+    setSide,
+    setAmount,
+    balances,
+    targetBufferUsd,
+    setActiveReceiptModal,
+    auditReceipts,
+    addToast,
+  } = useAppStore();
+
+  if (!judgeTourOpen) return null;
+
+  const liquidUsdc = balances.USDC || 0;
+  const excessCash = Math.max(0, liquidUsdc - targetBufferUsd);
+
+  // Step 1: Execute Sweep
+  const handleStep1Sweep = () => {
+    if (excessCash <= 0) {
+      addToast("Cash Already Optimized", "Idle cash is already swept into USYC T-Bills.", "info");
+      return;
+    }
+    useAppStore.setState((s) => ({
+      balances: {
+        ...s.balances,
+        USDC: s.targetBufferUsd,
+        USYC: (s.balances.USYC || 0) + excessCash,
+      },
+      activity: [
+        {
+          ts: Date.now(),
+          type: "sweep",
+          label: `Judge Demo Sweep: $${excessCash.toLocaleString()} USDC -> USYC T-Bills`,
+          detail: `Earns +$${(excessCash * 0.0495).toFixed(2)}/yr continuous yield @ 4.95% APY`,
+        },
+        ...s.activity,
+      ],
+    }));
+    addToast(
+      "Yield Sweep Complete!",
+      `Swept $${excessCash.toLocaleString()} USDC into USYC T-Bills at 4.95% APY.`,
+      "ok"
+    );
+  };
+
+  // Step 2: Set up $25,000 trade and execute
+  const handleStep2SimulateTrade = () => {
+    setView("terminal");
+    setSide("buy");
+    setAmount(25000);
+    // Execute trade directly in demo mode
+    useAppStore.getState().executeTrade();
+  };
+
+  // Step 3: Inspect latest receipt
+  const handleStep3InspectReceipt = () => {
+    setView("ledger");
+    if (auditReceipts.length > 0) {
+      setActiveReceiptModal(auditReceipts[0]);
+    }
+  };
+
+  const goToStep = (step: number) => {
+    setJudgeTourStep(step);
+    if (step === 1) setView("portfolio");
+    if (step === 2) {
+      setView("terminal");
+      setSide("buy");
+      setAmount(25000);
+    }
+    if (step === 3) setView("ledger");
+  };
+
+  return (
+    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:bottom-8 z-40 md:max-w-xl w-full animate-view-fade">
+      <div className="glass-modal rounded-2xl p-5 border border-lime-500/40 shadow-2xl space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-lime-500 animate-pulse" />
+            <span className="font-display font-black text-xs sm:text-sm text-themed tracking-wide uppercase">
+              Arc Hackathon Judge Showcase Tour
+            </span>
+            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-lime-500/15 text-lime-500 border border-lime-500/30 font-bold">
+              3-MIN EVALUATION
+            </span>
+          </div>
+          <button
+            onClick={() => setJudgeTourOpen(false)}
+            className="text-muted hover:text-themed transition-colors p-1"
+            title="Close Tour"
+          >
+            <span className="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+
+        {/* Step Indicator Tabs */}
+        <div className="grid grid-cols-3 gap-1.5 font-mono text-[11px]">
+          {[
+            { step: 1, label: "1. 4.95% Sweep" },
+            { step: 2, label: "2. JIT Unwind" },
+            { step: 3, label: "3. Arc Audit" },
+          ].map((item) => (
+            <button
+              key={item.step}
+              onClick={() => goToStep(item.step)}
+              className={`py-1.5 px-2 rounded-lg text-center transition-all ${
+                judgeTourStep === item.step
+                  ? "bg-lime-500 text-black font-extrabold shadow-sm scale-102"
+                  : "bg-themed-card/50 text-sub hover:text-themed border border-themed/30"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Step Content */}
+        {judgeTourStep === 1 && (
+          <div className="space-y-3">
+            <div className="font-mono text-xs text-sub leading-relaxed">
+              <span className="text-themed font-bold">Pillar 1: Continuous Cash Optimization.</span> Operating cash buffer retains $5,000 for gas & wires; detects{" "}
+              <span className="text-pos font-bold">${excessCash.toLocaleString()} USDC</span> idle cash drag and automatically sweeps to USYC T-Bills.
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleStep1Sweep}
+                leftIcon={<span className="material-symbols-outlined text-[16px]">bolt</span>}
+              >
+                1-Click Sweep ${excessCash.toLocaleString()} to USYC
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => goToStep(2)}
+                rightIcon={<span className="material-symbols-outlined text-[14px]">arrow_forward</span>}
+              >
+                Next: JIT Unwind
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {judgeTourStep === 2 && (
+          <div className="space-y-3">
+            <div className="font-mono text-xs text-sub leading-relaxed">
+              <span className="text-themed font-bold">Pillar 2: Just-In-Time (JIT) Liquidity Bridge.</span> An outgoing wire or trade of{" "}
+              <span className="text-lime-500 font-bold">$25,000</span> exceeds liquid USDC. USYC T-Bills automatically redeem at par ($1.00) instantly with zero capital drag.
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleStep2SimulateTrade}
+                leftIcon={<span className="material-symbols-outlined text-[16px]">swap_calls</span>}
+              >
+                Simulate $25k Trade & JIT Unwind
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => goToStep(3)}
+                rightIcon={<span className="material-symbols-outlined text-[14px]">arrow_forward</span>}
+              >
+                Next: Arc Audit
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {judgeTourStep === 3 && (
+          <div className="space-y-3">
+            <div className="font-mono text-xs text-sub leading-relaxed">
+              <span className="text-themed font-bold">Pillar 3: Zero-Custody EIP-712 Mandates & Arc Settlement.</span> Every ticket generates a canonical JSON-LD certificate with SHA-256 integrity proofs anchored to verified Arc contract{" "}
+              <span className="text-pos font-bold font-mono">{shortAddr(ARC.settlement)}</span> on Chain 5042.
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleStep3InspectReceipt}
+                leftIcon={<span className="material-symbols-outlined text-[16px]">verified</span>}
+              >
+                Inspect Cryptographic Certificate
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setJudgeTourOpen(false)}
+              >
+                Finish Tour
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

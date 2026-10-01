@@ -21,7 +21,7 @@ export const BottomNav: React.FC = () => {
             key={item.id}
             onClick={() => setView(item.id)}
             className={`flex flex-col items-center py-1 px-2 rounded-card transition-colors ${
-              isActive ? "text-pos font-bold" : "text-muted hover:text-themed"
+              isActive ? "text-lime-500 font-bold" : "text-muted hover:text-themed"
             }`}
           >
             <span className="material-symbols-outlined text-[20px]">{item.icon}</span>

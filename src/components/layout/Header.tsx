@@ -16,6 +16,7 @@ export const Header: React.FC = () => {
     setGasTankModalOpen,
     setSearchOpen,
     nativeGasBalance,
+    startJudgeTour,
   } = useAppStore();
 
   return (
@@ -26,7 +27,7 @@ export const Header: React.FC = () => {
       >
         <Logo size={28} />
         <div className="text-left leading-tight">
-          <div className="font-display font-extrabold text-sm text-themed group-hover:text-cyan transition-colors">
+          <div className="font-display font-extrabold text-sm text-themed group-hover:text-lime-500 transition-colors">
             INTERMINAL
           </div>
           <div className="font-mono text-[8px] text-muted uppercase">Arc 5042</div>
@@ -34,6 +35,16 @@ export const Header: React.FC = () => {
       </button>
 
       <div className="flex items-center gap-2">
+        {/* Judge Tour Button */}
+        <Button
+          size="xs"
+          variant="outline"
+          className="border-lime-500/40 text-lime-500 hover:bg-lime-500/10 font-bold"
+          onClick={startJudgeTour}
+          leftIcon={<span className="w-1.5 h-1.5 rounded-full bg-lime-500 animate-pulse" />}
+        >
+          Judge Tour
+        </Button>
         {/* Gas Tank Pill */}
         <button
           onClick={() => setGasTankModalOpen(true)}

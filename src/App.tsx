@@ -6,6 +6,7 @@ import { BottomNav } from "./components/layout/BottomNav";
 import { MarketTickerMarquee } from "./components/layout/MarketTickerMarquee";
 import { ToastStack } from "./components/layout/ToastStack";
 import { SplashScreen } from "./components/layout/SplashScreen";
+import { JudgeTourBar } from "./components/layout/JudgeTourBar";
 
 // Views
 import { LandingView } from "./components/views/LandingView";
@@ -98,6 +99,9 @@ export const App: React.FC = () => {
 
       {/* Real-Time Toast Notifications */}
       <ToastStack />
+
+      {/* Arc Hackathon Judge Showcase Tour Floating HUD */}
+      <JudgeTourBar />
 
       {/* 2-Second Initial Splashscreen */}
       {showSplash && (

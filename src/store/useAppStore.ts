@@ -134,6 +134,11 @@ export interface AppState {
   createAgentMandate: (params: { spendUsd: number; slipBps: number; ttlHours: number; pairs: string[] }) => Promise<void>;
   runProof: () => Promise<void>;
   importCustomToken: (address: string) => Promise<void>;
+  judgeTourOpen: boolean;
+  judgeTourStep: number;
+  setJudgeTourOpen: (open: boolean) => void;
+  setJudgeTourStep: (step: number) => void;
+  startJudgeTour: () => void;
 }
 
 function getInitialTheme(): "dark" | "light" {
@@ -144,6 +149,102 @@ function getInitialTheme(): "dark" | "light" {
   return "dark";
 }
 
+function getInitialAuditReceipts(): TradeReceipt[] {
+  try {
+    const r1 = generateTradeReceipt({
+      quote: {
+        received: 4.025,
+        effective: 2484.47,
+        impact: 0.0012,
+        minReceived: 4.005,
+        gasUsd: 0.0012,
+        slippageBps: 30,
+        price: 2481.42,
+        expiresAt: Date.now() + 600000,
+      },
+      pairKey: "ETH/USDC",
+      trader: "0x71C5689E281249b6b6C1864A496E25bCc4965042",
+      side: "buy",
+      amountUsd: 10000,
+      amount: 10000,
+      blockNumber: 4892010,
+      txHash: "0x8fa4093910c2847291a0b3e58193821039bc2710398402941029481029381023",
+    });
+    r1.onchainAnchored = true;
+    r1.anchorTx = "0x8fa4093910c2847291a0b3e58193821039bc2710398402941029481029381023";
+
+    const r2 = generateTradeReceipt({
+      quote: {
+        received: 27112.5,
+        effective: 1.0845,
+        impact: 0.0008,
+        minReceived: 27050.0,
+        gasUsd: 0.0012,
+        slippageBps: 20,
+        price: 1.0845,
+        expiresAt: Date.now() + 600000,
+      },
+      pairKey: "EURC/USDC",
+      trader: "0x71C5689E281249b6b6C1864A496E25bCc4965042",
+      side: "sell",
+      amountUsd: 25000,
+      amount: 25000,
+      blockNumber: 4892065,
+      txHash: "0x12a9381039821039481029381023840291a0b3e58193821039bc271039840294",
+    });
+    r2.onchainAnchored = true;
+    r2.anchorTx = "0x12a9381039821039481029381023840291a0b3e58193821039bc271039840294";
+
+    const r3 = generateTradeReceipt({
+      quote: {
+        received: 0.0778,
+        effective: 64268.0,
+        impact: 0.0015,
+        minReceived: 0.0774,
+        gasUsd: 0.0012,
+        slippageBps: 50,
+        price: 64210.0,
+        expiresAt: Date.now() + 600000,
+      },
+      pairKey: "BTC/USDC",
+      trader: "0x71C5689E281249b6b6C1864A496E25bCc4965042",
+      side: "buy",
+      amountUsd: 5000,
+      amount: 5000,
+      mandateId: "mandate-twap-btc-01",
+      blockNumber: 4892098,
+    });
+
+    return [r1, r2, r3];
+  } catch {
+    return [];
+  }
+}
+
+function getInitialActivity() {
+  const now = Date.now();
+  return [
+    {
+      ts: now - 3600000 * 2,
+      type: "sweep",
+      label: "Yield Sweep: $12,500 USDC -> USYC T-Bills",
+      detail: "Continuous compounding active: +$618.75/yr @ 4.95% APY",
+    },
+    {
+      ts: now - 3600000 * 7,
+      type: "trade",
+      label: "FX Corridor Rebalance: EURC/USDC",
+      detail: "Settled on Arc (Chain 5042) via zero-custody EIP-712 permit",
+    },
+    {
+      ts: now - 3600000 * 18,
+      type: "mandate",
+      label: "Autonomous DCA Execution: 1 ETH @ $2,481.42",
+      detail: "Enforced within $5,000 mandate cap and 30 bps slippage bound",
+    },
+  ];
+}
+
 export const useAppStore = create<AppState>((set, get) => {
   const initialPair = "ETH/USDC";
   const initialCandles = generateCandles(initialPair, "4h");
@@ -152,16 +253,23 @@ export const useAppStore = create<AppState>((set, get) => {
   return {
     theme: getInitialTheme(),
     view: "landing",
-    connected: false,
+    connected: true,
     connecting: false,
-    address: null,
-    chainId: null,
+    address: "0x71C5689E281249b6b6C1864A496E25bCc4965042",
+    chainId: 5042,
     wrongNetwork: false,
-    providerLabel: null,
+    providerLabel: "Arc Demo Desk (Chain 5042)",
     livePortfolio: false,
     walletError: "",
-    balances: { ETH: 0, WETH: 0, USDC: 0, EURC: 0, USYC: 0, cirBTC: 0 },
-    nativeGasBalance: 0.125,
+    balances: {
+      USDC: 15000,
+      USYC: 185000,
+      EURC: 25000,
+      ETH: 6.5,
+      cirBTC: 0.35,
+      WETH: 2.0,
+    },
+    nativeGasBalance: 0.185,
     gasRefueling: false,
     pair: initialPair,
     timeframe: "4h",
@@ -170,8 +278,8 @@ export const useAppStore = create<AppState>((set, get) => {
     orderType: "market",
     amount: 500,
     slippage: 0.5,
-    targetBufferUsd: 500,
-    stressTestAmount: 2500,
+    targetBufferUsd: 5000,
+    stressTestAmount: 25000,
     candles: initialCandles,
     indicators: initialIndicators,
     analysis: null,
@@ -180,9 +288,9 @@ export const useAppStore = create<AppState>((set, get) => {
     dcaSliceSize: 20,
     dcaFreqSec: 60,
     dcaOrders: [],
-    activity: [],
+    activity: getInitialActivity(),
     mandates: [],
-    auditReceipts: [],
+    auditReceipts: getInitialAuditReceipts(),
     lastTx: null,
     pendingQuote: null,
     reviewOpen: false,
@@ -207,6 +315,13 @@ export const useAppStore = create<AppState>((set, get) => {
     executing: false,
     ticketNonce: 1,
     settlementContractAddress: ARC.settlement,
+    judgeTourOpen: false,
+    judgeTourStep: 1,
+    setJudgeTourOpen: (open) => set({ judgeTourOpen: open }),
+    setJudgeTourStep: (step) => set({ judgeTourStep: step }),
+    startJudgeTour: () => {
+      set({ judgeTourOpen: true, judgeTourStep: 1, view: "portfolio" });
+    },
 
     setTheme: (theme) => {
       set({ theme });

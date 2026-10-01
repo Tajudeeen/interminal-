@@ -7,7 +7,7 @@ import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
 
 export const LandingView: React.FC = () => {
-  const { connectWallet, launchDemo, connecting, setView } = useAppStore();
+  const { connectWallet, launchDemo, connecting, setView, startJudgeTour } = useAppStore();
   const [simTreasurySize, setSimTreasurySize] = useState<number>(250000);
 
   const previewKeys = ["ETH/USDC", "BTC/USDC", "EURC/USDC", "ARC/USDC"];
@@ -51,11 +51,18 @@ export const LandingView: React.FC = () => {
           <Logo size={56} />
         </div>
 
-        {/* Arc Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-pill card-themed border border-themed text-[10px] font-mono tracking-widest uppercase text-muted mb-6">
+        {/* Arc Badge linked to Explorer */}
+        <a
+          href={`https://explorer.arc.network/address/${ARC.settlement}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-3.5 py-1 rounded-pill card-themed border border-themed/60 hover:border-cyan/50 text-[10px] font-mono tracking-widest uppercase text-muted hover:text-cyan transition-colors mb-6 group"
+          title="View verified contract on Arc Explorer"
+        >
           <span className="w-1.5 h-1.5 rounded-full bg-pos animate-pulse" />
-          Arc Mainnet · Chain ID 5042 · Institutional Liquidity
-        </div>
+          <span>Arc Mainnet · 5042 · {shortAddr(ARC.settlement)}</span>
+          <span className="material-symbols-outlined text-[12px] opacity-70 group-hover:opacity-100">open_in_new</span>
+        </a>
 
         {/* Hero Title */}
         <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.08] text-themed">
@@ -89,8 +96,34 @@ export const LandingView: React.FC = () => {
           </div>
         </div>
 
+        {/* Arc Hackathon Judge Showcase Tour Banner */}
+        <div className="mt-8 w-full max-w-md">
+          <button
+            onClick={startJudgeTour}
+            className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-cyan/15 hover:bg-cyan/25 border-2 border-cyan/50 text-themed transition-all shadow-lg hover:shadow-cyan/10 group cursor-pointer"
+          >
+            <div className="flex items-center gap-3 text-left">
+              <span className="w-3 h-3 rounded-full bg-cyan animate-ping shrink-0" />
+              <div>
+                <div className="font-display font-black text-sm text-cyan flex items-center gap-1.5">
+                  <span>Start Arc Judge Showcase Tour</span>
+                  <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-cyan/20 border border-cyan/40 text-cyan uppercase font-bold">
+                    3 MIN
+                  </span>
+                </div>
+                <div className="font-mono text-[11px] text-sub mt-0.5">
+                  1-Click walkthrough: 4.95% USYC Sweep, JIT Unwind & Arc Settlement
+                </div>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-[20px] text-cyan group-hover:translate-x-1 transition-transform shrink-0">
+              play_circle
+            </span>
+          </button>
+        </div>
+
         {/* CTA Buttons with True React Button Component */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center gap-3 w-full max-w-md">
+        <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 w-full max-w-md">
           <Button
             size="lg"
             variant="primary"

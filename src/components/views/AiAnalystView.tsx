@@ -58,8 +58,8 @@ export const AiAnalystView: React.FC = () => {
               onClick={() => setPair(pk)}
               className={`px-3 py-1.5 rounded-card font-mono text-xs transition-all ${
                 activePair === pk
-                  ? "bg-cyan text-black font-bold shadow-xs"
-                  : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-cyan/30"
+                  ? "bg-lime-500 text-black font-bold shadow-xs"
+                  : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-lime-500/30"
               }`}
             >
               {pk}
@@ -74,7 +74,7 @@ export const AiAnalystView: React.FC = () => {
           <div className="card-themed border border-themed rounded-card p-6 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-themed/30">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-card bg-cyan/10 border border-cyan/30 flex items-center justify-center font-display font-black text-cyan text-base">
+                <div className="w-10 h-10 rounded-card bg-lime-500/10 border border-lime-500/30 flex items-center justify-center font-display font-black text-lime-500 text-base">
                   {p.base.slice(0, 3)}
                 </div>
                 <div>
@@ -204,7 +204,7 @@ export const AiAnalystView: React.FC = () => {
         </div>
       ) : (
         <div className="card-themed border border-themed rounded-card p-12 text-center space-y-4">
-          <span className="material-symbols-outlined text-[36px] text-cyan animate-pulse">psychology</span>
+          <span className="material-symbols-outlined text-[36px] text-lime-500 animate-pulse">psychology</span>
           <p className="font-mono text-xs text-sub">Running technical indicators for {activePair}...</p>
           <Button
             variant="primary"
