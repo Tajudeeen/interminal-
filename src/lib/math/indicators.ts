@@ -43,6 +43,80 @@ export function generateCandles(pairKey: string, timeframe: Timeframe, count = 1
   return candles;
 }
 
+/* ── Live candle data from Binance public API ────────────────── */
+const BINANCE_SYMBOL_MAP: Record<string, string> = {
+  "ETH/USDC": "ETHUSDT",
+  "BTC/USDC": "BTCUSDT",
+  "SOL/USDC": "SOLUSDT",
+  "AVAX/USDC": "AVAXUSDT",
+  "SUI/USDC": "SUIUSDT",
+  "ARB/USDC": "ARBUSDT",
+  "OP/USDC": "OPUSDT",
+  "NEAR/USDC": "NEARUSDT",
+  "LINK/USDC": "LINKUSDT",
+  "AAVE/USDC": "AAVEUSDT",
+  "UNI/USDC": "UNIUSDT",
+  "EURC/USDC": "EURUSDT", // EUR/USD as proxy
+  "USYC/USDC": "USTCUSDT", // USTC as proxy (not perfect, but no direct equivalent)
+  "ARC/USDC": "ETHUSDT", // No direct, use ETH as proxy until Arc has an API
+};
+
+// Binance kline interval mapping
+const BINANCE_INTERVAL_MAP: Record<Timeframe, string> = {
+  "1m": "1m",
+  "5m": "5m",
+  "15m": "15m",
+  "1h": "1h",
+  "4h": "4h",
+  "1D": "1d",
+};
+
+export async function fetchLiveCandles(
+  pairKey: string,
+  timeframe: Timeframe,
+  count = 200
+): Promise<Candle[] | null> {
+  const tf = TF_ALLOW.has(timeframe) ? timeframe : "4h";
+  const bnSymbol = BINANCE_SYMBOL_MAP[pairKey];
+  if (!bnSymbol) return null;
+
+  const interval = BINANCE_INTERVAL_MAP[tf];
+  if (!interval) return null;
+
+  try {
+    const res = await fetch(
+      `https://api.binance.com/api/v3/klines?symbol=${bnSymbol}&interval=${interval}&limit=${count}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    if (!res.ok) return null;
+    const data = await res.json() as any[][];
+
+    return data.map((k: any[]) => ({
+      time: k[0] as number,
+      open: parseFloat(k[1]),
+      high: parseFloat(k[2]),
+      low: parseFloat(k[3]),
+      close: parseFloat(k[4]),
+      volume: parseFloat(k[5]),
+    })).filter((c) => !isNaN(c.close) && c.close > 0);
+  } catch {
+    return null;
+  }
+}
+
+/* ── Combined fetcher: live first, fallback to seeded ───────── */
+export async function getCandles(
+  pairKey: string,
+  timeframe: Timeframe,
+  count = 120
+): Promise<{ candles: Candle[]; source: "live" | "seeded" }> {
+  const live = await fetchLiveCandles(pairKey, timeframe, count);
+  if (live && live.length >= 50) {
+    return { candles: live, source: "live" };
+  }
+  return { candles: generateCandles(pairKey, timeframe, count), source: "seeded" };
+}
+
 export function ema(values: number[], period: number): number[] {
   const k = 2 / (period + 1);
   const out: number[] = [];

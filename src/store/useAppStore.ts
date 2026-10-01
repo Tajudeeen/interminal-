@@ -13,7 +13,7 @@ import {
   generateTradeReceipt,
 } from "../lib/crypto/eip712";
 import { calculateJitUnwind } from "../lib/math/treasury";
-import { computeIndicators, generateCandles, analyzeMarket } from "../lib/math/indicators";
+import { computeIndicators, generateCandles, analyzeMarket, getCandles } from "../lib/math/indicators";
 import { formatUnits, quoteTrade } from "../lib/math/quotes";
 import {
   getInjected,
@@ -62,6 +62,7 @@ export interface AppState {
   stressTestAmount: number;
   candles: Candle[];
   indicators: Indicators | null;
+  candleSource: "live" | "seeded";
   analysis: MarketAnalysis | null;
   aiCore: "market" | "trade" | "portfolio" | "wallet";
   dcaSpendTotal: number;
@@ -283,6 +284,7 @@ export const useAppStore = create<AppState>((set, get) => {
     stressTestAmount: 25000,
     candles: initialCandles,
     indicators: initialIndicators,
+    candleSource: "seeded",
     analysis: null,
     aiCore: "market",
     dcaSpendTotal: 100,
@@ -359,18 +361,30 @@ export const useAppStore = create<AppState>((set, get) => {
       try {
         assertPair(pair);
         const tf = get().timeframe;
-        const candles = generateCandles(pair, tf);
-        const indicators = computeIndicators(candles);
-        set({ pair, candles, indicators });
+        // Try live data first, fallback to seeded
+        getCandles(pair, tf).then(({ candles: liveCandles, source }) => {
+          const indicators = computeIndicators(liveCandles);
+          set({ pair, candles: liveCandles, indicators, candleSource: source });
+        }).catch(() => {
+          const candles = generateCandles(pair, tf);
+          const indicators = computeIndicators(candles);
+          set({ pair, candles, indicators, candleSource: "seeded" });
+        });
       } catch (e: any) {
         get().addToast("Unknown pair", e.message || String(e), "err");
       }
     },
 
     setTimeframe: (tf) => {
-      const candles = generateCandles(get().pair, tf);
-      const indicators = computeIndicators(candles);
-      set({ timeframe: tf, candles, indicators });
+      const pair = get().pair;
+      getCandles(pair, tf).then(({ candles: liveCandles, source }) => {
+        const indicators = computeIndicators(liveCandles);
+        set({ timeframe: tf, candles: liveCandles, indicators, candleSource: source });
+      }).catch(() => {
+        const candles = generateCandles(pair, tf);
+        const indicators = computeIndicators(candles);
+        set({ timeframe: tf, candles, indicators, candleSource: "seeded" });
+      });
     },
 
     setChartMode: (chartMode) => set({ chartMode }),
@@ -522,12 +536,27 @@ export const useAppStore = create<AppState>((set, get) => {
         });
         const activePair = get().pair;
         const tf = get().timeframe;
-        const candles = generateCandles(activePair, tf);
-        const indicators = computeIndicators(candles);
-        set({
-          candles,
-          indicators,
-          marketFeedStatus: { source: "DexScreener Uniswap V3", live: true, lastUpdate: Date.now(), error: null },
+        // Try live candle fetch alongside price sync
+        getCandles(activePair, tf).then(({ candles: liveCandles, source }) => {
+          const indicators = computeIndicators(liveCandles);
+          set({
+            candles: liveCandles,
+            indicators,
+            candleSource: source,
+            marketFeedStatus: { source: source === "live" ? "Binance Live" : "DexScreener Uniswap V3", live: source === "live", lastUpdate: Date.now(), error: null },
+          });
+          if (source === "live") {
+            get().addToast("Live Candles Active", "Chart data synced from Binance API.", "ok");
+          }
+        }).catch(() => {
+          const candles = generateCandles(activePair, tf);
+          const indicators = computeIndicators(candles);
+          set({
+            candles,
+            indicators,
+            candleSource: "seeded",
+            marketFeedStatus: { source: "DexScreener Uniswap V3", live: false, lastUpdate: Date.now(), error: null },
+          });
         });
         get().addToast("DEX Feeds Live", "Prices synced with Uniswap V3 on-chain pools.", "ok");
       } catch (err: any) {
@@ -643,11 +672,30 @@ export const useAppStore = create<AppState>((set, get) => {
       try {
         const trader = normalizeAddress(address);
         const ticket = buildTradeTicket(trader, pairKey, side, amount, pendingQuote, ticketNonce);
+        const eip712Payload = {
+          types: ticket.types,
+          primaryType: ticket.primaryType,
+          domain: ticket.domain,
+          message: ticket.message,
+        };
+        const serializedPayload = JSON.stringify(eip712Payload, (_, v) =>
+          typeof v === "bigint" ? v.toString() : v
+        );
+
         let sig: string;
         if (!livePortfolio) {
-          sig = "0x" + sha256Hex(JSON.stringify(ticket) + Date.now()).slice(2) + "d".repeat(66);
+          sig = "0x" + sha256Hex(serializedPayload + Date.now()).slice(2) + "d".repeat(66);
         } else {
-          sig = await walletRpc("eth_signTypedData_v4", [trader, JSON.stringify(ticket)]);
+          try {
+            sig = await walletRpc("eth_signTypedData_v4", [trader, serializedPayload]);
+          } catch (signErr: any) {
+            // Some wallet providers expect parsed object instead of serialized JSON string
+            if (signErr?.message?.includes("JSON") || signErr?.message?.includes("parse")) {
+              sig = await walletRpc("eth_signTypedData_v4", [trader, eip712Payload]);
+            } else {
+              throw signErr;
+            }
+          }
           if (typeof sig !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(sig)) {
             throw new Error("Wallet returned malformed signature");
           }

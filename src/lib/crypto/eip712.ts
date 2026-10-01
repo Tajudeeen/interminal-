@@ -9,6 +9,26 @@ import { calculateFxParity } from "../math/fx";
 import { parseUnits, quoteTrade } from "../math/quotes";
 import { sha256Hex } from "./sha256";
 
+// Ensure BigInts serialize safely across JSON operations
+if (typeof BigInt !== "undefined" && !(BigInt.prototype as any).toJSON) {
+  (BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+  };
+}
+
+export function toEip712Payload(ticket: TradeTicket | AgentMandateTicket) {
+  return {
+    types: ticket.types,
+    primaryType: ticket.primaryType,
+    domain: ticket.domain,
+    message: ticket.message,
+  };
+}
+
+export function serializeEip712(ticket: TradeTicket | AgentMandateTicket): string {
+  return JSON.stringify(toEip712Payload(ticket), (_, v) => (typeof v === "bigint" ? v.toString() : v));
+}
+
 export function buildOnchainTradeTicket(
   address: string,
   pairKey: string,
