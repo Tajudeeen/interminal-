@@ -1,10 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAppStore } from "./store/useAppStore";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
 import { BottomNav } from "./components/layout/BottomNav";
 import { MarketTickerMarquee } from "./components/layout/MarketTickerMarquee";
 import { ToastStack } from "./components/layout/ToastStack";
+import { SplashScreen } from "./components/layout/SplashScreen";
 
 // Views
 import { LandingView } from "./components/views/LandingView";
@@ -25,6 +26,7 @@ import { ImportTokenModal } from "./components/modals/ImportTokenModal";
 
 export const App: React.FC = () => {
   const { view, theme, setTheme, setSearchOpen } = useAppStore();
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     // Initial theme setup
@@ -94,6 +96,14 @@ export const App: React.FC = () => {
 
       {/* Real-Time Toast Notifications */}
       <ToastStack />
+
+      {/* 2-Second Initial Splashscreen */}
+      {showSplash && (
+        <SplashScreen
+          durationMs={2000}
+          onComplete={() => setShowSplash(false)}
+        />
+      )}
     </div>
   );
 };
