@@ -106,7 +106,7 @@ export const LandingView: React.FC = () => {
               <span className="w-3 h-3 rounded-full bg-cyan animate-ping shrink-0" />
               <div>
                 <div className="font-display font-black text-sm text-cyan flex items-center gap-1.5">
-                  <span>Start Interactive Tour</span>
+                  <span>Take a Tour</span>
                   <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-cyan/20 border border-cyan/40 text-cyan uppercase font-bold">
                     3 MIN
                   </span>

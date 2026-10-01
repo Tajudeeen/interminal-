@@ -59,8 +59,8 @@ export const Sidebar: React.FC = () => {
           className="w-full flex items-center justify-between px-3 py-2 rounded-card bg-cyan/10 hover:bg-cyan/20 border border-cyan/40 text-cyan text-xs font-display font-bold transition-all shadow-sm group"
         >
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan animate-pulse" />
-            <span>Tour (3 min)</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan animate-pulse" />
+            <span>Take a Tour</span>
           </div>
           <span className="material-symbols-outlined text-[15px] group-hover:translate-x-0.5 transition-transform">
             arrow_forward

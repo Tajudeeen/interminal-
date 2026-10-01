@@ -43,7 +43,7 @@ export const Header: React.FC = () => {
           onClick={startJudgeTour}
           leftIcon={<span className="w-1.5 h-1.5 rounded-full bg-cyan animate-pulse" />}
         >
-          Tour
+          Take a Tour
         </Button>
         {/* Gas Tank Pill */}
         <button

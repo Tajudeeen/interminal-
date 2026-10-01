@@ -90,7 +90,7 @@ export const JudgeTourBar: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-cyan animate-pulse" />
             <span className="font-display font-black text-xs sm:text-sm text-themed tracking-wide uppercase">
-              Interminal Interactive Tour
+              Take a Tour
             </span>
             <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-cyan/15 text-cyan border border-cyan/30 font-bold">
               3-MIN WALKTHROUGH

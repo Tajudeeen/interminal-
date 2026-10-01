@@ -40,9 +40,9 @@ Interminal solves this on Arc by leveraging Arc's sub-cent gas fees and determin
 
 ## What to Try (3-Step Reviewer Guide)
 
-### Option A: 3-Minute Interactive Tour (No Wallet or Gas Required)
+### Option A: 3-Minute Tour (No Wallet or Gas Required)
 1. Open the live deployment: [https://useinterminal.vercel.app/](https://useinterminal.vercel.app/)
-2. Click **"Start Interactive Tour"** on the landing page or **"Tour (3 min)"** in the navigation bar.
+2. Click **"Take a Tour"** on the landing page or in the navigation bar.
 3. Walk through the 3 core pillars using the pre-seeded simulation state:
    - **Step 1:** Execute the 4.95% USYC Yield Sweep of excess liquid cash.
    - **Step 2:** Simulate a $25,000 disbursement demonstrating the JIT par redemption bridge ($1.00).
