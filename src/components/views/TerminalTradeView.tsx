@@ -530,7 +530,7 @@ export const TerminalTradeView: React.FC = () => {
                 onClick={startDcaPlan}
                 leftIcon={<span className="material-symbols-outlined text-[18px]">schedule</span>}
               >
-                Authorize Autonomous DCA
+                Create DCA Simulation Plan
               </Button>
             </div>
           )}
