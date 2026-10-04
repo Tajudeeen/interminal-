@@ -40,10 +40,10 @@ export const MarketsView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display font-black text-2xl sm:text-3xl text-themed tracking-tight">
-            Arc Markets & Liquidity Pools
+            Markets & Liquidity References
           </h1>
           <p className="font-mono text-xs text-muted mt-1">
-            Arc DEX liquidity · GeckoTerminal OHLCV · Verified reference feeds · Chain 5042
+            Arc DEX feeds + explicit global references · GeckoTerminal OHLCV · Chain 5042
           </p>
         </div>
 
@@ -55,7 +55,7 @@ export const MarketsView: React.FC = () => {
             isLoading={syncing}
             leftIcon={<span className="material-symbols-outlined text-[16px]">refresh</span>}
           >
-            {syncing ? "Syncing DEX..." : "Sync Reserves"}
+            {syncing ? "Refreshing feed..." : "Refresh Active Feed"}
           </Button>
 
           <Button
