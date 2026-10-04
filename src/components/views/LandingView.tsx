@@ -24,7 +24,7 @@ export const LandingView: React.FC = () => {
       balances: {
         ...s.balances,
         USDC: simBuffer,
-        USYC: simYieldPrincipal,
+        USYC: simYieldPrincipal / PAIRS["USYC/USDC"].price,
       },
       targetBufferUsd: simBuffer,
       connected: true,
