@@ -62,8 +62,13 @@ async function main() {
   if (errors.length) throw new Error("Committed Solidity source does not compile");
   const freshRuntime = "0x" + compileOutput.contracts["InterminalSettlement.sol"]["InterminalSettlement"].evm.deployedBytecode.object;
 
-  const sourceRuntimeMatches = stripSolidityMetadata(settlementCode).toLowerCase() ===
-    stripSolidityMetadata(freshRuntime).toLowerCase();
+  const deployedCore = stripSolidityMetadata(settlementCode);
+  const freshCore = stripSolidityMetadata(freshRuntime);
+  console.log("INFO runtime bytes: deployed=" + ((settlementCode.length - 2) / 2) + ", freshly-compiled=" + ((freshRuntime.length - 2) / 2));
+  console.log("INFO executable bytes after metadata: deployed=" + ((deployedCore.length - 2) / 2) + ", freshly-compiled=" + ((freshCore.length - 2) / 2));
+  console.log("INFO deployed runtime prefix: " + deployedCore.slice(0, 66));
+  console.log("INFO fresh runtime prefix: " + freshCore.slice(0, 66));
+  const sourceRuntimeMatches = deployedCore.toLowerCase() === freshCore.toLowerCase();
   ok("deployed Arc runtime matches freshly compiled committed source", sourceRuntimeMatches);
 
   const artifactRuntimeMatches = stripSolidityMetadata(String(artifact.deployedBytecode || "")).toLowerCase() ===
