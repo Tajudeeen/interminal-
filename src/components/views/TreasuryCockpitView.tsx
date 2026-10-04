@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { USYC_APY, ARC } from "../../constants/arc";
+import { PAIRS } from "../../constants/pairs";
 import {
   calculateJitUnwind,
   calculateOpportunityCost,
@@ -39,6 +40,7 @@ export const TreasuryCockpitView: React.FC = () => {
     tradeAmountUsd: stressTestAmount,
     liquidUsdc,
     usycBalance,
+    usycPriceUsd: PAIRS["USYC/USDC"].price,
     slippageBps: 20,
   });
 
@@ -91,8 +93,9 @@ export const TreasuryCockpitView: React.FC = () => {
   };
 
   // Yield over selected horizon
-  const horizonYieldUsyc = usycBalance * (USYC_APY * (simHorizonDays / 365));
-  const horizonYieldBank = usycBalance * (0.0005 * (simHorizonDays / 365));
+  const usycNavUsd = usycBalance * PAIRS["USYC/USDC"].price;
+  const horizonYieldUsyc = usycNavUsd * (USYC_APY * (simHorizonDays / 365));
+  const horizonYieldBank = usycNavUsd * (0.0005 * (simHorizonDays / 365));
   const horizonAlphaDelta = horizonYieldUsyc - horizonYieldBank;
 
   return (
@@ -220,7 +223,7 @@ export const TreasuryCockpitView: React.FC = () => {
             ${usycBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="mt-1 font-mono text-[10px] text-pos font-semibold">
-            +3.225% reference yield (${(usycBalance * USYC_APY).toFixed(2)}/yr)
+            +3.225% reference yield (${(usycNavUsd * USYC_APY).toFixed(2)}/yr)
           </div>
         </div>
 
