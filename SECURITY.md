@@ -36,7 +36,9 @@ Market data is sourced from external public feeds. Chart data is not itself sett
 
 DCA scheduling and the browser walkthrough are simulations. The browser does not run a background autonomous executor.
 
-Agent-mandate signing is an authorization artifact in the current application. The live browser does not run an unattended agent. The deployed v1 `executeAgentTrade` path has pair-mask, spend, expiry, nonce, and minimum-output checks, but it does not contain the concrete token-to-pair binding and fresh-quote slippage ceiling present in V2. Therefore the browser does not advertise V1 as a production unattended executor, and `contracts/InterminalSettlementV2.sol` is explicitly not deployed.
+Agent-mandate signing is an authorization artifact in the current application. The live browser does not run an unattended agent. A security review found that deployed v1 `executeAgentTrade` validates the signed pair bitmask but does not bind `execution.tokenIn` and `execution.tokenOut` to the selected pair. If a user gave the v1 settlement contract an ERC-20 allowance and then authorized an agent, that gap could let the agent spend within the budget on an unintended token route. The browser therefore blocks new live agent-mandate signing against v1.
+
+`contracts/InterminalSettlementV2.sol` is the hardened successor. It binds agent input to Arc USDC, maps each authorized pair index to a concrete output token, enforces the mandate slippage ceiling against a fresh router quote, and now rejects invalid pair indexes explicitly. V2 is not deployed on Arc Mainnet yet. Do not treat it as live until a fresh deployment, runtime fingerprint, and independent review are complete.
 
 ## Receipt integrity
 
