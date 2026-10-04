@@ -35,7 +35,7 @@ export function buildOnchainTradeTicket(
   side: TradeSide,
   amount: number,
   quote: TradeQuote,
-  nonce: number = 1,
+  nonce: number = 0,
   executionPriceUsd?: number
 ): TradeTicket {
   const p = PAIRS[assertPair(pairKey)];
@@ -130,7 +130,7 @@ export function buildTradeTicket(
   side: TradeSide,
   amount: number,
   quote: TradeQuote,
-  nonce: number = 1,
+  nonce: number = 0,
   executionPriceUsd?: number
 ): TradeTicket {
   return buildOnchainTradeTicket(address, pair, side, amount, quote, nonce, executionPriceUsd);
