@@ -1887,9 +1887,13 @@ export const useAppStore = create<AppState>((set, get) => {
       }
 
       const sym = metadata.symbol;
-      // Never let an imported symbol overwrite a verified market such as ETH/USDC.
-      // Give every import a stable, address-derived market key instead.
-      const pairKey = "CUSTOM/" + sym + "-" + addr.slice(2, 8).toUpperCase() + "/USDC";
+      // Keep normal symbol pairs in the UI when the symbol is not already claimed
+      // by a verified market. If it collides, retain the symbol and add a short
+      // address suffix so the imported contract cannot hijack the verified pair.
+      const symbolPairKey = sym + "/USDC";
+      const pairKey = PAIRS[symbolPairKey]
+        ? sym + "-" + addr.slice(2, 8).toUpperCase() + "/USDC"
+        : symbolPairKey;
       PAIRS[pairKey] = {
         base: sym,
         quote: "USDC",
