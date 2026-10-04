@@ -177,10 +177,10 @@ input::placeholder, textarea::placeholder {
 .bg-card { background-color: var(--card); }
 .bg-card-hover:hover { background-color: var(--surface); }
 .bg-themed-card { background-color: var(--card); }
-.bg-themed-card\\/40 { background-color: color-mix(in srgb, var(--card) 40%, transparent); }
-.bg-themed-card\\/50 { background-color: color-mix(in srgb, var(--card) 50%, transparent); }
-.bg-themed-card\\/60 { background-color: color-mix(in srgb, var(--card) 60%, transparent); }
-.bg-themed-surface\\/80 { background-color: color-mix(in srgb, var(--surface) 80%, transparent); }
+.bg-themed-card\/40 { background-color: color-mix(in srgb, var(--card) 40%, transparent); }
+.bg-themed-card\/50 { background-color: color-mix(in srgb, var(--card) 50%, transparent); }
+.bg-themed-card\/60 { background-color: color-mix(in srgb, var(--card) 60%, transparent); }
+.bg-themed-surface\/80 { background-color: color-mix(in srgb, var(--surface) 80%, transparent); }
 .border-border { border-color: var(--border); }
 
 /* ── Glassmorphism modal classes ────────────────── */
