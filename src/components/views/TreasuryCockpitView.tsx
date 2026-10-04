@@ -38,7 +38,8 @@ export const TreasuryCockpitView: React.FC = () => {
   const liquidUsdc = balances.USDC || 0;
   const usycBalance = balances.USYC || 0;
 
-  const cost = calculateOpportunityCost(liquidUsdc, USYC_APY);
+  const idleCash = Math.max(0, liquidUsdc - targetBufferUsd);
+  const cost = calculateOpportunityCost(idleCash, USYC_APY);
   const sweep = calculateYieldSweep(liquidUsdc, targetBufferUsd);
   const jit = calculateJitUnwind({
     tradeAmountUsd: stressTestAmount,
@@ -577,12 +578,13 @@ export const TreasuryCockpitView: React.FC = () => {
               <span className="text-[10px] text-amber-500 font-semibold">USYC YIELD DELTA</span>
             </div>
             <div className="p-2 rounded bg-themed/5 text-themed text-[11px] font-mono select-all">
-              Cost = Liquid USDC × USYC reference yield × (Days / 365)
+              Cost = Excess Cash × USYC reference yield × (Days / 365)
             </div>
             <div className="text-[11px] text-muted space-y-1">
-              <div>• Current Liquid: ${liquidUsdc.toLocaleString()} USDC</div>
-              <div>• Annual Drag: ${(liquidUsdc * 0.0495).toFixed(2)} USD</div>
-              <div>• Daily Burn: ${((liquidUsdc * 0.0495) / 365).toFixed(2)} / day</div>
+              <div>• Excess Cash: {mainnetReview ? "—" : "$" + idleCash.toLocaleString()} USDC</div>
+              <div>• Reference Rate: {(USYC_APY * 100).toFixed(3)}%</div>
+              <div>• Annual Drag: {mainnetReview ? "—" : "$" + cost.annualYieldUsd.toFixed(2)} USD</div>
+              <div>• Daily Drag: {mainnetReview ? "—" : "$" + cost.dailyYieldUsd.toFixed(3) + " / day"}</div>
             </div>
           </div>
 
