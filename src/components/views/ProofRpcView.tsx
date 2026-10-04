@@ -169,8 +169,8 @@ export const ProofRpcView: React.FC = () => {
 
         <div className="p-3 rounded-card bg-themed-card/40 border border-themed/20 font-mono text-[11px] space-y-1 text-muted">
           <div className="flex items-center justify-between text-themed font-semibold">
-            <span>Live Solidity ABI Functions Tested:</span>
-            <span className="text-pos font-bold">100% On-Chain Verified</span>
+            <span>Critical Settlement Reads:</span>
+            <span className="text-pos font-bold">Live RPC Verified</span>
           </div>
           <div>• <code className="text-cyan">DOMAIN_SEPARATOR()</code> [0x3644e515] - Returns canonical EIP-712 domain hash</div>
           <div>• <code className="text-cyan">anchorReceipt(bytes32)</code> [0xea683470] - Immutably logs audit certificate hash into block storage</div>
