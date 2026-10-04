@@ -4,6 +4,7 @@ import { PAIRS } from "../../constants/pairs";
 import { ARC } from "../../constants/arc";
 import { shortAddr } from "../../lib/arc/wallet";
 import { quoteTrade } from "../../lib/math/quotes";
+import { liveSizePresets } from "../../lib/math/liveSizing";
 import { calculateJitUnwind } from "../../lib/math/treasury";
 import { Timeframe } from "../../types/market";
 import { Button } from "../ui/Button";
@@ -88,7 +89,10 @@ export const TerminalTradeView: React.FC = () => {
   const tfOptions: Timeframe[] = pairKey === "USYC/USDC"
     ? ["1D"]
     : ["1m", "5m", "15m", "1h", "4h", "1D"];
-  const quickSizes = [100, 500, 1000, 2500];
+  const availableTradeUsd = isBuy ? userUsdcBal : userBaseBal * p.price;
+  const quickSizes = livePortfolio
+    ? liveSizePresets(availableTradeUsd)
+    : [100, 500, 1000, 2500];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-7xl mx-auto">
@@ -262,7 +266,9 @@ export const TerminalTradeView: React.FC = () => {
               <div>
                 <div className="flex justify-between text-[10px] font-mono text-muted uppercase mb-1">
                   <span>Allocation Percent</span>
-                  <span className="text-lime-500">Quick Portfolio Fill</span>
+                  <span className={livePortfolio ? "text-cyan-500" : "text-lime-500"}>
+                    {livePortfolio ? "Wallet-scaled fill" : "Quick Portfolio Fill"}
+                  </span>
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {[25, 50, 75, 100].map((pct) => (
