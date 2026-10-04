@@ -4,7 +4,7 @@ import { useAppStore } from "../../store/useAppStore";
 import { Button } from "../ui/Button";
 
 export const AgentMandateModal: React.FC = () => {
-  const { mandateModalOpen, setMandateModalOpen, createAgentMandate, address, balances, livePortfolio } = useAppStore();
+  const { mandateModalOpen, setMandateModalOpen, createAgentMandate, address, balances, livePortfolio, environmentMode } = useAppStore();
 
   const [spendUsd, setSpendUsd] = useState<number>(500);
   const [agent, setAgent] = useState<string>(address || "");
@@ -61,6 +61,12 @@ export const AgentMandateModal: React.FC = () => {
       maxWidth="max-w-lg"
     >
       <div className="space-y-4">
+        {environmentMode === "mainnet" && (
+          <div className="p-3 rounded-card bg-amber-500/10 border border-amber-500/30 font-mono text-[11px] text-amber-600 dark:text-amber-400 space-y-1">
+            <div className="font-semibold">Live agent delegation is temporarily locked.</div>
+            <div>The deployed Arc settlement is v1. The hardened successor must be deployed and independently verified before live mandates can safely be signed.</div>
+          </div>
+        )}
         {/* Agent Wallet */}
         <div>
           <label className="block font-mono text-[11px] uppercase tracking-wider text-muted mb-1.5">
@@ -184,6 +190,7 @@ export const AgentMandateModal: React.FC = () => {
           size="lg"
           fullWidth
           onClick={handleAuthorize}
+          disabled={environmentMode === "mainnet"}
           leftIcon={<span className="material-symbols-outlined text-[18px]">verified_user</span>}
         >
           Authorize Scoped EIP-712 Mandate
