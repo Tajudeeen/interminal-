@@ -1125,10 +1125,12 @@ export const useAppStore = create<AppState>((set, get) => {
         get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) first.", "err");
         return;
       }
-      if (get().livePortfolio && !PAIRS[assertPair(pairKey)].address) {
+      if (get().livePortfolio && (!PAIRS[assertPair(pairKey)].address || PAIRS[assertPair(pairKey)].cat === "imported")) {
         get().addToast(
           "Live Market Unavailable",
-          pairKey + " has no verified Arc token contract in the registry. This market is simulation-only.",
+          PAIRS[assertPair(pairKey)].cat === "imported"
+            ? pairKey + " is an imported token and is view-only until its contract is independently verified."
+            : pairKey + " has no verified Arc token contract in the registry. This market is simulation-only.",
           "err",
         );
         return;
@@ -1194,10 +1196,12 @@ export const useAppStore = create<AppState>((set, get) => {
       }
 
       const p = PAIRS[assertPair(pairKey)];
-      if (liveIntent && !p.address) {
+      if (liveIntent && (!p.address || p.cat === "imported")) {
         get().addToast(
           "Live Market Unavailable",
-          pairKey + " has no verified Arc token contract in the registry. This market is simulation-only.",
+          p.cat === "imported"
+            ? pairKey + " is an imported token and cannot be executed until its contract is independently verified."
+            : pairKey + " has no verified Arc token contract in the registry. This market is simulation-only.",
           "err",
         );
         return;
@@ -1871,39 +1875,36 @@ export const useAppStore = create<AppState>((set, get) => {
       }
       set({ importingToken: true, importTokenError: "" });
       try {
-        const addr = address.toLowerCase();
-      // Permit only after validating that the address is an actual contract with ERC-20 metadata.
+        const addr = normalizeAddress(address);
+      // Temporarily allow the user-supplied contract for read-only metadata lookup.
+      // Never persist arbitrary imports in the global RPC target allowlist.
       TOKEN_ALLOW.add(addr);
       let metadata;
       try {
         metadata = await readErc20Metadata(addr);
-      } catch (metaError: any) {
+      } finally {
         TOKEN_ALLOW.delete(addr);
-        throw metaError;
       }
 
       const sym = metadata.symbol;
-      const pairKey = sym + "/USDC";
-      if (!PAIRS[pairKey]) {
-        PAIRS[pairKey] = {
-          base: sym,
-          quote: "USDC",
-          price: 1.0,
-          change: 0,
-          high: 1.0,
-          low: 1.0,
-          vol: 0,
-          tvl: 0,
-          seed: 99,
-          cat: "imported",
-          address: metadata.address,
-          decimals: metadata.decimals,
-          oracle: "Imported ERC-20 · live quote required for execution",
-        };
-      } else {
-        PAIRS[pairKey].address = metadata.address;
-        PAIRS[pairKey].decimals = metadata.decimals;
-      }
+      // Never let an imported symbol overwrite a verified market such as ETH/USDC.
+      // Give every import a stable, address-derived market key instead.
+      const pairKey = "CUSTOM/" + sym + "-" + addr.slice(2, 8).toUpperCase() + "/USDC";
+      PAIRS[pairKey] = {
+        base: sym,
+        quote: "USDC",
+        price: 1.0,
+        change: 0,
+        high: 1.0,
+        low: 1.0,
+        vol: 0,
+        tvl: 0,
+        seed: 99,
+        cat: "imported",
+        address: metadata.address,
+        decimals: metadata.decimals,
+        oracle: "Imported ERC-20 · view-only until independently verified",
+      };
 
       set((s) => ({
         importingToken: false,
