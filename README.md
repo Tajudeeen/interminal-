@@ -39,6 +39,8 @@ Interminal uses Arc for USDC-denominated settlement, low-cost repeated execution
 
 ## What Actually Works on Arc Mainnet?
 
+For a reproducible live-chain identity check, see [`docs/LIVE_CONTRACT_FINGERPRINT.md`](docs/LIVE_CONTRACT_FINGERPRINT.md).
+
 ## Live versus simulation
 
 Interminal deliberately separates browser simulation from confirmed Arc execution.
