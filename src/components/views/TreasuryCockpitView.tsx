@@ -153,6 +153,29 @@ export const TreasuryCockpitView: React.FC = () => {
           <Button size="xs" variant="danger" onClick={() => connectWallet()}>Recheck Wallet</Button>
         </div>
       ) : (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-card bg-amber-500/10 border border-amber-500/40 text-xs gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+            <div>
+              <span className="font-display font-black text-amber-500 uppercase tracking-wider">
+                DEMO / SIMULATION MODE
+              </span>
+              <span className="font-mono text-muted text-[11px] ml-2">
+                Illustrative balances only. Live wallet mode reads balances from Arc.
+              </span>
+            </div>
+          </div>
+          <Button
+            size="xs"
+            variant="primary"
+            onClick={() => connectWallet()}
+            leftIcon={<span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>}
+          >
+            Connect Live Arc Wallet
+          </Button>
+        </div>
+      )}
+
       {/* Primary KPI Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* NAV */}
