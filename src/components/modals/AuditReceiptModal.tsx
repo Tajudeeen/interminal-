@@ -30,7 +30,7 @@ export const AuditReceiptModal: React.FC = () => {
     try {
       const isAnchored = await checkReceiptAnchoredOnchain(activeReceiptModal, settlementContractAddress);
       if (isAnchored) {
-        setOnchainStatusText("Anchored in Arc Mainnet State (Verified via isReceiptAnchored)");
+        setOnchainStatusText("Anchored in Arc Mainnet State and verified via isReceiptAnchored");
         setActiveReceiptModal({ ...activeReceiptModal, onchainAnchored: true });
         addToast("On-Chain Verified", "Receipt hash verified in Arc settlement contract storage.", "ok");
       } else {
