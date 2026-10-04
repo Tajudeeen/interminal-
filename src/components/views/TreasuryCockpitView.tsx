@@ -47,6 +47,7 @@ export const TreasuryCockpitView: React.FC = () => {
   });
 
   const snapshot = portfolioSnapshot(balances, livePortfolio);
+  const usycNavUsd = usycBalance * PAIRS["USYC/USDC"].price;
   const liveSizing = deriveLiveControlSizing(balances);
   const treasuryLiquidityUsd = liquidUsdc + usycNavUsd;
 
@@ -112,7 +113,6 @@ export const TreasuryCockpitView: React.FC = () => {
   };
 
   // Yield over selected horizon
-  const usycNavUsd = usycBalance * PAIRS["USYC/USDC"].price;
   const horizonYieldUsyc = usycNavUsd * (USYC_APY * (simHorizonDays / 365));
   const horizonYieldBank = usycNavUsd * (0.0005 * (simHorizonDays / 365));
   const horizonAlphaDelta = horizonYieldUsyc - horizonYieldBank;
