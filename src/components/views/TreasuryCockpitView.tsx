@@ -62,7 +62,12 @@ export const TreasuryCockpitView: React.FC = () => {
     : [500, 1000, 2500, 5000];
 
   const stressPresets = livePortfolio
-    ? [...new Set([0.75, 1.00, 1.25, 1.50].map((ratio) => toPreset(treasuryLiquidityUsd * ratio, treasuryLiquidityUsd)).filter(Boolean))]
+    ? [...new Set([
+        treasuryLiquidityUsd * 0.50,
+        treasuryLiquidityUsd * 0.75,
+        liveSizing.stressTestAmount,
+        treasuryLiquidityUsd,
+      ].map((value) => toPreset(value, treasuryLiquidityUsd)).filter(Boolean))]
     : [1000, 2500, 5000, 10000];
 
   const bufferSliderMax = livePortfolio
