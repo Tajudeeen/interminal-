@@ -46,9 +46,18 @@ function statsFromCandles(candles) {
 }
 
 export default async function handler(req, res) {
+  // This endpoint is a read-only market-data proxy. Reject every method except GET
+  // before doing any upstream work, and strictly bound query parameters so a caller
+  // cannot turn the proxy into an unbounded upstream resource consumer.
+  if (req.method !== "GET") {
+    res.setHeader("Allow", "GET");
+    return json(res, 405, { error: "Method not allowed" });
+  }
+
   const pair = String(req.query?.pair || "");
   const timeframe = String(req.query?.timeframe || "4h");
-  const count = Math.min(Math.max(Number(req.query?.count || 120), 2), 1000);
+  const requestedCount = req.query?.count === undefined ? 120 : Number(req.query.count);
+  const count = Number.isInteger(requestedCount) ? Math.min(Math.max(requestedCount, 2), 500) : 120;
 
   const pool = POOLS[pair];
   const resolution = RESOLUTION[timeframe];
