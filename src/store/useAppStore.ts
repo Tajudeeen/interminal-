@@ -438,8 +438,12 @@ export const useAppStore = create<AppState>((set, get) => {
         const wrongNetwork = id !== ARC.chainId;
         let balances = get().balances;
         let nativeGasBalance = get().nativeGasBalance;
+        let ticketNonce = 0;
         if (!wrongNetwork) {
           balances = await loadOnchainPortfolio(address);
+          try {
+            ticketNonce = await readTraderNonce(address);
+          } catch {}
           try {
             const nativeHex = await publicRpc("eth_getBalance", [address, "latest"]);
             nativeGasBalance = formatUnits(nativeHex, ARC.nativeDecimals);
@@ -458,7 +462,13 @@ export const useAppStore = create<AppState>((set, get) => {
           ticketNonce,
           view: "portfolio",
         });
-        get().addToast("Wallet Connected", `Authorized: ${shortAddr(address)} on Arc Mainnet`, "ok");
+        get().addToast(
+          wrongNetwork ? "Wallet Connected · Wrong Network" : "Wallet Connected",
+          wrongNetwork
+            ? "Connected " + shortAddr(address) + " on chain " + id + ". Switch to Arc Mainnet (5042) before executing."
+            : "Authorized " + shortAddr(address) + " on Arc Mainnet.",
+          wrongNetwork ? "warn" : "ok"
+        );
       } catch (err: any) {
         set({ connecting: false, walletError: err.message || String(err) });
         get().addToast("Connection Rejected", err.message || String(err), "err");
