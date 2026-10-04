@@ -24,6 +24,16 @@ Interminal does not generate production chart candles.
 
 GeckoTerminal attribution: https://www.geckoterminal.com/arc
 
+### Arc chart pools
+
+| Market | GeckoTerminal pool | Venue |
+|---|---|---|
+| ETH/USDC | `0x6f302decb49fb30b2d2c609bdd16e04e7dd096fc` | Aero · Arc |
+| BTC/USDC (cirBTC) | `0xd945caee4635bcd7fb8a9fa74dc1d0c4c1472782` | Aero · Arc |
+| EURC/USDC | `0xbe080ac37ad1305dfcc9521f5e6f68cfdc41b7fa` | Aero · Arc |
+
+The public GeckoTerminal API is cached for roughly one minute and is limited to about 10 requests/minute, so Interminal caches chart responses locally for 45 seconds and refreshes market state no more than necessary.
+
 ---
 
 ## Builder
