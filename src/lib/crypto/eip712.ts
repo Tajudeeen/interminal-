@@ -397,6 +397,8 @@ export function generateTradeReceipt({
   mode = "simulation",
   status = mode === "mainnet" ? "draft" : "simulated",
   transactionHash,
+  executionReceiptHash,
+  actualReceived,
 }: GenerateReceiptParams): TradeReceipt {
   const effectivePairKey = pairKey || pair || "ETH/USDC";
   const pairObj = PAIRS[assertPair(effectivePairKey)];
