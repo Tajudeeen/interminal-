@@ -28,6 +28,10 @@ export const LandingView: React.FC = () => {
       },
       targetBufferUsd: simBuffer,
       connected: true,
+      address: null,
+      chainId: 5042,
+      wrongNetwork: false,
+      providerLabel: "Demo Simulation",
       livePortfolio: false,
     }));
     setView("portfolio");
