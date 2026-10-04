@@ -10,7 +10,8 @@
     "test:legacy": "node test.mjs",
     "compile": "node scripts/compile.mjs",
     "deploy": "node scripts/deploy.mjs",
-    "verify:arc": "node scripts/verifyArc.mjs"
+    "verify:arc": "node scripts/verifyArc.mjs",
+    "verify:market": "node scripts/verifyMarketData.mjs"
   },
   "keywords": [],
   "author": "",
