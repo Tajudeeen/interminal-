@@ -8,7 +8,7 @@ import {
   LineStyle,
 } from "lightweight-charts";
 import type { UTCTimestamp } from "lightweight-charts";
-import type { Candle, ChartMode, Indicators } from "../../types/market";
+import type { Candle, ChartMode, Indicators, Timeframe } from "../../types/market";
 
 interface MarketChartProps {
   candles: Candle[];
@@ -16,6 +16,7 @@ interface MarketChartProps {
   chartMode: ChartMode;
   theme: "dark" | "light";
   pair: string;
+  timeframe: Timeframe;
   showLevels: boolean;
   analysis: {
     support: number;
@@ -35,6 +36,7 @@ export const MarketChart: React.FC<MarketChartProps> = ({
   chartMode,
   theme,
   pair,
+  timeframe,
   showLevels,
   analysis,
   marketFeedStatus,
@@ -224,7 +226,7 @@ export const MarketChart: React.FC<MarketChartProps> = ({
       resizeObserver.disconnect();
       chart.remove();
     };
-  }, [candles, indicators, chartMode, theme, pair, showLevels, analysis]);
+  }, [candles, indicators, chartMode, theme, pair, timeframe, showLevels, analysis]);
 
   return (
     <div className="relative h-full min-h-[300px]">
@@ -245,7 +247,7 @@ export const MarketChart: React.FC<MarketChartProps> = ({
       </div>
       <div className="absolute right-2 top-2 z-10 pointer-events-none">
         <div className="rounded px-2 py-1 bg-black/70 border border-white/10 backdrop-blur-sm font-mono text-[10px] text-neutral-400">
-          {pair === "USYC/USDC" ? "NAV · DAILY" : "OHLCV"}
+          {pair === "USYC/USDC" ? "NAV · DAILY" : `OHLCV · ${timeframe.toUpperCase()}`}
         </div>
       </div>
     </div>
