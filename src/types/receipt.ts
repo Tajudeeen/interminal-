@@ -28,6 +28,10 @@ export interface TradeReceipt {
   mandateId: string;
   signature: string;
   transactionHash?: string | null;
+  executionReceiptHash?: string | null;
+  actualAmountInRaw?: string | null;
+  actualAmountOutRaw?: string | null;
+  actualReceived?: number | null;
   integrityDigest: string;
   onchainAnchored?: boolean;
   anchorTx?: string;
