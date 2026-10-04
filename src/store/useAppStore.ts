@@ -934,8 +934,8 @@ export const useAppStore = create<AppState>((set, get) => {
 
         const label =
           side === "buy"
-            ? "Confirmed buy " + received.toFixed(4) + " " + p.base + " for $" + amount.toFixed(2) + " USDC"
-            : "Confirmed sell " + inputAmount.toFixed(4) + " " + p.base + " for $" + received.toFixed(2) + " USDC";
+            ? "Confirmed buy " + Number(settledReceived).toFixed(4) + " " + p.base + " for $" + amount.toFixed(2) + " USDC"
+            : "Confirmed sell " + Number(settledInput).toFixed(4) + " " + p.base + " for $" + Number(settledReceived).toFixed(2) + " USDC";
 
         set({
           balances: freshBalances,
