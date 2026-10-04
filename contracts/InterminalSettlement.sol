@@ -38,6 +38,10 @@ contract InterminalSettlement {
     uint256 public constant ARC_CHAIN_ID = 5042;
     address public constant ARC_ROUTER = 0x52FE40c00530db2e43d01652f903870571A14AFD;
     address public constant ARC_USDC_ERC20 = 0x3600000000000000000000000000000000000000;
+    address public constant ARC_WETH = 0x128cC466B61f542da60c70e3aA11c10e19B84EDB;
+    address public constant ARC_EURC = 0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1;
+    address public constant ARC_USYC = 0x8a5D989Bbb96929F689B0200f435f53dA42bF490;
+    address public constant ARC_CIRBTC = 0x171A4217b86A807A64eB94757Db6849fb4bDbAA0;
 
     // --- EIP-712 TypeHashes ---
     bytes32 public constant DOMAIN_TYPEHASH = keccak256(
@@ -275,6 +279,14 @@ contract InterminalSettlement {
         );
     }
 
+    function _agentPairTokenOut(uint256 pairIndex) internal pure returns (address) {
+        if (pairIndex == 0) return ARC_WETH;
+        if (pairIndex == 1) return ARC_EURC;
+        if (pairIndex == 2) return ARC_USYC;
+        if (pairIndex == 3) return ARC_CIRBTC;
+        revert("Interminal: unsupported agent pair");
+    }
+
     // --- Autonomous Agentic Execution ---
     /**
      * @notice Executes a trade delegated to an autonomous AI agent within verified bounds.
@@ -298,15 +310,30 @@ contract InterminalSettlement {
         address authorizer = recoverSigner(mandateDigest, mandateSig);
         require(authorizer == mandate.authorizer, "Interminal: authorizer signature mismatch");
 
-        // Gating Check 1: Pair Bitmask verification
-        require((mandate.allowedPairsMask & (1 << execution.pairIndex)) != 0, "Interminal: pair not authorized by mandate");
+        require(mandate.maxSlippageBps <= 500, "Interminal: mandate slippage ceiling invalid");
 
-        // Gating Check 2: Max Spend Per Tx limit
+        // Agent mandates are intentionally scoped to USDC-denominated treasury spend.
+        require(execution.tokenIn == ARC_USDC_ERC20, "Interminal: agent input must be Arc USDC");
+
+        // Gating Check 1: Pair bitmask and concrete token mapping.
+        require((mandate.allowedPairsMask & (1 << execution.pairIndex)) != 0, "Interminal: pair not authorized by mandate");
+        require(execution.tokenOut == _agentPairTokenOut(execution.pairIndex), "Interminal: token pair does not match mandate");
+
+        // Gating Check 2: Max Spend Per Tx limit, denominated in 6-decimal USDC units.
         require(execution.amountIn <= mandate.maxSpendPerTx, "Interminal: exceeds per-tx spend limit");
 
-        // Gating Check 3: Cumulative Spend limit
+        // Gating Check 3: Cumulative Spend limit.
         uint256 currentCumulative = mandateCumulativeSpend[mandateDigest];
         require(currentCumulative + execution.amountIn <= mandate.maxCumulativeSpend, "Interminal: exceeds cumulative spend budget");
+
+        // Gating Check 4: Slippage ceiling is enforced against a fresh Arc router quote.
+        address[] memory agentPath = new address[](2);
+        agentPath[0] = ARC_USDC_ERC20;
+        agentPath[1] = execution.tokenOut;
+        uint256[] memory expected = IUniswapV2Router02(ARC_ROUTER).getAmountsOut(execution.amountIn, agentPath);
+        require(expected.length == 2 && expected[1] > 0, "Interminal: missing agent quote");
+        uint256 floor = expected[1] * (10000 - mandate.maxSlippageBps) / 10000;
+        require(execution.minAmountOut >= floor, "Interminal: minimum output exceeds mandate slippage band");
 
         // Update cumulative spend
         mandateCumulativeSpend[mandateDigest] = currentCumulative + execution.amountIn;
