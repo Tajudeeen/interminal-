@@ -232,7 +232,7 @@ export const Sidebar: React.FC = () => {
         <div className="flex items-center justify-between px-1 pt-1">
           <div className="font-mono text-[10px] text-muted">
             <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${environmentMode === "testnet" ? "bg-cyan" : "bg-pos"}`} />
-            {environmentMode === "testnet" ? "5042002 Testnet" : "5042 Mainnet"}
+            {environmentMode === "testnet" ? "5042002 Testnet" : environmentMode === "mainnet" ? "5042 Mainnet" : "Demo · no wallet"}
           </div>
           <button
             onClick={toggleTheme}
