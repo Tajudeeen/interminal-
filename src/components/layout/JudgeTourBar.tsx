@@ -54,13 +54,16 @@ export const JudgeTourBar: React.FC = () => {
     );
   };
 
-  // Step 2: Set up $25,000 trade and execute
+  // Step 2: Load a $25,000 JIT scenario without pretending a transaction happened.
   const handleStep2SimulateTrade = () => {
     setView("terminal");
     setSide("buy");
     setAmount(25000);
-    // Execute trade directly in demo mode
-    useAppStore.getState().executeTrade();
+    addToast(
+      "JIT Scenario Loaded",
+      "The terminal now shows the USYC shortfall and live quote controls. No transaction was broadcast.",
+      "info",
+    );
   };
 
   // Step 3: Inspect latest receipt
@@ -167,7 +170,7 @@ export const JudgeTourBar: React.FC = () => {
                 onClick={handleStep2SimulateTrade}
                 leftIcon={<span className="material-symbols-outlined text-[16px]">swap_calls</span>}
               >
-                Simulate $25k Trade & JIT Unwind
+                Open $25k JIT Scenario
               </Button>
               <Button
                 variant="secondary"
