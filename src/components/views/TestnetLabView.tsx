@@ -15,11 +15,13 @@ export const TestnetLabView: React.FC = () => {
     targetBufferUsd,
     connectWallet,
     switchToCurrentNetwork,
-    completeTestnetTask,
+    runTestnetProof,
     performMainnetFromTestnet,
     setStressTestAmount,
     stressTestAmount,
     testnetTaskComplete,
+    testnetTxHash,
+    executing,
   } = useAppStore();
   const [headBlock, setHeadBlock] = useState<number | null>(null);
   const [loadingBlock, setLoadingBlock] = useState(true);
@@ -91,7 +93,11 @@ export const TestnetLabView: React.FC = () => {
               <Button size="lg" variant="primary" isLoading={connecting} onClick={() => connectWallet("testnet")} leftIcon={<span className="material-symbols-outlined text-[18px]">account_balance_wallet</span>}>
                 {connected ? "Connect to Arc Testnet" : "Connect Testnet Wallet"}
               </Button>
-            ) : null}
+            ) : (
+              <Button size="lg" variant="primary" isLoading={executing} onClick={runTestnetProof} leftIcon={<span className="material-symbols-outlined text-[18px]">bolt</span>}>
+                {executing ? "Confirming..." : testnetTaskComplete ? "Testnet Check Confirmed" : "Run Testnet Execution Check"}
+              </Button>
+            )}
             {connected && chainId !== network.chainId ? (
               <Button size="lg" variant="outline" onClick={switchToCurrentNetwork} leftIcon={<span className="material-symbols-outlined text-[18px]">swap_horiz</span>}>
                 Switch to Arc Testnet
@@ -143,10 +149,20 @@ export const TestnetLabView: React.FC = () => {
             <div className="font-mono text-xs text-sub mt-1">
               {address ? `Wallet ${shortAddr(address)} is connected for the test environment.` : "Connect a funded testnet wallet for network rehearsal. Policy balances shown above are scenarios."}
             </div>
+            {testnetTxHash ? (
+              <a
+                href={network.explorer + "/tx/" + testnetTxHash}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 mt-2 text-cyan font-mono text-[10px] hover:underline"
+              >
+                View confirmed testnet transaction <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+              </a>
+            ) : null}
           </div>
           {!testnetTaskComplete ? (
-            <Button size="md" variant="pos" onClick={() => { completeTestnetTask(); }} disabled={!ready}>
-              Complete Testnet Rehearsal
+            <Button size="md" variant="outline" onClick={runTestnetProof} disabled={!ready || executing} leftIcon={<span className="material-symbols-outlined text-[15px]">verified</span>}>
+              {executing ? "Waiting for confirmation..." : "Run Testnet Check"}
             </Button>
           ) : (
             <Button size="md" variant="primary" onClick={performMainnetFromTestnet} rightIcon={<span className="material-symbols-outlined text-[17px]">arrow_forward</span>}>
