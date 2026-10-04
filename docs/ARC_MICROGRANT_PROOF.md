@@ -54,3 +54,29 @@ Recommended one-line description:
 Interminal is a policy-controlled USDC treasury desk for Arc that rebalances idle capital into USYC, executes quoted USDC/USYC treasury flows through a deployed Arc settlement contract, and anchors cryptographic audit receipts on-chain.
 
 The grant submission should link directly to the live deployment and the public repository.
+
+## Evidence matrix
+
+| Claim a reviewer may ask about | Direct proof |
+|---|---|
+| Live on Arc Mainnet | Settlement contract and deployment transaction above |
+| Correct chain | `eth_chainId -> 5042` in `npm run verify:arc` |
+| Exact deployed source | CI compiles `contracts/InterminalSettlement.sol` and requires byte-for-byte runtime equality |
+| Contract runtime identity | Recorded runtime keccak256 and 8,802-byte size |
+| Real trade path | Wallet approval → EIP-712 TradeTicket → Arc transaction → receipt confirmation |
+| Receipt provenance | `TradeSettled` event decoded from the confirmed receipt |
+| Audit anchoring | `anchorReceipt(bytes32)` followed by `isReceiptAnchored(bytes32)` |
+| Policy/replay controls | Live source guards plus local fail-closed regression suite |
+| Real market data | GeckoTerminal Arc OHLCV smoke test on CI |
+| USYC pricing | Hashnote NAV feed, rendered as daily data |
+| Simulation boundaries | UI labels simulation and never invents historical Arc transactions |
+| Reproducible build | `npm test`, `npm run build`, `npm run test:legacy`, `npm run verify:market`, `npm run verify:arc` |
+| Threat model | [SECURITY.md](../SECURITY.md) |
+
+## 90-second reviewer path
+
+1. Open the live app and choose **Take a Tour**.
+2. Load the **$25k JIT Scenario**. The terminal shows the USYC shortfall without pretending a transaction occurred.
+3. Open **Proof / Arc RPC** and run the live verification.
+4. For a real-wallet proof, connect to Arc Mainnet, approve only the requested ERC-20 amount, sign the EIP-712 ticket, and follow the confirmed transaction to Arc Explorer.
+5. Open the receipt and verify the certificate digest plus on-chain anchor.
