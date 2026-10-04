@@ -76,13 +76,14 @@ export interface CandleResult {
 }
 
 const GECKO_BASE = "https://api.geckoterminal.com/api/v2";
+const GECKO_ACCEPT = "application/json;version=20230203";
 const HASHNOTE_PRICE = "https://usyc.hashnote.com/api/price";
 const HASHNOTE_REPORTS = "https://usyc.hashnote.com/api/price-reports";
 
 const ARC_POOL_MAP: Record<string, string> = {
   // Verified live Arc pools indexed by GeckoTerminal.
   "ETH/USDC": "0x6f302decb49fb30b2d2c609bdd16e04e7dd096fc",
-  "BTC/USDC": "0x82916bee18fcef517b26c72d7cb5f13694e1db41",
+  "BTC/USDC": "0xd945caee4635bcd7fb8a9fa74dc1d0c4c1472782",
   "EURC/USDC": "0xbe080ac37ad1305dfcc9521f5e6f68cfdc41b7fa",
 };
 
@@ -122,7 +123,7 @@ const GECKO_RESOLUTION: Record<Timeframe, { bucket: string; aggregate: number }>
 async function fetchJson(url: string, timeoutMs = 9000): Promise<any> {
   const res = await fetch(url, {
     signal: AbortSignal.timeout(timeoutMs),
-    headers: { Accept: "application/json" },
+    headers: { Accept: GECKO_ACCEPT },
   });
   if (!res.ok) throw new Error("Market data request failed: " + res.status);
   return res.json();
@@ -153,6 +154,13 @@ function statsFromCandles(candles: Candle[]): CandleStats | undefined {
     low: Math.min(...statsWindow.map((c) => c.low)),
     vol: statsWindow.reduce((sum, c) => sum + Math.max(0, c.volume || 0), 0),
   };
+}
+
+const liveCandleCache = new Map<string, { expiresAt: number; result: CandleResult }>();
+const LIVE_CACHE_MS = 45_000;
+
+function getCacheKey(pairKey: string, timeframe: Timeframe, count: number): string {
+  return pairKey + "|" + timeframe + "|" + count;
 }
 
 async function fetchArcPoolCandles(
@@ -363,18 +371,27 @@ export async function getCandles(
 ): Promise<CandleResult> {
   assertPair(pairKey);
   const tf = TF_ALLOW.has(timeframe) ? timeframe : "4h";
+  const cacheKey = getCacheKey(pairKey, tf, count);
+  const cached = liveCandleCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.result;
 
   try {
     if (pairKey === "USYC/USDC") {
-      return await fetchHashnoteUsycCandles(count);
+      const result = await fetchHashnoteUsycCandles(count);
+      liveCandleCache.set(cacheKey, { expiresAt: Date.now() + LIVE_CACHE_MS, result });
+      return result;
     }
 
     if (ARC_POOL_MAP[pairKey]) {
-      return await fetchArcPoolCandles(pairKey, tf, count);
+      const result = await fetchArcPoolCandles(pairKey, tf, count);
+      liveCandleCache.set(cacheKey, { expiresAt: Date.now() + LIVE_CACHE_MS, result });
+      return result;
     }
 
     if (BINANCE_SYMBOL_MAP[pairKey]) {
-      return await fetchBinanceCandles(pairKey, tf, count);
+      const result = await fetchBinanceCandles(pairKey, tf, count);
+      liveCandleCache.set(cacheKey, { expiresAt: Date.now() + LIVE_CACHE_MS, result });
+      return result;
     }
 
     return {
