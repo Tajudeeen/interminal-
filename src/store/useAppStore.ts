@@ -29,6 +29,7 @@ import {
   publicRpc,
   readChainId,
   readTraderNonce,
+  readMandateNonce,
   routerAmountOut,
   verifyArcLive,
   erc20Allowance,
@@ -978,7 +979,7 @@ export const useAppStore = create<AppState>((set, get) => {
           maxSlippageBps: slipBps,
           allowedPairs: pairs,
           ttlSeconds: ttlHours * 3600,
-          nonce: livePortfolio ? await readTraderNonce(trader) : 0,
+          nonce: livePortfolio ? await readMandateNonce(trader) : 0,
         });
 
         let signedMandate = mandate;
