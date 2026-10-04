@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { NETWORKS } from "../../constants/networks";
 import { Button } from "../ui/Button";
 import { shortAddr } from "../../lib/arc/wallet";
-import { calculateJitUnwind, calculateYieldSweep } from "../../lib/math/treasury";
 
 export const TestnetLabView: React.FC = () => {
   const {
@@ -12,14 +11,11 @@ export const TestnetLabView: React.FC = () => {
     connected,
     connecting,
     nativeGasBalance,
-    targetBufferUsd,
     connectWallet,
     switchToCurrentNetwork,
     runTestnetProof,
     performMainnetFromTestnet,
-    setStressTestAmount,
-    stressTestAmount,
-    testnetTaskComplete,
+testnetTaskComplete,
     testnetTxHash,
     executing,
   } = useAppStore();
@@ -27,17 +23,6 @@ export const TestnetLabView: React.FC = () => {
   const [loadingBlock, setLoadingBlock] = useState(true);
 
   const network = NETWORKS.testnet;
-  const scenarioUsdc = 15000;
-  const scenarioUsyc = 185000;
-  const sweep = useMemo(() => calculateYieldSweep(25000, targetBufferUsd), [targetBufferUsd]);
-  const jit = useMemo(() => calculateJitUnwind({
-    tradeAmountUsd: stressTestAmount,
-    liquidUsdc: scenarioUsdc,
-    usycBalance: scenarioUsyc,
-    usycPriceUsd: 1.135836,
-    slippageBps: 30,
-  }), [stressTestAmount]);
-
   useEffect(() => {
     let cancelled = false;
     setLoadingBlock(true);
