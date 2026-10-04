@@ -39,8 +39,11 @@ export function buildOnchainTradeTicket(
 ): TradeTicket {
   const p = PAIRS[assertPair(pairKey)];
   const traderAddr = normalizeAddress(address);
-  const baseToken = ARC.tokens[p.base] || ARC.tokens.WETH;
+  const baseToken = ARC.tokens[p.base];
   const quoteToken = { address: ARC.usdcErc20, decimals: 6 };
+  if (!baseToken?.address) {
+    throw new Error("Pair " + pairKey + " has no verified Arc token address and cannot be executed on-chain");
+  }
 
   let tokenIn: string;
   let tokenOut: string;
@@ -167,7 +170,7 @@ export function createAgentMandateDescriptor({
   maxSlippageBps = 50,
   allowedPairs = ["ETH/USDC"],
   ttlSeconds = 14400,
-  nonce = 1,
+  nonce = 0,
 }: CreateMandateParams): AgentMandateDescriptor {
   const traderAddr = trader || delegator;
   if (!traderAddr || !isAddress(traderAddr)) throw new Error("Invalid trader address");
@@ -293,7 +296,8 @@ export function buildAgentMandateTicket(
     6
   );
   const expiry = Number(mandate.deadline) || Math.floor(Date.now() / 1000) + (mandate.ttlSeconds || 14400);
-  const nonce = Number(mandate.nonce) || 0;
+  const nonceValue = Number(mandate.nonce);
+  const nonce = Number.isFinite(nonceValue) && nonceValue >= 0 ? nonceValue : 0;
 
   return {
     types: {
@@ -352,6 +356,9 @@ export function buildAgentMandateTicket(
 
 export interface GenerateReceiptParams {
   txLabel?: string;
+  mode?: "simulation" | "mainnet";
+  status?: "simulated" | "draft" | "signed" | "pending" | "confirmed" | "failed";
+  transactionHash?: string;
   quote: TradeQuote;
   pairKey?: string;
   pair?: string;
@@ -377,6 +384,9 @@ export function generateTradeReceipt({
   side,
   amount,
   amountUsd,
+  mode = "simulation",
+  status = mode === "mainnet" ? "draft" : "simulated",
+  transactionHash,
 }: GenerateReceiptParams): TradeReceipt {
   const effectivePairKey = pairKey || pair || "ETH/USDC";
   const pairObj = PAIRS[assertPair(effectivePairKey)];
@@ -387,12 +397,14 @@ export function generateTradeReceipt({
 
   const receipt: any = {
     receiptVersion: "1.0-ARC",
+    mode,
+    status,
     network: "Arc Mainnet",
     chainId: ARC.chainId,
     rpc: ARC.rpc,
     receiptId: "rcpt-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8),
     timestamp: new Date().toISOString(),
-    blockNumber: blockNumber || 4892104,
+    blockNumber: blockNumber ?? 0,
     trader: traderAddr,
     pair: effectivePairKey,
     baseSymbol: pairObj.base,
@@ -412,6 +424,7 @@ export function generateTradeReceipt({
     gasUsd: quote.gasUsd,
     mandateId: mandateId || "NONE (Manual EIP-712 Signature)",
     signature: effectiveSig,
+    transactionHash: transactionHash || null,
   };
 
   const canonicalString = JSON.stringify(receipt);
@@ -426,6 +439,8 @@ export function verifyReceiptIntegrity(receipt: any): boolean {
   delete clone.integrityDigest;
   delete clone.onchainAnchored;
   delete clone.anchorTx;
+  delete clone.anchoredAt;
+  delete clone.status;
   const computedDigest = sha256Hex(JSON.stringify(clone));
   return expectedDigest.toLowerCase() === computedDigest.toLowerCase();
 }
