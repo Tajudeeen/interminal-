@@ -14,7 +14,7 @@ import {
   serializeEip712,
 } from "../lib/crypto/eip712";
 import { calculateJitUnwind } from "../lib/math/treasury";
-import { computeIndicators, generateCandles, analyzeMarket, getCandles } from "../lib/math/indicators";
+import { CandleSource, computeIndicators, generateCandles, analyzeMarket, getCandles } from "../lib/math/indicators";
 import { formatUnits, parseUnits, quoteTrade } from "../lib/math/quotes";
 import {
   getInjected,
@@ -71,7 +71,7 @@ export interface AppState {
   stressTestAmount: number;
   candles: Candle[];
   indicators: Indicators | null;
-  candleSource: "live" | "seeded";
+  candleSource: CandleSource;
   analysis: MarketAnalysis | null;
   aiCore: "market" | "trade" | "portfolio" | "wallet";
   dcaSpendTotal: number;
@@ -251,8 +251,6 @@ function getInitialActivity() {
 
 export const useAppStore = create<AppState>((set, get) => {
   const initialPair = "ETH/USDC";
-  const initialCandles = generateCandles(initialPair, "4h");
-  const initialIndicators = computeIndicators(initialCandles);
 
   return {
     theme: getInitialTheme(),
@@ -284,9 +282,9 @@ export const useAppStore = create<AppState>((set, get) => {
     slippage: 0.5,
     targetBufferUsd: 5000,
     stressTestAmount: 25000,
-    candles: initialCandles,
-    indicators: initialIndicators,
-    candleSource: "seeded",
+    candles: [],
+    indicators: null,
+    candleSource: "unavailable",
     analysis: null,
     aiCore: "market",
     dcaSpendTotal: 100,
@@ -314,7 +312,7 @@ export const useAppStore = create<AppState>((set, get) => {
     proof: { running: false, live: null, local: null, checkedAt: null },
     block: 0,
     latency: 12,
-    marketFeedStatus: { source: "DexScreener Uniswap V3", live: false, lastUpdate: null, error: null },
+    marketFeedStatus: { source: "Waiting for live market data", live: false, lastUpdate: null, error: null },
     toasts: [],
     showLevels: false,
     executing: false,
@@ -363,15 +361,32 @@ export const useAppStore = create<AppState>((set, get) => {
     setPair: (pair) => {
       try {
         assertPair(pair);
-        const tf = get().timeframe;
-        // Try live data first, fallback to seeded
-        getCandles(pair, tf).then(({ candles: liveCandles, source }) => {
-          const indicators = computeIndicators(liveCandles);
-          set({ pair, candles: liveCandles, indicators, candleSource: source });
-        }).catch(() => {
-          const candles = generateCandles(pair, tf);
-          const indicators = computeIndicators(candles);
-          set({ pair, candles, indicators, candleSource: "seeded" });
+        const tf = pair === "USYC/USDC" ? "1D" : get().timeframe;
+        set({ pair, timeframe: tf, candles: [], indicators: null, candleSource: "unavailable", marketFeedStatus: { source: "Loading live market data", live: false, lastUpdate: null, error: null } });
+
+        getCandles(pair, tf).then((result) => {
+          const indicators = result.candles.length ? computeIndicators(result.candles) : null;
+          const current = PAIRS[pair];
+          if (current && result.stats) {
+            current.price = result.stats.price;
+            current.change = result.stats.change;
+            current.high = result.stats.high;
+            current.low = result.stats.low;
+            current.vol = result.stats.vol;
+          }
+          set({
+            pair,
+            timeframe: tf,
+            candles: result.candles,
+            indicators,
+            candleSource: result.source,
+            marketFeedStatus: {
+              source: result.label,
+              live: result.source !== "unavailable",
+              lastUpdate: Date.now(),
+              error: result.source === "unavailable" ? result.label : null,
+            },
+          });
         });
       } catch (e: any) {
         get().addToast("Unknown pair", e.message || String(e), "err");
@@ -380,13 +395,29 @@ export const useAppStore = create<AppState>((set, get) => {
 
     setTimeframe: (tf) => {
       const pair = get().pair;
-      getCandles(pair, tf).then(({ candles: liveCandles, source }) => {
-        const indicators = computeIndicators(liveCandles);
-        set({ timeframe: tf, candles: liveCandles, indicators, candleSource: source });
-      }).catch(() => {
-        const candles = generateCandles(pair, tf);
-        const indicators = computeIndicators(candles);
-        set({ timeframe: tf, candles, indicators, candleSource: "seeded" });
+      const nextTf = pair === "USYC/USDC" ? "1D" : tf;
+      getCandles(pair, nextTf).then((result) => {
+        const indicators = result.candles.length ? computeIndicators(result.candles) : null;
+        const current = PAIRS[pair];
+        if (current && result.stats) {
+          current.price = result.stats.price;
+          current.change = result.stats.change;
+          current.high = result.stats.high;
+          current.low = result.stats.low;
+          current.vol = result.stats.vol;
+        }
+        set({
+          timeframe: nextTf,
+          candles: result.candles,
+          indicators,
+          candleSource: result.source,
+          marketFeedStatus: {
+            source: result.label,
+            live: result.source !== "unavailable",
+            lastUpdate: Date.now(),
+            error: result.source === "unavailable" ? result.label : null,
+          },
+        });
       });
     },
 
@@ -478,8 +509,6 @@ export const useAppStore = create<AppState>((set, get) => {
 
     launchDemo: () => {
       const demoPair = "ETH/USDC";
-      const candles = generateCandles(demoPair, "4h");
-      const indicators = computeIndicators(candles);
       set({
         connected: true,
         address: null,
@@ -492,12 +521,18 @@ export const useAppStore = create<AppState>((set, get) => {
         stressTestAmount: 2500,
         view: "portfolio",
         pair: demoPair,
-        candles,
-        indicators,
+        timeframe: "4h",
+        candles: [],
+        indicators: null,
+        candleSource: "unavailable",
+        marketFeedStatus: { source: "Loading live market data", live: false, lastUpdate: null, error: null },
       });
+
+      void get().syncMarketData();
+
       get().addToast(
         "Treasury Cockpit Active",
-        "Simulation initialized with $14,250 operating cash and $10,000 USYC. No Arc transaction was broadcast.",
+        "Simulation balances loaded. Market charts use live public market data and never fabricate candles.",
         "ok"
       );
     },
@@ -516,67 +551,41 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     syncMarketData: async () => {
-      try {
-        const tokens = [
-          "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", // WETH
-          "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599", // WBTC
-          "0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c", // EURC
-        ];
-        const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${tokens.join(",")}`);
-        if (!res.ok) throw new Error("DexScreener API error: " + res.status);
-        const data = await res.json();
-        const pairsArr = data.pairs || [];
-        pairsArr.forEach((p: any) => {
-          if (p.quoteToken?.symbol !== "USDC" && p.quoteToken?.symbol !== "USDT") return;
-          const base = p.baseToken?.symbol;
-          const px = parseFloat(p.priceUsd);
-          const chg = parseFloat(p.priceChange?.h24 || "0");
-          const vol = parseFloat(p.volume?.h24 || "0");
-          if (!px || px <= 0) return;
+      const activePair = get().pair;
+      const activeTf = activePair === "USYC/USDC" ? "1D" : get().timeframe;
 
-          if ((base === "WETH" || base === "ETH") && PAIRS["ETH/USDC"]) {
-            PAIRS["ETH/USDC"].price = px;
-            PAIRS["ETH/USDC"].change = chg;
-            PAIRS["ETH/USDC"].vol = vol;
-          } else if ((base === "WBTC" || base === "BTC") && PAIRS["BTC/USDC"]) {
-            PAIRS["BTC/USDC"].price = px;
-            PAIRS["BTC/USDC"].change = chg;
-            PAIRS["BTC/USDC"].vol = vol;
-          } else if (base === "EURC" && PAIRS["EURC/USDC"]) {
-            PAIRS["EURC/USDC"].price = px;
-            PAIRS["EURC/USDC"].change = chg;
-            PAIRS["EURC/USDC"].vol = vol;
-          }
+      try {
+        const result = await getCandles(activePair, activeTf);
+        const indicators = result.candles.length ? computeIndicators(result.candles) : null;
+        const current = PAIRS[activePair];
+
+        if (current && result.stats) {
+          current.price = result.stats.price;
+          current.change = result.stats.change;
+          current.high = result.stats.high;
+          current.low = result.stats.low;
+          current.vol = result.stats.vol;
+        }
+
+        set({
+          timeframe: activeTf,
+          candles: result.candles,
+          indicators,
+          candleSource: result.source,
+          marketFeedStatus: {
+            source: result.label,
+            live: result.source !== "unavailable",
+            lastUpdate: Date.now(),
+            error: result.source === "unavailable" ? result.label : null,
+          },
         });
-        const activePair = get().pair;
-        const tf = get().timeframe;
-        // Try live candle fetch alongside price sync
-        getCandles(activePair, tf).then(({ candles: liveCandles, source }) => {
-          const indicators = computeIndicators(liveCandles);
-          set({
-            candles: liveCandles,
-            indicators,
-            candleSource: source,
-            marketFeedStatus: { source: source === "live" ? "Binance Live" : "DexScreener Uniswap V3", live: source === "live", lastUpdate: Date.now(), error: null },
-          });
-          if (source === "live") {
-            get().addToast("Live Candles Active", "Chart data synced from Binance API.", "ok");
-          }
-        }).catch(() => {
-          const candles = generateCandles(activePair, tf);
-          const indicators = computeIndicators(candles);
-          set({
-            candles,
-            indicators,
-            candleSource: "seeded",
-            marketFeedStatus: { source: "DexScreener Uniswap V3", live: false, lastUpdate: Date.now(), error: null },
-          });
-        });
-        get().addToast("DEX Feeds Live", "Prices synced with Uniswap V3 on-chain pools.", "ok");
       } catch (err: any) {
         set({
+          candles: [],
+          indicators: null,
+          candleSource: "unavailable",
           marketFeedStatus: {
-            source: "DexScreener Uniswap V3",
+            source: "Live market data unavailable",
             live: false,
             lastUpdate: Date.now(),
             error: err.message || String(err),
@@ -584,7 +593,6 @@ export const useAppStore = create<AppState>((set, get) => {
         });
       }
     },
-
     runAiAnalysis: () => {
       const { pair, timeframe, indicators } = get();
       const analysis = analyzeMarket(pair, timeframe, indicators);
