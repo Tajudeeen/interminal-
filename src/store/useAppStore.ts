@@ -802,8 +802,36 @@ export const useAppStore = create<AppState>((set, get) => {
       try {
         await switchOrAddNetwork(eth, mode);
         const chainId = Number.parseInt(String(await walletRpc("eth_chainId")), 16);
-        set({ chainId, wrongNetwork: false });
-        get().addToast("Network Ready", "Connected to " + NETWORKS[mode].name + " (" + NETWORKS[mode].chainId + ").", "ok");
+        if (mode === "mainnet") {
+          const currentAddress = get().address;
+          if (!currentAddress || !isAddress(currentAddress)) throw new Error("No wallet account available after network switch");
+          const balances = await loadOnchainPortfolio(currentAddress);
+          await refreshLivePairValuation();
+          const liveSizing = deriveLiveControlSizing(balances);
+          let ticketNonce = 0;
+          try { ticketNonce = await readTraderNonce(currentAddress); } catch {}
+          set({
+            chainId,
+            wrongNetwork: false,
+            connected: true,
+            livePortfolio: true,
+            balances,
+            ticketNonce,
+            targetBufferUsd: liveSizing.targetBufferUsd,
+            stressTestAmount: liveSizing.stressTestAmount,
+            amount: liveSizing.tradeDefaultUsd,
+            dcaSpendTotal: liveSizing.dcaSpendTotal,
+            dcaSliceSize: liveSizing.dcaSliceSize,
+            mandateSpend: liveSizing.mandateSpendUsd,
+            nativeGasBalance: formatUnits(await walletRpc("eth_getBalance", [currentAddress, "latest"]), ARC.nativeDecimals),
+            view: "portfolio",
+          });
+        } else {
+          set({ chainId, wrongNetwork: false });
+        }
+        get().addToast("Network Ready", mode === "mainnet"
+          ? "Arc Mainnet is ready. Live balances and prices have been loaded."
+          : "Connected to " + NETWORKS[mode].name + " (" + NETWORKS[mode].chainId + ").", "ok");
       } catch (err: any) {
         get().addToast("Network Switch Failed", err.message || String(err), "err");
       }
