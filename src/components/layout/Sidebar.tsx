@@ -21,6 +21,7 @@ export const Sidebar: React.FC = () => {
     setSearchOpen,
     startJudgeTour,
     launchTestnet,
+    openMainnetReview,
     environmentMode,
   } = useAppStore();
 
@@ -125,18 +126,22 @@ export const Sidebar: React.FC = () => {
                   Arc Gas Tank
                 </span>
               </div>
-              <Button
-                size="xs"
-                variant="outline"
-                className="text-[10px] text-pos border-pos/30 hover:border-pos/60 hover:bg-pos/10"
-                onClick={() => setGasTankModalOpen(true)}
-              >
-                Refuel
-              </Button>
+              {environmentMode === "demo" ? (
+                <Button
+                  size="xs"
+                  variant="outline"
+                  className="text-[10px] text-pos border-pos/30 hover:border-pos/60 hover:bg-pos/10"
+                  onClick={() => setGasTankModalOpen(true)}
+                >
+                  Refuel
+                </Button>
+              ) : (
+                <span className="font-mono text-[9px] text-muted uppercase">native gas</span>
+              )}
             </div>
             <div className="mt-2 flex items-baseline justify-between">
               <span className="font-display font-extrabold text-base text-themed tnum">
-                {nativeGasBalance.toFixed(3)}
+                {environmentMode === "mainnet" && !livePortfolio ? "—" : nativeGasBalance.toFixed(3)}
               </span>
               <span className="font-mono text-[10px] text-muted">Arc Native</span>
             </div>
@@ -196,10 +201,10 @@ export const Sidebar: React.FC = () => {
           <Button
             size="sm"
             variant="primary"
-            onClick={launchTestnet}
-            leftIcon={<span className="material-symbols-outlined text-[14px]">science</span>}
+            onClick={openMainnetReview}
+            leftIcon={<span className="material-symbols-outlined text-[14px]">bolt</span>}
           >
-            Testnet
+            Review Mainnet
           </Button>
         ) : (
           <Button
