@@ -8,6 +8,7 @@ import {
   calculateYieldSweep,
 } from "../../lib/math/treasury";
 import { portfolioSnapshot } from "../../lib/math/risk";
+import { deriveLiveControlSizing } from "../../lib/math/liveSizing";
 import { Button } from "../ui/Button";
 import { CapitalFlowDiagram } from "../treasury/CapitalFlowDiagram";
 
@@ -26,6 +27,7 @@ export const TreasuryCockpitView: React.FC = () => {
     addToast,
     setView,
     executing,
+    nativeGasBalance,
     executeSweepOnchain,
   } = useAppStore();
 
@@ -45,9 +47,26 @@ export const TreasuryCockpitView: React.FC = () => {
   });
 
   const snapshot = portfolioSnapshot(balances, livePortfolio);
+  const liveSizing = deriveLiveControlSizing(balances);
+  const treasuryLiquidityUsd = liquidUsdc + usycNavUsd;
 
-  const bufferPresets = [500, 1000, 2500, 5000];
-  const stressPresets = [1000, 2500, 5000, 10000];
+  const toPreset = (value: number, ceiling = Number.POSITIVE_INFINITY) => {
+    if (!Number.isFinite(value) || value <= 0) return 0;
+    const step = value >= 1000 ? 100 : 50;
+    return Math.min(ceiling, Math.max(10, Math.round(value / step) * step));
+  };
+
+  const bufferPresets = livePortfolio
+    ? [...new Set([0.10, 0.20, 0.35, 0.50].map((ratio) => toPreset(liquidUsdc * ratio, liquidUsdc)).filter(Boolean))]
+    : [500, 1000, 2500, 5000];
+
+  const stressPresets = livePortfolio
+    ? [...new Set([0.75, 1.00, 1.25, 1.50].map((ratio) => toPreset(treasuryLiquidityUsd * ratio, treasuryLiquidityUsd)).filter(Boolean))]
+    : [1000, 2500, 5000, 10000];
+
+  const bufferSliderMax = livePortfolio
+    ? Math.max(100, Math.ceil(Math.max(liquidUsdc, 100) / 1000) * 1000)
+    : 10000;
 
   const handleSweepNow = () => {
     if (!sweep.recommended || sweep.sweepAmount <= 0) {
@@ -257,6 +276,11 @@ export const TreasuryCockpitView: React.FC = () => {
               <p className="font-mono text-xs text-muted mt-1 leading-relaxed">
                 Retain liquid USDC for operations, then sweep excess into the configured treasury asset.
               </p>
+              {livePortfolio && (
+                <p className="font-mono text-[10px] text-cyan mt-2">
+                  Wallet-scaled starting buffer: ${liveSizing.targetBufferUsd.toLocaleString()} USDC · based on 20% of current liquid USDC.
+                </p>
+              )}
             </div>
             <span className="font-display font-black text-xl text-pos tnum">
               ${targetBufferUsd.toLocaleString()}
@@ -294,10 +318,10 @@ export const TreasuryCockpitView: React.FC = () => {
             </div>
             <input
               type="range"
-              min={100}
-              max={10000}
+              min={0}
+              max={bufferSliderMax}
               step={100}
-              value={targetBufferUsd}
+              value={Math.min(targetBufferUsd, bufferSliderMax)}
               onChange={(e) => setTargetBufferUsd(Number(e.target.value))}
               className="w-full accent-lime-500 cursor-pointer"
             />
@@ -362,6 +386,11 @@ export const TreasuryCockpitView: React.FC = () => {
             <div className="text-[10px] font-mono text-muted uppercase tracking-wider mb-2">
               Simulate Outgoing Wire / Trade Size
             </div>
+            {livePortfolio && (
+              <div className="font-mono text-[10px] text-cyan mb-2">
+                Wallet-scaled scenario: ${liveSizing.stressTestAmount.toLocaleString()} USDC from current ${treasuryLiquidityUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })} treasury NAV.
+              </div>
+            )}
             <div className="grid grid-cols-4 gap-2">
               {stressPresets.map((val) => (
                 <button
