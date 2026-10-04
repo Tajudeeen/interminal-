@@ -13,6 +13,7 @@ export const AuditReceiptModal: React.FC = () => {
     setActiveReceiptModal,
     addToast,
     address,
+    wrongNetwork,
     settlementContractAddress,
   } = useAppStore();
   const [anchoring, setAnchoring] = useState(false);
@@ -61,8 +62,16 @@ export const AuditReceiptModal: React.FC = () => {
   };
 
   const handleAnchor = async () => {
+    if (activeReceiptModal.mode === "simulation") {
+      addToast("Simulation Receipt", "Simulation certificates are local-only and cannot be anchored as mainnet execution.", "info");
+      return;
+    }
     if (!address) {
       addToast("Wallet Required", "Connect an Arc Mainnet wallet to anchor receipt on-chain.", "err");
+      return;
+    }
+    if (wrongNetwork) {
+      addToast("Wrong Network", "Switch the connected wallet to Arc Mainnet (5042) before anchoring.", "err");
       return;
     }
     setAnchoring(true);
@@ -110,6 +119,24 @@ export const AuditReceiptModal: React.FC = () => {
           <span className="text-[10px] opacity-80">Canonical JSON · SHA-256</span>
         </div>
 
+        {/* Execution Provenance */}
+        <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+          <div className="p-3 rounded-card card-themed border border-themed/30">
+            <div className="text-muted text-[10px] uppercase">Execution Mode</div>
+            <div className={activeReceiptModal.mode === "mainnet" ? "text-pos font-bold mt-0.5" : "text-amber-500 font-bold mt-0.5"}>
+              {activeReceiptModal.mode.toUpperCase()} · {activeReceiptModal.status.toUpperCase()}
+            </div>
+          </div>
+          <div className="p-3 rounded-card card-themed border border-themed/30">
+            <div className="text-muted text-[10px] uppercase">Settled Output</div>
+            <div className="text-themed font-bold mt-0.5">
+              {activeReceiptModal.actualReceived != null
+                ? activeReceiptModal.actualReceived.toLocaleString("en-US", { maximumFractionDigits: 8 })
+                : "Pending / Simulation"}
+            </div>
+          </div>
+        </div>
+
         {/* Certificate Overview Grid */}
         <div className="grid grid-cols-2 gap-2 text-xs font-mono">
           <div className="p-3 rounded-card card-themed border border-themed/30">
@@ -132,7 +159,7 @@ export const AuditReceiptModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Raw JSON-LD viewer with syntax styling */}
+        {/* Canonical JSON viewer with syntax styling */}
         <div>
           <div className="flex items-center justify-between mb-1.5 font-mono text-[10px] text-muted">
             <span>CANONICAL PAYLOAD</span>
@@ -188,6 +215,19 @@ export const AuditReceiptModal: React.FC = () => {
           </div>
         )}
 
+        {/* Execution transaction proof */}
+        {activeReceiptModal.transactionHash && (
+          <a
+            href={ARC.explorer + "/tx/" + activeReceiptModal.transactionHash}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between p-3 rounded-card bg-cyan/10 border border-cyan/30 text-cyan text-xs font-mono hover:bg-cyan/15 transition-colors"
+          >
+            <span>Execution Tx: {shortAddr(activeReceiptModal.transactionHash)}</span>
+            <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+          </a>
+        )}
+
         {/* Action Controls */}
         <div className="flex flex-wrap gap-2 pt-2">
           <Button
@@ -217,7 +257,7 @@ export const AuditReceiptModal: React.FC = () => {
           >
             Download .JSON
           </Button>
-          {!activeReceiptModal.onchainAnchored && (
+          {activeReceiptModal.mode === "mainnet" && !activeReceiptModal.onchainAnchored && (
             <Button
               variant="primary"
               size="sm"
