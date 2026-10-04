@@ -21,6 +21,8 @@ export const Header: React.FC = () => {
     wrongNetwork,
     switchToCurrentNetwork,
     launchTestnet,
+    openMainnetReview,
+    environmentMode,
   } = useAppStore();
 
   return (
@@ -55,16 +57,24 @@ export const Header: React.FC = () => {
         >
           Take a Tour
         </Button>
-        {/* Gas Tank Pill */}
-        <button
-          onClick={() => setGasTankModalOpen(true)}
-          className="flex items-center gap-1 px-2 py-1 rounded-pill card-themed border border-themed text-[11px] font-mono text-sub hover:text-themed"
-        >
-          <span className="material-symbols-outlined text-[13px] text-amber-500">
-            local_gas_station
-          </span>
-          <span>{nativeGasBalance.toFixed(2)}</span>
-        </button>
+        {/* Gas balance: live Arc uses native USDC directly; refuel is demo-only. */}
+        {environmentMode === "demo" ? (
+          <button
+            onClick={() => setGasTankModalOpen(true)}
+            className="flex items-center gap-1 px-2 py-1 rounded-pill card-themed border border-themed text-[11px] font-mono text-sub hover:text-themed"
+          >
+            <span className="material-symbols-outlined text-[13px] text-amber-500">local_gas_station</span>
+            <span>{nativeGasBalance.toFixed(2)}</span>
+          </button>
+        ) : (
+          <div
+            className="flex items-center gap-1 px-2 py-1 rounded-pill card-themed border border-themed text-[11px] font-mono text-sub"
+            title="Native USDC is the Arc gas balance"
+          >
+            <span className="material-symbols-outlined text-[13px] text-amber-500">local_gas_station</span>
+            <span>{livePortfolio ? nativeGasBalance.toFixed(2) : "—"}</span>
+          </div>
+        )
 
         {/* Search */}
         <button
@@ -108,8 +118,8 @@ export const Header: React.FC = () => {
             </div>
           )
         ) : environmentMode === "demo" ? (
-          <Button size="xs" variant="outline" onClick={launchTestnet}>
-            Testnet
+          <Button size="xs" variant="outline" onClick={openMainnetReview}>
+            Mainnet
           </Button>
         ) : (
           <Button
