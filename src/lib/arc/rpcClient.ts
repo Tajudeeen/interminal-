@@ -126,6 +126,13 @@ export async function readTraderNonce(address: string): Promise<number> {
   return Number(BigInt(hex || "0x0"));
 }
 
+export async function readMandateNonce(address: string): Promise<number> {
+  const safe = normalizeAddress(address);
+  const data = "0x3f40b75a" + padAddr(safe);
+  const hex = await publicRpc("eth_call", [{ to: ARC.settlement, data }, "latest"]);
+  return Number(BigInt(hex || "0x0"));
+}
+
 export async function routerAmountOut(
   tokenIn: string,
   tokenOut: string,
