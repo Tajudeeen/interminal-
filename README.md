@@ -53,6 +53,10 @@ Timeframe changes are request-scoped: the UI clears the previous series while lo
 
 The application theme switch applies to the full product surface, including every modal. Modal overlays, glass panels, headers, inputs, internal cards, borders, and secondary actions use the same theme tokens, so switching between dark and light does not leave a hard-coded dark modal behind.
 
+### TypeScript UI wiring
+
+The application was migrated from the original JavaScript implementation to React + TypeScript. The current UI is the source of interaction, while the Zustand store owns shared state and execution actions. Automated tests now scan the store action surface and component tree to catch actions that become orphaned during future refactors. The audit also keeps DCA/TWAP plans and signed agent mandates visible in the Corporate Ledger, wires chart mode and price-level controls into the terminal, validates imported ERC-20 metadata before registration, and keeps imported live markets bound to their contract address.
+
 ---
 
 ## Builder
