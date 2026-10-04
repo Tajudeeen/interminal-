@@ -158,7 +158,7 @@ export const TreasuryCockpitView: React.FC = () => {
             <span className="w-2.5 h-2.5 rounded-full bg-pos animate-pulse shrink-0" />
             <div>
               <span className="font-display font-black text-pos uppercase tracking-wider">LIVE ARC MAINNET CONNECTED</span>
-              <span className="font-mono text-muted text-[11px] ml-2">Chain ID: 5042 · Wallet: {address} · Real balances synced via Arc public RPC</span>
+              <span className="font-mono text-muted text-[11px] ml-2">Wallet {address ? address.slice(0, 6) + "…" + address.slice(-4) : "—"} · USDC ${liquidUsdc.toLocaleString(undefined, { maximumFractionDigits: 2 })} · USYC NAV ${usycNavUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })} · Total NAV ${snapshot.total.toLocaleString(undefined, { maximumFractionDigits: 2 })} · Native gas ${nativeGasBalance.toFixed(4)} USDC</span>
             </div>
           </div>
           <a href={ARC.explorer + "/address/" + address} target="_blank" rel="noopener noreferrer" className="font-mono text-[11px] text-pos hover:underline flex items-center gap-1 shrink-0">
