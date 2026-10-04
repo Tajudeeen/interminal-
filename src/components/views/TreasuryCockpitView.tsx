@@ -29,10 +29,12 @@ export const TreasuryCockpitView: React.FC = () => {
     executing,
     nativeGasBalance,
     executeSweepOnchain,
+    environmentMode,
   } = useAppStore();
 
   const [simHorizonDays, setSimHorizonDays] = useState<number>(365);
 
+  const mainnetReview = environmentMode === "mainnet" && !livePortfolio;
   const liquidUsdc = balances.USDC || 0;
   const usycBalance = balances.USYC || 0;
 
@@ -135,7 +137,7 @@ export const TreasuryCockpitView: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {!livePortfolio && (
+          {!livePortfolio && !mainnetReview && (
             <Button
               variant="secondary"
               size="sm"
@@ -179,6 +181,28 @@ export const TreasuryCockpitView: React.FC = () => {
           </div>
           <Button size="xs" variant="danger" onClick={() => connectWallet()}>Recheck Wallet</Button>
         </div>
+      ) : mainnetReview ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-card bg-cyan/10 border border-cyan/40 text-xs gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan animate-pulse shrink-0" />
+            <div className="min-w-0">
+              <div className="font-display font-black text-cyan uppercase tracking-wider">
+                MAINNET REVIEW · WALLET REQUIRED
+              </div>
+              <div className="font-mono text-muted text-[11px] mt-1">
+                Connect to load your real Arc holdings, live prices, wallet-scaled policy controls, and executable settlement.
+              </div>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => connectWallet("mainnet")}
+            leftIcon={<span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>}
+          >
+            Connect Arc Mainnet
+          </Button>
+        </div>
       ) : (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-card bg-amber-500/10 border border-amber-500/40 text-xs gap-3">
           <div className="flex items-center gap-2.5">
@@ -195,7 +219,7 @@ export const TreasuryCockpitView: React.FC = () => {
           <Button
             size="xs"
             variant="primary"
-            onClick={() => connectWallet()}
+            onClick={() => connectWallet("mainnet")}
             leftIcon={<span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>}
           >
             Connect Live Arc Wallet
