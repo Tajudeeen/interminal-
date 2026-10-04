@@ -24,7 +24,6 @@ export const TerminalTradeView: React.FC = () => {
     chartMode,
     candles,
     indicators,
-    candleSource,
     marketFeedStatus,
     balances,
     dcaSpendTotal,
