@@ -20,6 +20,7 @@ export const Header: React.FC = () => {
     environmentMode,
     wrongNetwork,
     switchToCurrentNetwork,
+    launchTestnet,
   } = useAppStore();
 
   return (
@@ -106,11 +107,15 @@ export const Header: React.FC = () => {
               <span className="truncate max-w-[64px]">{shortAddr(address)}</span>
             </div>
           )
+        ) : environmentMode === "demo" ? (
+          <Button size="xs" variant="outline" onClick={launchTestnet}>
+            Testnet
+          </Button>
         ) : (
           <Button
             size="xs"
             variant="primary"
-            onClick={() => connectWallet()}
+            onClick={() => connectWallet(environmentMode === "testnet" ? "testnet" : "mainnet")}
           >
             Connect
           </Button>
