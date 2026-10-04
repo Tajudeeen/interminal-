@@ -43,7 +43,6 @@ export const TerminalTradeView: React.FC = () => {
     setSearchOpen,
   } = useAppStore();
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const p = PAIRS[pairKey] || PAIRS["ETH/USDC"];
 
   let quote;
