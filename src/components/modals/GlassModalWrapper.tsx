@@ -34,17 +34,20 @@ export const GlassModalWrapper: React.FC<GlassModalWrapperProps> = ({
       {/* Backdrop with Blur */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 modal-backdrop backdrop-blur-md transition-opacity animate-in fade-in duration-200"
       />
 
       {/* Glassmorphic Modal Dialog */}
       <div
-        className={`relative w-full ${maxWidth} glass-modal rounded-card overflow-hidden shadow-2xl z-10 animate-in zoom-in-95 duration-200`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="interminal-modal-title"
+        className={`relative w-full ${maxWidth} glass-modal rounded-card overflow-hidden z-10 animate-in zoom-in-95 duration-200`}
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-themed/30 flex items-center justify-between">
           <div>
-            <h3 className="font-display font-extrabold text-base text-themed tracking-tight">
+            <h3 id="interminal-modal-title" className="font-display font-extrabold text-base text-themed tracking-tight">
               {title}
             </h3>
             {subtitle && (
