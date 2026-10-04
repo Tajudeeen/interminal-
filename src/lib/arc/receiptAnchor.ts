@@ -1,6 +1,6 @@
 import { ARC } from "../../constants/arc";
 import { TradeReceipt } from "../../types/receipt";
-import { publicRpc } from "./rpcClient";
+import { publicRpc, waitForTransactionReceipt } from "./rpcClient";
 import { isAddress, walletRpc } from "./wallet";
 
 export async function checkReceiptAnchoredOnchain(receipt: TradeReceipt, settlementAddress?: string): Promise<boolean> {
@@ -40,7 +40,9 @@ export async function anchorReceiptOnchain(
       gas: "0x30D40",
     },
   ]);
+  await waitForTransactionReceipt(txHash);
   receipt.onchainAnchored = true;
   receipt.anchorTx = txHash;
+  receipt.anchoredAt = Math.floor(Date.now() / 1000);
   return txHash;
 }
