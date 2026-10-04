@@ -178,20 +178,43 @@ async function fetchArcPoolCandles(
   }
 
   const resolution = GECKO_RESOLUTION[timeframe];
-  const url =
-    GECKO_BASE +
-    "/networks/arc/pools/" +
-    pool +
-    "/ohlcv/" +
-    resolution.bucket +
-    "?aggregate=" +
-    resolution.aggregate +
-    "&limit=" +
-    Math.min(count, 1000) +
-    "&currency=usd";
+  const query =
+    "?pair=" +
+    encodeURIComponent(pairKey) +
+    "&timeframe=" +
+    encodeURIComponent(timeframe) +
+    "&count=" +
+    Math.min(count, 1000);
 
-  const json = await fetchJson(url);
-  const raw = json?.data?.attributes?.ohlcv_list;
+  // In the browser, use the same-origin Vercel proxy to avoid CORS/rate-limit
+  // surprises. Non-browser environments can still call GeckoTerminal directly.
+  const json =
+    typeof window !== "undefined"
+      ? await fetchJson("/api/market-data" + query)
+      : await fetchJson(
+          GECKO_BASE +
+            "/networks/arc/pools/" +
+            pool +
+            "/ohlcv/" +
+            resolution.bucket +
+            "?aggregate=" +
+            resolution.aggregate +
+            "&limit=" +
+            Math.min(count, 1000) +
+            "&currency=usd",
+        );
+
+  const raw =
+    typeof window !== "undefined"
+      ? json?.candles?.map((c: any) => [
+          Number(c.time) / 1000,
+          c.open,
+          c.high,
+          c.low,
+          c.close,
+          c.volume,
+        ])
+      : json?.data?.attributes?.ohlcv_list;
   if (!Array.isArray(raw)) throw new Error("GeckoTerminal returned no OHLCV data");
 
   // GeckoTerminal OHLCV tuples are [timestamp, open, high, low, close, volume].
