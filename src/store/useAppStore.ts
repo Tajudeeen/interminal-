@@ -83,7 +83,6 @@ export interface AppState {
   indicators: Indicators | null;
   candleSource: CandleSource;
   analysis: MarketAnalysis | null;
-  aiCore: "market" | "trade" | "portfolio" | "wallet";
   dcaSpendTotal: number;
   dcaSliceSize: number;
   dcaFreqSec: number;
@@ -121,7 +120,6 @@ export interface AppState {
   setTheme: (theme: "dark" | "light") => void;
   toggleTheme: () => void;
   setView: (view: AppState["view"]) => void;
-  setEnvironmentMode: (mode: EnvironmentMode) => void;
   openMainnetReview: () => void;
   launchTestnet: () => void;
   performMainnetFromTestnet: () => void;
@@ -144,7 +142,6 @@ export interface AppState {
   setReviewOpen: (open: boolean) => void;
   setActiveReceiptModal: (receipt: TradeReceipt | null) => void;
   setImportTokenOpen: (open: boolean) => void;
-  setAiCore: (core: AppState["aiCore"]) => void;
   setShowLevels: (show: boolean) => void;
   addToast: (title: string, body: string, kind?: ToastItem["kind"]) => void;
   removeToast: (id: string) => void;
@@ -309,7 +306,6 @@ export const useAppStore = create<AppState>((set, get) => {
     indicators: null,
     candleSource: "unavailable",
     analysis: null,
-    aiCore: "market",
     dcaSpendTotal: 100,
     dcaSliceSize: 20,
     dcaFreqSec: 60,
@@ -370,21 +366,6 @@ export const useAppStore = create<AppState>((set, get) => {
       } else {
         get().setTheme(next);
       }
-    },
-
-    setEnvironmentMode: (mode) => {
-      if (mode === "mainnet") {
-        if (get().livePortfolio) {
-          set({ environmentMode: "mainnet" });
-          return;
-        }
-        get().openMainnetReview();
-        return;
-      }
-      set({
-        environmentMode: mode,
-        testnetTaskComplete: mode === "testnet" ? get().testnetTaskComplete : false,
-      });
     },
 
     openMainnetReview: () => {
@@ -700,7 +681,6 @@ export const useAppStore = create<AppState>((set, get) => {
     setReviewOpen: (reviewOpen) => set({ reviewOpen }),
     setActiveReceiptModal: (activeReceiptModal) => set({ activeReceiptModal }),
     setImportTokenOpen: (importTokenOpen) => set({ importTokenOpen }),
-    setAiCore: (aiCore) => set({ aiCore }),
     setShowLevels: (showLevels) => set({ showLevels }),
 
     addToast: (title, body, kind = "info") => {
