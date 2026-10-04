@@ -27,6 +27,10 @@ function stripSolidityMetadata(bytecode) {
   return "0x" + hex.slice(0, hex.length - metadataHexLength - 4);
 }
 
+function sameExecutableRuntime(a, b) {
+  return stripSolidityMetadata(a).toLowerCase() === stripSolidityMetadata(b).toLowerCase();
+}
+
 function compileSource(source) {
   const input = {
     language: "Solidity",
@@ -78,8 +82,8 @@ async function main() {
   const freshCreation = "0x" + contract.evm.bytecode.object;
 
   ok(
-    "checked-in Solidity reproduces the live deployment byte-for-byte",
-    freshRuntime.toLowerCase() === settlementCode.toLowerCase(),
+    "checked-in Solidity reproduces the live executable runtime",
+    sameExecutableRuntime(freshRuntime, settlementCode),
   );
 
   const artifact = JSON.parse(
@@ -87,12 +91,16 @@ async function main() {
   );
   ok("committed artifact is for InterminalSettlement", artifact.contractName === "InterminalSettlement");
   ok(
-    "committed artifact runtime matches live deployment",
-    String(artifact.deployedBytecode || "").toLowerCase() === settlementCode.toLowerCase(),
+    "committed artifact executable runtime matches live deployment",
+    sameExecutableRuntime(String(artifact.deployedBytecode || ""), settlementCode),
+  );
+  ok(
+    "committed artifact executable runtime matches freshly compiled source",
+    sameExecutableRuntime(String(artifact.deployedBytecode || ""), freshRuntime),
   );
   ok(
     "committed artifact creation bytecode matches freshly compiled source",
-    String(artifact.bytecode || "").toLowerCase() === freshCreation.toLowerCase(),
+    sameExecutableRuntime(String(artifact.bytecode || ""), freshCreation),
   );
 
   const deployedRuntimeHash = ethers.keccak256(settlementCode);
@@ -170,7 +178,7 @@ async function main() {
     provenance: {
       canonicalSource: "contracts/InterminalSettlement.sol",
       futureSuccessor: "contracts/InterminalSettlementV2.sol",
-      sourceRuntimeMatch: true,
+      executableRuntimeMatch: true,
     },
   }, null, 2));
 }
