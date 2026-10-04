@@ -86,8 +86,8 @@ export const JudgeTourBar: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:bottom-8 z-40 md:max-w-xl w-full animate-view-fade">
-      <div className="glass-modal rounded-2xl p-5 border border-cyan/40 shadow-2xl space-y-4">
+    <div className="fixed left-4 right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] md:left-auto md:right-8 md:bottom-8 z-50 md:max-w-xl w-auto animate-view-fade">
+      <div className="glass-modal rounded-2xl p-4 sm:p-5 border border-cyan/40 shadow-2xl space-y-4 max-h-[calc(100dvh-6rem)] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -136,10 +136,11 @@ export const JudgeTourBar: React.FC = () => {
               <span className="font-bold">Pillar 1: Policy-Driven Cash Optimization.</span> Operating cash buffer retains liquid USDC for operations; detects{" "}
               <span className="text-pos font-bold">${excessCash.toLocaleString()} USDC</span> excess cash and routes it to USYC in simulation mode.
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2">
               <Button
                 variant="primary"
                 size="sm"
+                className="flex-1 min-w-0"
                 onClick={handleStep1Sweep}
                 leftIcon={<span className="material-symbols-outlined text-[16px]">bolt</span>}
               >
@@ -148,6 +149,7 @@ export const JudgeTourBar: React.FC = () => {
               <Button
                 variant="secondary"
                 size="sm"
+                className="flex-1 min-w-0"
                 onClick={() => goToStep(2)}
                 rightIcon={<span className="material-symbols-outlined text-[14px]">arrow_forward</span>}
               >
@@ -163,10 +165,11 @@ export const JudgeTourBar: React.FC = () => {
               <span className="font-bold">Pillar 2: Just-In-Time (JIT) Liquidity.</span> An outgoing wire or trade of{" "}
               <span className="text-lime-500 font-bold">$25,000</span> exceeds liquid USDC. The demo calculates a USYC shortfall, while live mode can execute a fresh USYC/USDC route on Arc with bounded output.
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2">
               <Button
                 variant="primary"
                 size="sm"
+                className="flex-1 min-w-0"
                 onClick={handleStep2SimulateTrade}
                 leftIcon={<span className="material-symbols-outlined text-[16px]">swap_calls</span>}
               >
@@ -175,6 +178,7 @@ export const JudgeTourBar: React.FC = () => {
               <Button
                 variant="secondary"
                 size="sm"
+                className="flex-1 min-w-0"
                 onClick={() => goToStep(3)}
                 rightIcon={<span className="material-symbols-outlined text-[14px]">arrow_forward</span>}
               >
@@ -190,10 +194,11 @@ export const JudgeTourBar: React.FC = () => {
               <span className="font-bold">Pillar 3: Signed EIP-712 Controls & Arc Settlement.</span> Executed tickets generate a canonical JSON certificate with SHA-256 integrity proofs that can be anchored to the deployed Arc contract{" "}
               <span className="text-pos font-bold font-mono">{shortAddr(ARC.settlement)}</span> on Chain 5042.
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2">
               <Button
                 variant="primary"
                 size="sm"
+                className="flex-1 min-w-0"
                 onClick={handleStep3InspectReceipt}
                 leftIcon={<span className="material-symbols-outlined text-[16px]">verified</span>}
               >
@@ -202,6 +207,7 @@ export const JudgeTourBar: React.FC = () => {
               <Button
                 variant="secondary"
                 size="sm"
+                className="flex-1 min-w-0"
                 onClick={() => setJudgeTourOpen(false)}
               >
                 Finish Tour
