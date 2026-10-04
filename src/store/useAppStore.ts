@@ -1510,6 +1510,19 @@ export const useAppStore = create<AppState>((set, get) => {
     createAgentMandate: async ({ spendUsd, slipBps, ttlHours, pairs, agent: requestedAgent }) => {
       const { address, mandates, livePortfolio, environmentMode } = get();
       const liveIntent = environmentMode === "mainnet";
+
+      // The deployed Arc settlement address is the v1 contract. Its live agent
+      // executor does not bind execution.tokenIn/tokenOut to the signed pair mask,
+      // so an authorized agent could spend an approved ERC-20 allowance on an
+      // unintended token. Never sign new live mandates against that deployment.
+      if (liveIntent) {
+        get().addToast(
+          "Live Agent Mandates Disabled",
+          "The deployed settlement is v1. Live agent delegation stays locked until the hardened successor is deployed and verified.",
+          "warn",
+        );
+        return;
+      }
       if (liveIntent && (!address || !isAddress(address))) {
         get().addToast("Wallet Required", "Connect an Arc Mainnet wallet to sign a live mandate.", "err");
         return;
