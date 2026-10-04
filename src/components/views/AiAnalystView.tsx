@@ -15,6 +15,8 @@ export const AiAnalystView: React.FC = () => {
     setMandateModalOpen,
     prepareTradeReview,
     addToast,
+    balances,
+    livePortfolio,
   } = useAppStore();
 
   useEffect(() => {
@@ -42,15 +44,33 @@ export const AiAnalystView: React.FC = () => {
   const handleExecuteRecommendedPolicy = () => {
     if (!analysis) return;
     const recommendedSide = analysis.trend === "Bearish" ? "sell" : "buy";
+    const recommendedPair = PAIRS[analysis.pair] || p;
+    const maxWalletValue = recommendedSide === "buy"
+      ? Math.max(0, balances.USDC || 0)
+      : Math.max(0, (balances[recommendedPair.base] || 0) * recommendedPair.price);
+    const recommendedAmount = livePortfolio ? Math.min(500, maxWalletValue) : 500;
+
+    if (livePortfolio && recommendedAmount <= 0) {
+      addToast(
+        "No Wallet Capacity",
+        "The connected wallet has no usable balance for the recommended action.",
+        "err",
+      );
+      return;
+    }
+
     setPair(analysis.pair);
     setSide(recommendedSide);
-    setAmount(500);
+    setAmount(recommendedAmount);
     prepareTradeReview();
-    addToast(
-      "Policy Checks Passed",
-      "Action complies with daily spend limits and slippage bounds. Ready for authorization.",
-      "ok"
-    );
+
+    if (useAppStore.getState().reviewOpen) {
+      addToast(
+        "Policy Review Ready",
+        \`Loaded a $\${recommendedAmount.toLocaleString()} \${recommendedSide.toUpperCase()} review for \${analysis.pair}. The next step still requires wallet authorization.\`,
+        "ok",
+      );
+    }
   };
 
   return (
@@ -211,11 +231,11 @@ export const AiAnalystView: React.FC = () => {
                   {analysis.trend === "Bearish" ? "Take Profit / Hedge" : "Treasury Rebalance"}: {analysis.pair}
                 </div>
                 <div className="font-mono text-xs text-sub mt-0.5">
-                  Allocate $500 USDC based on {analysis.regime.toLowerCase()} regime & favorable risk/reward ({analysis.rr}:1)
+                  Allocate ${livePortfolio ? Math.min(500, Math.max(0, balances.USDC || 0)).toLocaleString() : 500} USDC based on {analysis.regime.toLowerCase()} regime & favorable risk/reward ({analysis.rr}:1)
                 </div>
               </div>
               <div className="text-right font-mono text-xs text-pos font-bold shrink-0">
-                Size: $500.00 USDC
+                Size: ${livePortfolio ? Math.min(500, Math.max(0, balances.USDC || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "500.00"} USDC
               </div>
             </div>
 
