@@ -317,3 +317,56 @@ canvas { display: block; }
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Slightly darker action colors for a calmer institutional UI */
+.btn-primary {
+  background: #b7cf3d;
+  color: #10140a;
+  border: 1px solid #9fb52f;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+.btn-primary:hover { background: #c4dc4a; border-color: #afc63a; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.24); }
+.btn-positive {
+  background: #0b8f69;
+  color: #ffffff;
+  border: 1px solid #08785a;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
+}
+.btn-positive:hover { background: #0da277; border-color: #0b8967; }
+.btn-danger {
+  background: #c94744;
+  color: #ffffff;
+  border: 1px solid #a83a37;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
+}
+.btn-danger:hover { background: #d5524f; border-color: #b74340; }
+
+.app-scroll {
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+  scroll-padding-top: 1rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.page-shell {
+  contain: layout paint style;
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-view-fade {
+    animation: viewFadeIn 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .smooth-lift:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
+  }
+}
