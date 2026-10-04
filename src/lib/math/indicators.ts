@@ -43,8 +43,51 @@ export function generateCandles(pairKey: string, timeframe: Timeframe, count = 1
   return candles;
 }
 
-/* ── Live candle data from Binance public API ────────────────── */
+
+/* -------------------------------------------------------------------------- */
+/* Live market data                                                            */
+/*                                                                            */
+/* Production charts must never silently fall back to fabricated candles.     */
+/* Arc-listed markets use GeckoTerminal's free public on-chain OHLCV API.     */
+/* USYC uses Hashnote's official NAV reports because USYC is priced once per  */
+/* business day rather than trading as a normal continuously quoted asset.    */
+/* -------------------------------------------------------------------------- */
+
+export type CandleSource =
+  | "arc-geckoterminal"
+  | "hashnote-usyc"
+  | "global-binance"
+  | "unavailable";
+
+export interface CandleStats {
+  price: number;
+  change: number;
+  high: number;
+  low: number;
+  vol: number;
+}
+
+export interface CandleResult {
+  candles: Candle[];
+  source: CandleSource;
+  label: string;
+  stats?: CandleStats;
+  poolAddress?: string;
+}
+
+const GECKO_BASE = "https://api.geckoterminal.com/api/v2";
+const HASHNOTE_PRICE = "https://usyc.hashnote.com/api/price";
+const HASHNOTE_REPORTS = "https://usyc.hashnote.com/api/price-reports";
+
+const ARC_POOL_MAP: Record<string, string> = {
+  // Verified live Arc pools indexed by GeckoTerminal.
+  "ETH/USDC": "0x6f302decb49fb30b2d2c609bdd16e04e7dd096fc",
+  "BTC/USDC": "0x82916bee18fcef517b26c72d7cb5f13694e1db41",
+  "EURC/USDC": "0xbe080ac37ad1305dfcc9521f5e6f68cfdc41b7fa",
+};
+
 const BINANCE_SYMBOL_MAP: Record<string, string> = {
+  // Explicitly global reference markets, not Arc liquidity.
   "ETH/USDC": "ETHUSDT",
   "BTC/USDC": "BTCUSDT",
   "SOL/USDC": "SOLUSDT",
@@ -56,12 +99,8 @@ const BINANCE_SYMBOL_MAP: Record<string, string> = {
   "LINK/USDC": "LINKUSDT",
   "AAVE/USDC": "AAVEUSDT",
   "UNI/USDC": "UNIUSDT",
-  "EURC/USDC": "EURUSDT", // EUR/USD as proxy
-  "USYC/USDC": "USTCUSDT", // USTC as proxy (not perfect, but no direct equivalent)
-  "ARC/USDC": "ETHUSDT", // No direct, use ETH as proxy until Arc has an API
 };
 
-// Binance kline interval mapping
 const BINANCE_INTERVAL_MAP: Record<Timeframe, string> = {
   "1m": "1m",
   "5m": "5m",
@@ -71,50 +110,283 @@ const BINANCE_INTERVAL_MAP: Record<Timeframe, string> = {
   "1D": "1d",
 };
 
-export async function fetchLiveCandles(
-  pairKey: string,
-  timeframe: Timeframe,
-  count = 200
-): Promise<Candle[] | null> {
-  const tf = TF_ALLOW.has(timeframe) ? timeframe : "4h";
-  const bnSymbol = BINANCE_SYMBOL_MAP[pairKey];
-  if (!bnSymbol) return null;
+const GECKO_RESOLUTION: Record<Timeframe, { bucket: string; aggregate: number }> = {
+  "1m": { bucket: "minute", aggregate: 1 },
+  "5m": { bucket: "minute", aggregate: 5 },
+  "15m": { bucket: "minute", aggregate: 15 },
+  "1h": { bucket: "hour", aggregate: 1 },
+  "4h": { bucket: "hour", aggregate: 4 },
+  "1D": { bucket: "day", aggregate: 1 },
+};
 
-  const interval = BINANCE_INTERVAL_MAP[tf];
-  if (!interval) return null;
-
-  try {
-    const res = await fetch(
-      `https://api.binance.com/api/v3/klines?symbol=${bnSymbol}&interval=${interval}&limit=${count}`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    if (!res.ok) return null;
-    const data = await res.json() as any[][];
-
-    return data.map((k: any[]) => ({
-      time: k[0] as number,
-      open: parseFloat(k[1]),
-      high: parseFloat(k[2]),
-      low: parseFloat(k[3]),
-      close: parseFloat(k[4]),
-      volume: parseFloat(k[5]),
-    })).filter((c) => !isNaN(c.close) && c.close > 0);
-  } catch {
-    return null;
-  }
+async function fetchJson(url: string, timeoutMs = 9000): Promise<any> {
+  const res = await fetch(url, {
+    signal: AbortSignal.timeout(timeoutMs),
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) throw new Error("Market data request failed: " + res.status);
+  return res.json();
 }
 
-/* ── Combined fetcher: live first, fallback to seeded ───────── */
+function statsFromCandles(candles: Candle[]): CandleStats | undefined {
+  if (!candles.length) return undefined;
+  const valid = candles.filter(
+    (c) =>
+      Number.isFinite(c.open) &&
+      Number.isFinite(c.high) &&
+      Number.isFinite(c.low) &&
+      Number.isFinite(c.close) &&
+      c.close > 0,
+  );
+  if (!valid.length) return undefined;
+
+  const latest = valid[valid.length - 1];
+  const cutoff = latest.time - 24 * 60 * 60 * 1000;
+  const prior = [...valid].reverse().find((c) => c.time <= cutoff);
+
+  return {
+    price: latest.close,
+    change: prior?.close ? ((latest.close / prior.close) - 1) * 100 : 0,
+    high: Math.max(...valid.map((c) => c.high)),
+    low: Math.min(...valid.map((c) => c.low)),
+    vol: valid.reduce((sum, c) => sum + Math.max(0, c.volume || 0), 0),
+  };
+}
+
+async function fetchArcPoolCandles(
+  pairKey: string,
+  timeframe: Timeframe,
+  count = 120,
+): Promise<CandleResult> {
+  const pool = ARC_POOL_MAP[pairKey];
+  if (!pool) {
+    return {
+      candles: [],
+      source: "unavailable",
+      label: "No indexed Arc market data",
+    };
+  }
+
+  const resolution = GECKO_RESOLUTION[timeframe];
+  const url =
+    GECKO_BASE +
+    "/networks/arc/pools/" +
+    pool +
+    "/ohlcv/" +
+    resolution.bucket +
+    "?aggregate=" +
+    resolution.aggregate +
+    "&limit=" +
+    Math.min(count, 1000) +
+    "&currency=usd";
+
+  const json = await fetchJson(url);
+  const raw = json?.data?.attributes?.ohlcv_list;
+  if (!Array.isArray(raw)) throw new Error("GeckoTerminal returned no OHLCV data");
+
+  // GeckoTerminal OHLCV tuples are [timestamp, open, high, low, close, volume].
+  const candles: Candle[] = raw
+    .map((k: any[]) => ({
+      time: Number(k?.[0]) * 1000,
+      open: Number(k?.[1]),
+      high: Number(k?.[2]),
+      low: Number(k?.[3]),
+      close: Number(k?.[4]),
+      volume: Number(k?.[5] || 0),
+    }))
+    .filter(
+      (c: Candle) =>
+        Number.isFinite(c.time) &&
+        Number.isFinite(c.open) &&
+        Number.isFinite(c.high) &&
+        Number.isFinite(c.low) &&
+        Number.isFinite(c.close) &&
+        c.close > 0,
+    )
+    .sort((a: Candle, b: Candle) => a.time - b.time);
+
+  if (candles.length < 2) throw new Error("Arc market returned insufficient OHLCV history");
+
+  return {
+    candles,
+    source: "arc-geckoterminal",
+    label: "Arc DEX · GeckoTerminal",
+    stats: statsFromCandles(candles),
+    poolAddress: pool,
+  };
+}
+
+type UnknownRecord = Record<string, any>;
+
+function collectRecords(value: any): UnknownRecord[] {
+  if (Array.isArray(value)) return value.flatMap(collectRecords);
+  if (value && typeof value === "object") {
+    const out: UnknownRecord[] = [value];
+    for (const key of ["data", "reports", "priceReports", "results", "items"]) {
+      if (value[key] !== undefined) out.push(...collectRecords(value[key]));
+    }
+    return out;
+  }
+  return [];
+}
+
+function firstNumber(row: UnknownRecord, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = Number(row[key]);
+    if (Number.isFinite(value) && value > 0) return value;
+  }
+  return null;
+}
+
+function firstTimestamp(row: UnknownRecord): number | null {
+  for (const key of [
+    "timestamp",
+    "time",
+    "reportedAt",
+    "effectiveAt",
+    "publishedAt",
+    "createdAt",
+    "date",
+  ]) {
+    const raw = row[key];
+    if (raw === undefined || raw === null || raw === "") continue;
+    const numeric = Number(raw);
+    if (Number.isFinite(numeric) && numeric > 0) return numeric < 10_000_000_000 ? numeric * 1000 : numeric;
+    const parsed = Date.parse(String(raw));
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+async function fetchHashnoteUsycCandles(count = 120): Promise<CandleResult> {
+  const [current, reports] = await Promise.all([
+    fetchJson(HASHNOTE_PRICE),
+    fetchJson(HASHNOTE_REPORTS),
+  ]);
+
+  const rows = [...collectRecords(reports), ...collectRecords(current)];
+  const seen = new Set<string>();
+  const points = rows
+    .map((row) => ({
+      time: firstTimestamp(row),
+      price: firstNumber(row, ["price", "priceUsd", "price_usd", "nav", "usycPrice", "value"]),
+    }))
+    .filter((p): p is { time: number; price: number } => !!p.time && !!p.price)
+    .sort((a, b) => a.time - b.time);
+
+  const candles: Candle[] = [];
+  for (const point of points) {
+    const key = String(point.time);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const previous = candles[candles.length - 1]?.close ?? point.price;
+    candles.push({
+      time: point.time,
+      open: previous,
+      high: Math.max(previous, point.price),
+      low: Math.min(previous, point.price),
+      close: point.price,
+      volume: 0,
+    });
+  }
+
+  const trimmed = candles.slice(-count);
+  if (trimmed.length < 2) throw new Error("Hashnote returned insufficient USYC price history");
+
+  return {
+    candles: trimmed,
+    source: "hashnote-usyc",
+    label: "USYC NAV · Hashnote",
+    stats: statsFromCandles(trimmed),
+  };
+}
+
+async function fetchBinanceCandles(
+  pairKey: string,
+  timeframe: Timeframe,
+  count = 120,
+): Promise<CandleResult> {
+  const symbol = BINANCE_SYMBOL_MAP[pairKey];
+  if (!symbol) {
+    return {
+      candles: [],
+      source: "unavailable",
+      label: "No market data available",
+    };
+  }
+
+  const interval = BINANCE_INTERVAL_MAP[timeframe];
+  const url =
+    "https://api.binance.com/api/v3/klines?symbol=" +
+    symbol +
+    "&interval=" +
+    interval +
+    "&limit=" +
+    Math.min(count, 1000);
+  const data = await fetchJson(url);
+
+  const candles: Candle[] = Array.isArray(data)
+    ? data
+        .map((k: any[]) => ({
+          time: Number(k?.[0]),
+          open: Number(k?.[1]),
+          high: Number(k?.[2]),
+          low: Number(k?.[3]),
+          close: Number(k?.[4]),
+          volume: Number(k?.[5] || 0),
+        }))
+        .filter((c: Candle) => Number.isFinite(c.close) && c.close > 0)
+    : [];
+
+  if (candles.length < 2) throw new Error("Binance returned insufficient OHLCV history");
+
+  return {
+    candles,
+    source: "global-binance",
+    label: "Global reference · Binance",
+    stats: statsFromCandles(candles),
+  };
+}
+
+/**
+ * Live-first production market feed.
+ *
+ * There is deliberately no synthetic fallback here. The exported
+ * generateCandles() below is retained only for deterministic unit tests.
+ */
 export async function getCandles(
   pairKey: string,
   timeframe: Timeframe,
-  count = 120
-): Promise<{ candles: Candle[]; source: "live" | "seeded" }> {
-  const live = await fetchLiveCandles(pairKey, timeframe, count);
-  if (live && live.length >= 50) {
-    return { candles: live, source: "live" };
+  count = 120,
+): Promise<CandleResult> {
+  assertPair(pairKey);
+  const tf = TF_ALLOW.has(timeframe) ? timeframe : "4h";
+
+  try {
+    if (pairKey === "USYC/USDC") {
+      return await fetchHashnoteUsycCandles(count);
+    }
+
+    if (ARC_POOL_MAP[pairKey]) {
+      return await fetchArcPoolCandles(pairKey, tf, count);
+    }
+
+    if (BINANCE_SYMBOL_MAP[pairKey]) {
+      return await fetchBinanceCandles(pairKey, tf, count);
+    }
+
+    return {
+      candles: [],
+      source: "unavailable",
+      label: "No indexed market data",
+    };
+  } catch {
+    return {
+      candles: [],
+      source: "unavailable",
+      label: "Live market data unavailable",
+    };
   }
-  return { candles: generateCandles(pairKey, timeframe, count), source: "seeded" };
 }
 
 export function ema(values: number[], period: number): number[] {
