@@ -79,8 +79,8 @@ export const TreasuryCockpitView: React.FC = () => {
         {
           ts: Date.now(),
           type: "trade",
-          label: `Inflow Wire Received: +$${amt.toLocaleString()} USDC`,
-          detail: "Treasury operating account credited via Arc clearinghouse",
+          label: `Simulated Inflow: +${amt.toLocaleString()} USDC`,
+          detail: "Simulation only · no Arc transfer was broadcast.",
         },
         ...s.activity,
       ],
