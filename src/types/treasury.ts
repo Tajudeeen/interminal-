@@ -22,6 +22,7 @@ export interface JitUnwindParams {
   tradeAmountUsd: number;
   liquidUsdc?: number;
   usycBalance?: number;
+  usycPriceUsd?: number;
   slippageBps?: number;
 }
 
