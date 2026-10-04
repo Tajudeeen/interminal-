@@ -105,7 +105,7 @@ testnetTaskComplete,
             </p>
           </div>
           <a
-            href="https://explorer.arc.io"
+            href={network.explorer}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-themed text-sub hover:text-themed hover:border-cyan/40 font-mono text-xs transition-all shrink-0"
