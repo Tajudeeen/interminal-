@@ -116,7 +116,7 @@ async function main() {
     ["receipt anchoring state", /anchoredReceipts\[receiptHash\] = block\.timestamp/.test(source)],
   ];
   console.log("INFO maintained-source guards checked separately from live runtime identity.");
-  for (const [label, present] of sourceGuards) ok("live source contains " + label, present);
+  for (const [label, present] of sourceGuards) ok("maintained source contains " + label, present);
 
   const functionNames = new Set(
     (artifact.abi || []).filter((entry) => entry.type === "function").map((entry) => entry.name),
