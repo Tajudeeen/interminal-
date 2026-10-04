@@ -44,6 +44,7 @@ export function isTokenAllowed(addr: string | null | undefined): boolean {
   const a = addr.toLowerCase();
   if (a === ARC.usdcErc20.toLowerCase()) return true;
   if (a === ARC.settlement.toLowerCase()) return true;
+  if (a === ARC.router.toLowerCase()) return true;
   if (Object.values(ARC.tokens).some((t) => t.address.toLowerCase() === a)) return true;
   return false;
 }
@@ -51,6 +52,7 @@ export function isTokenAllowed(addr: string | null | undefined): boolean {
 export const TOKEN_ALLOW = new Set<string>([
   ARC.usdcErc20.toLowerCase(),
   ARC.settlement.toLowerCase(),
+  ARC.router.toLowerCase(),
   ...Object.values(ARC.tokens).map((t) => t.address.toLowerCase()),
 ]);
 
