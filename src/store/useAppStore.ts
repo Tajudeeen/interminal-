@@ -774,11 +774,24 @@ export const useAppStore = create<AppState>((set, get) => {
         const tokenOut = side === "buy" ? p.address! : ARC.usdcErc20;
         const inputDecimals = side === "buy" ? 6 : (p.decimals ?? 18);
         const outputDecimals = side === "buy" ? (p.decimals ?? 18) : 6;
-        const inputAmount = side === "buy" ? amount : amount / p.price;
+
+        get().addToast("Live Quote", "Reading the verified Arc AMM quote before signing the trade ticket.", "info");
+
+        let inputAmount = amount;
+        let livePriceUsd = p.price;
+        if (side === "sell") {
+          const oneTokenRaw = parseUnits(1, inputDecimals);
+          const oneTokenOutRaw = await routerAmountOut(tokenIn, tokenOut, oneTokenRaw);
+          livePriceUsd = formatUnits("0x" + oneTokenOutRaw.toString(16), outputDecimals);
+          if (!Number.isFinite(livePriceUsd) || livePriceUsd <= 0) {
+            throw new Error("Arc AMM returned an invalid live token price");
+          }
+          inputAmount = amount / livePriceUsd;
+        }
+
         const amountInRaw = parseUnits(inputAmount, inputDecimals);
         if (amountInRaw <= 0n) throw new Error("Trade amount rounds to zero at token precision");
 
-        get().addToast("Live Quote", "Reading the verified Arc AMM quote before signing the trade ticket.", "info");
         const quotedOutRaw = await routerAmountOut(tokenIn, tokenOut, amountInRaw);
         if (quotedOutRaw <= 0n) throw new Error("Arc AMM returned zero output for this route");
 
@@ -793,7 +806,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
         const liveQuote: TradeQuote = {
           ...pendingQuote,
-          price: p.price,
+          price: livePriceUsd,
           received,
           minReceived,
           effective,
@@ -804,7 +817,7 @@ export const useAppStore = create<AppState>((set, get) => {
         };
 
         const onchainNonce = await readTraderNonce(trader);
-        const ticket = buildTradeTicket(trader, pairKey, side, amount, liveQuote, onchainNonce);
+        const ticket = buildTradeTicket(trader, pairKey, side, amount, liveQuote, onchainNonce, livePriceUsd);
 
         const currentAllowance = await erc20Allowance(tokenIn, trader, ARC.settlement);
         if (currentAllowance < amountInRaw) {
