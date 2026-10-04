@@ -179,7 +179,7 @@ test("FX Desk: EURC/USDC corridor computes pip spreads and carry differential", 
 });
 
 // --- SUITE 4: Bounded Agentic Mandates ---
-test("Agent Mandates: EIP-712 scoped permit validates and enforces bounds", () => {
+test("Agent Mandates: EIP-712 scoped permit validates bounded policy", () => {
   const delegator = "0x1111111111111111111111111111111111111111";
   const agent = "0x2222222222222222222222222222222222222222";
   const mandate = createAgentMandateDescriptor({
@@ -259,7 +259,7 @@ test("Agent Mandates: EIP-712 scoped permit validates and enforces bounds", () =
 });
 
 // --- SUITE 5: Cryptographic Audit Receipts ---
-test("Audit Receipts: Canonical JSON-LD trade certificates are tamper-evident", () => {
+test("Audit Receipts: Canonical JSON trade certificates are tamper-evident", () => {
   const quote = {
     effective: 1.0845,
     price: 1.0845,
@@ -646,7 +646,7 @@ test("Gas Tank: Runway estimator and native gas wrapping calculate accurately", 
 });
 
 // --- SUITE 19: Autonomous DCA / TWAP Engine (EIP-712 Mandates) ---
-test("DCA Engine: Autonomous execution slices enforce EIP-712 mandate budget and bounds", () => {
+test("DCA Engine: Simulated DCA slices enforce EIP-712 budget and bounds", () => {
   const createDcaPlan = get("createDcaPlan");
   const executeDcaSlice = get("executeDcaSlice");
   const state = get("state");
@@ -698,4 +698,4 @@ if (failed) {
   console.error("\n" + failed + " failed");
   process.exit(1);
 }
-console.log("\nALL TESTS PASSED — 100% VERIFIED ACROSS ALL CORE PILLARS & ARC MAINNET PROTOCOL");
+console.log("\nALL LEGACY PROTOCOL TESTS PASSED — LIVE ARC CHECKS INCLUDED");
