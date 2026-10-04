@@ -1,3 +1,4 @@
+import fs from "fs";
 import { ethers } from "ethers";
 
 const RPC = process.env.ARC_RPC || "https://rpc.mainnet.arc.io";
@@ -27,8 +28,9 @@ async function main() {
   const settlementCode = await provider.getCode(SETTLEMENT);
   ok("settlement contract bytecode exists", settlementCode !== "0x");
 
-  const artifactUrl = new URL("../artifacts/InterminalSettlement.json", import.meta.url);
-  const artifact = JSON.parse(await (await fetch(artifactUrl)).text());
+  const artifact = JSON.parse(
+    fs.readFileSync(new URL("../artifacts/InterminalSettlement.json", import.meta.url), "utf8")
+  );
   const deployedArtifact = String(artifact.deployedBytecode || "");
   ok("committed artifact is for InterminalSettlement", artifact.contractName === "InterminalSettlement");
   ok(
