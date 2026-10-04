@@ -19,7 +19,6 @@ export const TestnetLabView: React.FC = () => {
     switchToCurrentNetwork,
     completeTestnetTask,
     performMainnetFromTestnet,
-    setTargetBufferUsd,
     setStressTestAmount,
     stressTestAmount,
     testnetTaskComplete,
