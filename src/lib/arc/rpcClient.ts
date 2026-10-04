@@ -257,7 +257,8 @@ export async function loadOnchainPortfolio(address: string): Promise<Record<stri
   const erc20Usdc = await erc20Balance({ address: ARC.usdcErc20, decimals: 6 }, safe);
 
   const next: Record<string, number> = {
-    // Operational liquidity is ERC-20 USDC. Native USDC stays separate as gas.\n    USDC: erc20Usdc,
+    // Operational liquidity is ERC-20 USDC. Native USDC stays separate as gas.
+    USDC: erc20Usdc,
     ETH: 0,
     WETH: 0,
     EURC: 0,
