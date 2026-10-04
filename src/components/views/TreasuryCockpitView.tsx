@@ -345,7 +345,7 @@ export const TreasuryCockpitView: React.FC = () => {
           <div className="pt-2">
             <div className="flex justify-between text-[11px] font-mono text-muted mb-1">
               <span>Fine Adjustment</span>
-              <span className="text-themed font-bold">${targetBufferUsd}</span>
+              <span className="text-themed font-bold">{mainnetReview ? "—" : "$" + targetBufferUsd}</span>
             </div>
             <input
               type="range"
@@ -462,7 +462,7 @@ export const TreasuryCockpitView: React.FC = () => {
             </div>
             <div className="flex justify-between pt-1 border-t border-themed/20">
               <span className="text-muted">Remaining USYC Treasury:</span>
-              <span className="text-themed font-medium tnum">${jit.remainingUsyc.toLocaleString()}</span>
+              <span className="text-themed font-medium tnum">{mainnetReview ? "—" : "$" + jit.remainingUsyc.toLocaleString()}</span>
             </div>
           </div>
 
@@ -496,7 +496,7 @@ export const TreasuryCockpitView: React.FC = () => {
               Treasury Horizon Projection
             </div>
             <h3 className="font-display font-bold text-base text-themed mt-0.5">
-              Yield Earned on Current Holdings (~${usycNavUsd.toLocaleString("en-US", { maximumFractionDigits: 2 })} NAV)
+              Yield Earned on Current Holdings ({mainnetReview ? "connect wallet for live NAV" : "~$" + usycNavUsd.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " NAV"})
             </h3>
           </div>
           {/* Horizon Period Buttons */}
@@ -527,7 +527,7 @@ export const TreasuryCockpitView: React.FC = () => {
           <div className="p-4 rounded-card bg-themed-card/50 border border-themed/30">
             <div className="text-[10px] text-muted uppercase">USYC Net Reference Yield (3.225%)</div>
             <div className="text-2xl font-black text-pos mt-1 font-display tnum">
-              +${horizonYieldUsyc.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {mainnetReview ? "—" : "+$" + horizonYieldUsyc.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="text-[10px] text-muted mt-1">
               Yield accrues through USYC NAV
@@ -537,7 +537,7 @@ export const TreasuryCockpitView: React.FC = () => {
           <div className="p-4 rounded-card bg-themed-card/50 border border-themed/30">
             <div className="text-[10px] text-muted uppercase">Illustrative Bank Benchmark (0.05%)</div>
             <div className="text-2xl font-bold text-muted mt-1 font-display tnum">
-              +${horizonYieldBank.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {mainnetReview ? "—" : "+$" + horizonYieldBank.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="text-[10px] text-muted mt-1">
               Standard corporate checking deposit
@@ -547,7 +547,7 @@ export const TreasuryCockpitView: React.FC = () => {
           <div className="p-4 rounded-card bg-pos/10 border border-pos/30">
             <div className="text-[10px] text-pos font-bold uppercase">Net Treasury Outperformance</div>
             <div className="text-2xl font-black text-pos mt-1 font-display tnum">
-              +${horizonAlphaDelta.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {mainnetReview ? "—" : "+$" + horizonAlphaDelta.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="text-[10px] text-pos mt-1 font-semibold">
               Additional corporate cash generated
