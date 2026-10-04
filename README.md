@@ -102,7 +102,7 @@ Interminal is designed so a reviewer can independently verify its important clai
 | Claim | Evidence |
 |---|---|
 | Live Arc Mainnet deployment | Settlement address + deployment transaction in this README and the Arc Explorer |
-| Canonical source matches live bytecode | `npm run verify:arc` compiles `contracts/InterminalSettlement.sol` and fails on any runtime mismatch |
+| Canonical source matches live bytecode | `npm run verify:arc` compiles `contracts/InterminalSettlement.sol` and fails if the executable runtime differs from the live contract |
 | Deployment provenance | `verify:arc` checks the deployment receipt, contract address, and recorded block |
 | EIP-712 execution controls | Live source + ABI expose deadline, trader nonce, signer recovery, pause and reentrancy guards |
 | Real settlement | Confirmed `TradeSettled` receipt is decoded before the UI marks the trade successful |
