@@ -17,6 +17,7 @@ export const Header: React.FC = () => {
     setSearchOpen,
     nativeGasBalance,
     startJudgeTour,
+    environmentMode,
   } = useAppStore();
 
   return (
@@ -30,11 +31,17 @@ export const Header: React.FC = () => {
           <div className="font-display font-extrabold text-sm text-themed group-hover:text-lime-500 transition-colors">
             INTERMINAL
           </div>
-          <div className="font-mono text-[8px] text-muted uppercase">Arc 5042</div>
+          <div className="font-mono text-[8px] text-muted uppercase">{environmentMode === "testnet" ? "Arc Testnet · 5042002" : "Arc Mainnet · 5042"}</div>
         </div>
       </button>
 
       <div className="flex items-center gap-2">
+        {/* Environment status */}
+        <span className={`hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded-pill border font-mono text-[9px] uppercase ${environmentMode === "testnet" ? "border-cyan/30 text-cyan bg-cyan/5" : "border-lime-500/25 text-lime-500 bg-lime-500/5"}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${environmentMode === "testnet" ? "bg-cyan" : "bg-lime-500"}`} />
+          {environmentMode === "testnet" ? "testnet" : environmentMode === "mainnet" ? "mainnet" : "demo"}
+        </span>
+
         {/* Interactive Tour Button */}
         <Button
           size="xs"
