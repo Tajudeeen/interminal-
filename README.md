@@ -75,6 +75,17 @@ Interminal uses Arc for USDC-denominated settlement, low-cost repeated execution
 
 ---
 
+
+## Environment flow
+
+Interminal now uses a three-stage product flow:
+
+1. **Launch Treasury Demo** starts the full browser sandbox. Treasury balances, trades, sweeps, DCA, mandates, receipts, calculators and the guided tour remain usable without connecting a wallet. Simulated actions are marked as simulation and never claim to be Arc transactions.
+2. **Arc Testnet Lab** is the rehearsal environment. It connects to Arc Testnet (chain 5042002), verifies the live testnet chain head and native USDC balance, and lets a reviewer run the treasury policy drill before promotion.
+3. **Perform Task on Mainnet** is deliberately gated behind the completed testnet checkpoint. It switches the product into the mainnet execution context, where a wallet connection is required before any real transaction can be sent.
+
+Mobile browsers without an injected provider are handed off to the MetaMask mobile app, while desktop injected wallets are discovered through EIP-6963. This is the correct mobile-wallet model because ordinary iOS/Android browsers do not expose desktop browser extensions. MetaMask Connect documents the same cross-platform distinction. 
+
 ## What Actually Works on Arc Mainnet?
 
 For a reproducible live-chain identity check, see [`docs/LIVE_CONTRACT_FINGERPRINT.md`](docs/LIVE_CONTRACT_FINGERPRINT.md).
@@ -265,6 +276,8 @@ Typechecks the repository with `tsc` and bundles optimized production assets int
 ## Final submission readiness
 
 The final hardening pass is intentionally proof-first:
+
+The UI now keeps demo, testnet rehearsal, and mainnet execution as separate environments so the reviewer can move from safe exploration to real execution without ambiguity.
 
 - The canonical settlement source reproduces the live Arc Mainnet runtime byte-for-byte under the recorded compiler settings.
 - `npm run verify:arc` fails closed on chain, deployment receipt, contract address, bytecode, source/runtime, ABI, EIP-712 domain, and configured Arc infrastructure mismatches.
