@@ -1,5 +1,7 @@
 import { ARC, RPC_ALLOW, TOKEN_ALLOW, isTokenAllowed } from "../../constants/arc";
 import { formatUnits } from "../math/quotes";
+import { getCandles } from "../math/indicators";
+import { PAIRS } from "../../constants/pairs";
 import { isAddress, normalizeAddress, padAddr, walletRpc } from "./wallet";
 
 export async function publicRpc(method: string, params: any[] = [], retries = 2): Promise<any> {
@@ -257,7 +259,7 @@ export async function loadOnchainPortfolio(address: string): Promise<Record<stri
   const erc20Usdc = await erc20Balance({ address: ARC.usdcErc20, decimals: 6 }, safe);
 
   const next: Record<string, number> = {
-    USDC: erc20Usdc > 0 ? erc20Usdc : nativeUsdc,
+    // Operational liquidity is ERC-20 USDC. Native USDC stays separate as gas.\n    USDC: erc20Usdc,
     ETH: 0,
     WETH: 0,
     EURC: 0,
@@ -281,6 +283,37 @@ export async function loadOnchainPortfolio(address: string): Promise<Record<stri
     })
   );
   return next;
+}
+
+/** Refresh live prices for assets supported by the Arc wallet portfolio. */
+export async function refreshLivePairValuation(): Promise<{ updated: string[]; unavailable: string[] }> {
+  const targets: Array<{ pair: string; timeframe: "4h" | "1D" }> = [
+    { pair: "ETH/USDC", timeframe: "4h" },
+    { pair: "BTC/USDC", timeframe: "4h" },
+    { pair: "EURC/USDC", timeframe: "4h" },
+    { pair: "USYC/USDC", timeframe: "1D" },
+  ];
+  const results = await Promise.all(targets.map(async ({ pair, timeframe }) => {
+    try {
+      const result = await getCandles(pair, timeframe, 24);
+      return result.source !== "unavailable" && result.stats?.price && result.stats.price > 0
+        ? { pair, stats: result.stats }
+        : { pair, stats: null };
+    } catch {
+      return { pair, stats: null };
+    }
+  }));
+  const updated: string[] = [];
+  const unavailable: string[] = [];
+  for (const result of results) {
+    if (result.stats && PAIRS[result.pair]) {
+      Object.assign(PAIRS[result.pair], result.stats);
+      updated.push(result.pair);
+    } else {
+      unavailable.push(result.pair);
+    }
+  }
+  return { updated, unavailable };
 }
 
 export async function verifyArcLive(): Promise<{
