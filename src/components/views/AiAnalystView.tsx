@@ -67,7 +67,7 @@ export const AiAnalystView: React.FC = () => {
     if (useAppStore.getState().reviewOpen) {
       addToast(
         "Policy Review Ready",
-        \`Loaded a $\${recommendedAmount.toLocaleString()} \${recommendedSide.toUpperCase()} review for \${analysis.pair}. The next step still requires wallet authorization.\`,
+        `Loaded a ${recommendedAmount.toLocaleString()} ${recommendedSide.toUpperCase()} review for ${analysis.pair}. The next step still requires wallet authorization.`,
         "ok",
       );
     }
