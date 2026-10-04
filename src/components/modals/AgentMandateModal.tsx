@@ -4,9 +4,10 @@ import { useAppStore } from "../../store/useAppStore";
 import { Button } from "../ui/Button";
 
 export const AgentMandateModal: React.FC = () => {
-  const { mandateModalOpen, setMandateModalOpen, createAgentMandate } = useAppStore();
+  const { mandateModalOpen, setMandateModalOpen, createAgentMandate, address } = useAppStore();
 
   const [spendUsd, setSpendUsd] = useState<number>(500);
+  const [agent, setAgent] = useState<string>(address || "");
   const [slipBps, setSlipBps] = useState<number>(30);
   const [ttlHours, setTtlHours] = useState<number>(4);
   const [selectedPairs, setSelectedPairs] = useState<string[]>(["ETH/USDC", "EURC/USDC"]);
@@ -29,6 +30,7 @@ export const AgentMandateModal: React.FC = () => {
       slipBps,
       ttlHours,
       pairs: selectedPairs,
+      agent: agent.trim() || undefined,
     });
   };
 
@@ -41,6 +43,22 @@ export const AgentMandateModal: React.FC = () => {
       maxWidth="max-w-lg"
     >
       <div className="space-y-4">
+        {/* Agent Wallet */}
+        <div>
+          <label className="block font-mono text-[11px] uppercase tracking-wider text-muted mb-1.5">
+            Agent Wallet Address
+          </label>
+          <input
+            value={agent}
+            onChange={(e) => setAgent(e.target.value)}
+            placeholder="0x... agent wallet"
+            className="w-full px-3 py-2 rounded-card bg-themed-card text-themed border border-themed/50 font-mono text-xs focus:outline-none focus:border-lime-500"
+          />
+          <div className="font-mono text-[10px] text-muted mt-1">
+            For a self-execution proof, use your connected wallet address.
+          </div>
+        </div>
+
         {/* Maximum Spend Limit */}
         <div>
           <label className="block font-mono text-[11px] uppercase tracking-wider text-muted mb-1.5">
