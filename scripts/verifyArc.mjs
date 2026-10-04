@@ -1,4 +1,5 @@
 import fs from "fs";
+import solc from "solc";
 import { ethers } from "ethers";
 
 const RPC = process.env.ARC_RPC || "https://rpc.mainnet.arc.io";
@@ -31,25 +32,44 @@ async function main() {
   const artifact = JSON.parse(
     fs.readFileSync(new URL("../artifacts/InterminalSettlement.json", import.meta.url), "utf8")
   );
-  const deployedArtifact = String(artifact.deployedBytecode || "");
   ok("committed artifact is for InterminalSettlement", artifact.contractName === "InterminalSettlement");
+
   function stripSolidityMetadata(bytecode) {
     const hex = String(bytecode || "").replace(/^0x/i, "");
     if (hex.length < 4) return "0x" + hex;
     const metadataBytes = Number.parseInt(hex.slice(-4), 16);
     const metadataHexLength = metadataBytes * 2;
-    if (!Number.isFinite(metadataBytes) || metadataHexLength + 4 > hex.length) {
-      return "0x" + hex;
-    }
+    if (!Number.isFinite(metadataBytes) || metadataHexLength + 4 > hex.length) return "0x" + hex;
     return "0x" + hex.slice(0, hex.length - metadataHexLength - 4);
   }
 
-  const runtimeMatches = stripSolidityMetadata(settlementCode).toLowerCase() ===
-    stripSolidityMetadata(deployedArtifact).toLowerCase();
+  const source = fs.readFileSync(
+    new URL("../contracts/InterminalSettlement.sol", import.meta.url),
+    "utf8"
+  );
+  const compileInput = {
+    language: "Solidity",
+    sources: { "InterminalSettlement.sol": { content: source } },
+    settings: {
+      optimizer: { enabled: true, runs: 200 },
+      outputSelection: {
+        "*": { "*": ["abi", "evm.bytecode.object", "evm.deployedBytecode.object"] }
+      }
+    }
+  };
+  const compileOutput = JSON.parse(solc.compile(JSON.stringify(compileInput)));
+  const errors = (compileOutput.errors || []).filter((e) => e.severity === "error");
+  if (errors.length) throw new Error("Committed Solidity source does not compile");
+  const freshRuntime = "0x" + compileOutput.contracts["InterminalSettlement.sol"]["InterminalSettlement"].evm.deployedBytecode.object;
 
-  ok("deployed Arc runtime bytecode matches committed artifact", runtimeMatches);
-  if (settlementCode.toLowerCase() !== deployedArtifact.toLowerCase()) {
-    console.log("INFO committed artifact differs in Solidity metadata bytes; executable runtime matches.");
+  const sourceRuntimeMatches = stripSolidityMetadata(settlementCode).toLowerCase() ===
+    stripSolidityMetadata(freshRuntime).toLowerCase();
+  ok("deployed Arc runtime matches freshly compiled committed source", sourceRuntimeMatches);
+
+  const artifactRuntimeMatches = stripSolidityMetadata(String(artifact.deployedBytecode || "")).toLowerCase() ===
+    stripSolidityMetadata(freshRuntime).toLowerCase();
+  if (!artifactRuntimeMatches) {
+    console.log("WARN committed artifact runtime differs from freshly compiled source; regenerate artifacts before submission.");
   }
 
   const routerCode = await provider.getCode(ROUTER);
