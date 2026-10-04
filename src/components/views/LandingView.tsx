@@ -7,7 +7,7 @@ import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
 
 export const LandingView: React.FC = () => {
-  const { connectWallet, launchDemo, launchTestnet, connecting, setView, startJudgeTour } = useAppStore();
+  const { launchDemo, launchTestnet, setView, startJudgeTour } = useAppStore();
   const [simTreasurySize, setSimTreasurySize] = useState<number>(250000);
 
   const previewKeys = ["ETH/USDC", "BTC/USDC", "EURC/USDC", "ARC/USDC"];
@@ -148,21 +148,7 @@ export const LandingView: React.FC = () => {
           </Button>
         </div>
 
-        <div className="mt-3 w-full max-w-md flex flex-col sm:flex-row items-center gap-2">
-          <Button
-            size="md"
-            variant="outline"
-            fullWidth
-            isLoading={connecting}
-            onClick={() => connectWallet("mainnet")}
-            leftIcon={<span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>}
-          >
-            {connecting ? "Connecting..." : "Connect Mainnet Wallet"}
-          </Button>
-          <span className="text-[10px] font-mono text-muted text-center leading-relaxed px-2">
-            Mobile: use the MetaMask/Rabby mobile app browser. Desktop extensions are discovered automatically.
-          </span>
-        </div>
+
 
         {/* Interactive Yield Calculator Preview */}
         <div className="mt-12 w-full card-themed border border-themed rounded-card p-5 sm:p-6 text-left space-y-4">
