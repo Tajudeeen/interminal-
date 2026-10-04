@@ -397,8 +397,23 @@ export const useAppStore = create<AppState>((set, get) => {
     setTimeframe: (tf) => {
       const pair = get().pair;
       const nextTf = pair === "USYC/USDC" ? "1D" : tf;
-      getCandles(pair, nextTf).then((result) => {
+
+      // Make the requested timeframe authoritative before the async market
+      // request resolves. The response guard below then safely rejects stale
+      // responses when the user switches again before a request completes.
+      set({
+        timeframe: nextTf,
+        marketFeedStatus: {
+          source: "Loading live market data · " + nextTf,
+          live: false,
+          lastUpdate: get().marketFeedStatus.lastUpdate,
+          error: null,
+        },
+      });
+
+      void getCandles(pair, nextTf).then((result) => {
         if (get().pair !== pair || get().timeframe !== nextTf) return;
+
         const indicators = result.candles.length ? computeIndicators(result.candles) : null;
         const current = PAIRS[pair];
         if (current && result.stats) {
@@ -408,8 +423,8 @@ export const useAppStore = create<AppState>((set, get) => {
           current.low = result.stats.low;
           current.vol = result.stats.vol;
         }
+
         set({
-          timeframe: nextTf,
           candles: result.candles,
           indicators,
           candleSource: result.source,
