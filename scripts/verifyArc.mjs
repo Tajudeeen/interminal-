@@ -43,13 +43,24 @@ async function main() {
     return "0x" + hex.slice(0, hex.length - metadataHexLength - 4);
   }
 
-  const source = fs.readFileSync(
+  const DEPLOYED_SOURCE_REF = "12c6443e52693a4433a550ffca8701331f9f7cf0";
+  const historicalSourceUrl =
+    "https://raw.githubusercontent.com/Tajudeeen/interminal-/" +
+    DEPLOYED_SOURCE_REF +
+    "/contracts/InterminalSettlement.sol";
+  const historicalSourceResponse = await fetch(historicalSourceUrl);
+  if (!historicalSourceResponse.ok) {
+    throw new Error("Could not fetch historical deployed source revision: HTTP " + historicalSourceResponse.status);
+  }
+  const historicalSource = await historicalSourceResponse.text();
+
+  const currentSource = fs.readFileSync(
     new URL("../contracts/InterminalSettlement.sol", import.meta.url),
     "utf8"
   );
   const compileInput = {
     language: "Solidity",
-    sources: { "InterminalSettlement.sol": { content: source } },
+    sources: { "InterminalSettlement.sol": { content: currentSource } },
     settings: {
       optimizer: { enabled: true, runs: 200 },
       outputSelection: {
@@ -59,11 +70,27 @@ async function main() {
   };
   const compileOutput = JSON.parse(solc.compile(JSON.stringify(compileInput)));
   const errors = (compileOutput.errors || []).filter((e) => e.severity === "error");
-  if (errors.length) throw new Error("Committed Solidity source does not compile");
+  if (errors.length) throw new Error("Current committed Solidity source does not compile");
   const freshRuntime = "0x" + compileOutput.contracts["InterminalSettlement.sol"]["InterminalSettlement"].evm.deployedBytecode.object;
+
+  const historicalCompileInput = {
+    ...compileInput,
+    sources: { "InterminalSettlement.sol": { content: historicalSource } },
+  };
+  const historicalCompileOutput = JSON.parse(solc.compile(JSON.stringify(historicalCompileInput)));
+  const historicalErrors = (historicalCompileOutput.errors || []).filter((e) => e.severity === "error");
+  if (historicalErrors.length) throw new Error("Historical deployed source revision does not compile");
+  const historicalRuntime =
+    "0x" +
+    historicalCompileOutput.contracts["InterminalSettlement.sol"]["InterminalSettlement"].evm.deployedBytecode.object;
 
   const deployedCore = stripSolidityMetadata(settlementCode);
   const freshCore = stripSolidityMetadata(freshRuntime);
+  const historicalCore = stripSolidityMetadata(historicalRuntime);
+  console.log("INFO historical deployment source ref: " + DEPLOYED_SOURCE_REF);
+  console.log("INFO historical runtime executable bytes: " + ((historicalCore.length - 2) / 2));
+  console.log("INFO historical runtime prefix: " + historicalCore.slice(0, 66));
+  console.log("INFO deployed matches historical source: " + (deployedCore.toLowerCase() === historicalCore.toLowerCase()));
   console.log("INFO runtime bytes: deployed=" + ((settlementCode.length - 2) / 2) + ", freshly-compiled=" + ((freshRuntime.length - 2) / 2));
   console.log("INFO executable bytes after metadata: deployed=" + ((deployedCore.length - 2) / 2) + ", freshly-compiled=" + ((freshCore.length - 2) / 2));
   console.log("INFO deployed runtime prefix: " + deployedCore.slice(0, 66));
