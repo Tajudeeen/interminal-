@@ -46,7 +46,7 @@ export const AuditReceiptModal: React.FC = () => {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(JSON.stringify(activeReceiptModal, null, 2));
-    addToast("Copied", "Cryptographic JSON-LD audit certificate copied to clipboard.", "ok");
+    addToast("Copied", "Cryptographic JSON audit certificate copied to clipboard.", "ok");
   };
 
   const handleDownload = () => {
@@ -57,7 +57,7 @@ export const AuditReceiptModal: React.FC = () => {
     a.download = `interminal-receipt-${activeReceiptModal.receiptId}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    addToast("Exported", "Audit certificate downloaded as JSON-LD file.", "ok");
+    addToast("Exported", "Audit certificate downloaded as JSON file.", "ok");
   };
 
   const handleAnchor = async () => {
@@ -107,7 +107,7 @@ export const AuditReceiptModal: React.FC = () => {
               {isValid ? "SHA-256 Digest Verified Intact" : "Tamper Detected - Hash Mismatch"}
             </span>
           </div>
-          <span className="text-[10px] opacity-80">Canonical JSON-LD</span>
+          <span className="text-[10px] opacity-80">Canonical JSON · SHA-256</span>
         </div>
 
         {/* Certificate Overview Grid */}
