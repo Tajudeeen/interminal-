@@ -14,7 +14,7 @@ import {
   serializeEip712,
 } from "../lib/crypto/eip712";
 import { calculateJitUnwind } from "../lib/math/treasury";
-import { CandleSource, computeIndicators, generateCandles, analyzeMarket, getCandles } from "../lib/math/indicators";
+import { CandleSource, computeIndicators, analyzeMarket, getCandles } from "../lib/math/indicators";
 import { formatUnits, parseUnits, quoteTrade } from "../lib/math/quotes";
 import {
   getInjected,
