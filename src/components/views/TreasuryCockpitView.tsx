@@ -102,18 +102,20 @@ export const TreasuryCockpitView: React.FC = () => {
             Treasury Cockpit
           </h1>
           <p className="font-mono text-xs text-muted mt-1">
-            Continuous Cash Sweeps · 4.95% USYC T-Bill Engine · JIT Liquidity Unwind
+            Policy-Driven Cash Rebalancing · USYC Treasury Asset · JIT Liquidity Unwind
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => handleSimulateInflow(5000)}
-            leftIcon={<span className="material-symbols-outlined text-[16px] text-pos">add_circle</span>}
-          >
-            Simulate +$5k Inflow
-          </Button>
+          {!livePortfolio && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleSimulateInflow(5000)}
+              leftIcon={<span className="material-symbols-outlined text-[16px] text-pos">add_circle</span>}
+            >
+              Simulate +$5k Inflow
+            </Button>
+          )}
           <Button
             variant="primary"
             size="sm"
@@ -158,7 +160,7 @@ export const TreasuryCockpitView: React.FC = () => {
                 DEMO / SIMULATION MODE
               </span>
               <span className="font-mono text-muted text-[11px] ml-2">
-                Displaying illustrative $250k portfolio with Hashnote USYC yield curves.
+                Displaying an illustrative portfolio. Live wallet mode reads balances from Arc.
               </span>
             </div>
           </div>
@@ -207,7 +209,7 @@ export const TreasuryCockpitView: React.FC = () => {
           </div>
         </div>
 
-        {/* USYC T-Bills */}
+        {/* USYC */}
         <div className="card-themed border border-themed rounded-card p-4">
           <div className="flex justify-between items-center text-muted font-mono text-[10px] uppercase">
             <span>USYC Treasury Yield</span>
@@ -217,7 +219,7 @@ export const TreasuryCockpitView: React.FC = () => {
             ${usycBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="mt-1 font-mono text-[10px] text-pos font-semibold">
-            +4.95% APY (${(usycBalance * 0.0495).toFixed(2)}/yr)
+            +3.225% reference yield (${(usycBalance * USYC_APY).toFixed(2)}/yr)
           </div>
         </div>
 
@@ -249,7 +251,7 @@ export const TreasuryCockpitView: React.FC = () => {
                 Target Operating Cash Buffer
               </h2>
               <p className="font-mono text-xs text-muted mt-1 leading-relaxed">
-                Retain liquid USDC for gas & immediate operations; automatically sweep remainder into yield.
+                Retain liquid USDC for operations, then sweep excess into the configured treasury asset.
               </p>
             </div>
             <span className="font-display font-black text-xl text-pos tnum">
@@ -337,7 +339,7 @@ export const TreasuryCockpitView: React.FC = () => {
                 Just-In-Time (JIT) Liquidity Bridge
               </h2>
               <p className="font-mono text-xs text-muted mt-1 leading-relaxed">
-                When an outgoing wire or trade exceeds liquid USDC, USYC T-Bills redeem at par instantly.
+                When an outgoing wire or trade exceeds liquid USDC, calculate the USYC shortfall and execute a fresh USYC/USDC route on Arc with a bounded output floor.
               </p>
             </div>
             <span
@@ -389,7 +391,7 @@ export const TreasuryCockpitView: React.FC = () => {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">USYC Redeemed at Par ($1.00):</span>
+              <span className="text-muted">USYC Amount to Unwind:</span>
               <span className="text-pos font-bold tnum">${jit.usycToRedeem.toLocaleString()}</span>
             </div>
             <div className="flex justify-between pt-1 border-t border-themed/20">
@@ -400,7 +402,7 @@ export const TreasuryCockpitView: React.FC = () => {
 
           <div className="text-[11px] font-mono text-muted flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[15px] text-pos">verified</span>
-            Zero capital drag: funds remain 100% productive in T-Bills until millisecond of settlement.
+            Live execution uses a fresh Arc AMM quote and bounded output. Simulation uses the configured reference price.
           </div>
 
           {/* JIT Unwind Execute Button */}
@@ -457,17 +459,17 @@ export const TreasuryCockpitView: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 font-mono">
           <div className="p-4 rounded-card bg-themed-card/50 border border-themed/30">
-            <div className="text-[10px] text-muted uppercase">Arc USYC (4.95% APY)</div>
+            <div className="text-[10px] text-muted uppercase">USYC Net Reference Yield (3.225%)</div>
             <div className="text-2xl font-black text-pos mt-1 font-display tnum">
               +${horizonYieldUsyc.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="text-[10px] text-muted mt-1">
-              Compounds automatically on-chain
+              Yield accrues through USYC NAV
             </div>
           </div>
 
           <div className="p-4 rounded-card bg-themed-card/50 border border-themed/30">
-            <div className="text-[10px] text-muted uppercase">Commercial Bank (0.05% APY)</div>
+            <div className="text-[10px] text-muted uppercase">Illustrative Bank Benchmark (0.05%)</div>
             <div className="text-2xl font-bold text-muted mt-1 font-display tnum">
               +${horizonYieldBank.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
@@ -510,10 +512,10 @@ export const TreasuryCockpitView: React.FC = () => {
           <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/20 space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-bold text-themed">1. Opportunity Cost Drag</span>
-              <span className="text-[10px] text-amber-500 font-semibold">T-BILL DELTA</span>
+              <span className="text-[10px] text-amber-500 font-semibold">USYC YIELD DELTA</span>
             </div>
             <div className="p-2 rounded bg-themed/5 text-themed text-[11px] font-mono select-all">
-              Cost = Liquid USDC × 4.95% × (Days / 365)
+              Cost = Liquid USDC × USYC reference yield × (Days / 365)
             </div>
             <div className="text-[11px] text-muted space-y-1">
               <div>• Current Liquid: ${liquidUsdc.toLocaleString()} USDC</div>
@@ -543,16 +545,16 @@ export const TreasuryCockpitView: React.FC = () => {
           {/* Formula 3: JIT Redemption Parity */}
           <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/20 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-themed">3. JIT Parity Unwind</span>
-              <span className="text-[10px] text-cyan font-semibold">ZERO SLIPPAGE</span>
+              <span className="font-bold text-themed">3. JIT USYC/USDC Unwind</span>
+              <span className="text-[10px] text-cyan font-semibold">BOUNDED OUTPUT</span>
             </div>
             <div className="p-2 rounded bg-themed/5 text-themed text-[11px] font-mono select-all">
-              1.0000 USYC = 1.0000 USDC (Par)
+              Minimum output is derived from the live Arc AMM quote
             </div>
             <div className="text-[11px] text-muted space-y-1">
               <div>• Oracle Price: $1.0000 USYC NAV</div>
               <div>• Execution Cost: $0.00 (Zero Curve Impact)</div>
-              <div>• Fallback Gate: Fail-Closed if parity &lt; 0.9995</div>
+              <div>• Fallback Gate: Fail-Closed when live quoted output is zero or unavailable</div>
             </div>
           </div>
         </div>
@@ -611,7 +613,7 @@ export const TreasuryCockpitView: React.FC = () => {
             </h3>
           </div>
           <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-pos/10 border border-pos/30 text-pos font-bold">
-            41/41 Tests Verified
+            Protocol verification available in the repo test suite
           </span>
         </div>
 
