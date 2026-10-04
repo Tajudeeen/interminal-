@@ -144,7 +144,7 @@ export const TerminalTradeView: React.FC = () => {
       {/* Main Grid: Chart + Execution Desk */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left Column: Chart Container (Span 2) */}
-        <div className="lg:col-span-2 card-themed border border-themed rounded-card p-4 flex flex-col h-[460px] sm:h-[500px]">
+        <div h-[400px] sm:h-[420px] lg:h-[440px] xl:h-[460px]">
           <div className="flex items-center justify-between pb-3 border-b border-themed/30 font-mono text-xs text-muted">
             <div className="flex items-center gap-4">
               <span>High: ${p.high.toFixed(2)}</span>
