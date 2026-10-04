@@ -74,7 +74,7 @@ export const Header: React.FC = () => {
             <span className="material-symbols-outlined text-[13px] text-amber-500">local_gas_station</span>
             <span>{livePortfolio ? nativeGasBalance.toFixed(2) : "—"}</span>
           </div>
-        )
+        )}
 
         {/* Search */}
         <button
