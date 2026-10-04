@@ -135,6 +135,8 @@ Interminal is designed so a reviewer can independently verify its important clai
 
 A security review identified a concrete authorization-boundary issue in the deployed v1 agent executor: the signed pair bitmask was not sufficient to bind the execution token addresses to the selected pair. Interminal now blocks new live agent-mandate signing against that deployment. The hardened successor in `contracts/InterminalSettlementV2.sol` binds the input to Arc USDC, maps each pair index to a concrete output token, and enforces the slippage ceiling against a fresh router quote. V2 requires a fresh deployment and independent verification before it can be enabled on Mainnet.
 
+Imported ERC-20 contracts are also isolated from the verified market registry. Their symbols cannot overwrite verified markets, arbitrary import addresses are not retained in the RPC target allowlist, and imported markets are view-only until independently verified.
+
 
 | Component | Status on Arc Mainnet | Verification Details |
 |---|---|---|
