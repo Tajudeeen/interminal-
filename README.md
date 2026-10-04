@@ -295,7 +295,7 @@ For a reviewer, the strongest evidence path is: live app → Proof / Arc RPC →
 ## UX guarantees
 
 - **Demo never requires a wallet.** Trade simulation, treasury sweep simulation, JIT stress testing, DCA planning, agent-mandate simulation, gas-tank simulation, calculators, receipts, and the guided tour are available before wallet connection.
-- **Testnet is optional.** The app uses Arc Testnet chain `5042002`, reads its live block head, and can run a 0.01 native-USDC self-transfer as a wallet/network rehearsal. It does not gate Mainnet. 
+- **Testnet is explicit and opt-in.** Wallet connection defaults to Arc Mainnet. The app never silently connects a generic wallet action to Testnet; Testnet becomes the wallet target only after the reviewer explicitly opens **Testnet Rehearsal**. The app then uses Arc Testnet chain `5042002` and can run a 0.01 native-USDC self-transfer as a wallet/network rehearsal. It does not gate Mainnet. 
 - **Mainnet is the primary live path.** `Review Live Mainnet` opens a wallet-required Arc Mainnet context directly. Live execution cannot silently fall back to simulation, and on-chain success is only shown after a confirmed Arc receipt.
 - **Mobile wallets are first-class.** Injected mobile wallet browsers work through EIP-1193/EIP-6963 discovery. A normal mobile browser without an injected provider is handed off to MetaMask Mobile using its dapp deep link; desktop browser extensions remain supported through provider discovery. Mobile wallet apps such as Rabby also support EIP-6963/in-app dapp flows.
 - **Motion is restrained.** View changes use native View Transition API where available, with a fallback fade, smooth scroll-to-top on navigation, calmer 220ms control transitions, and reduced-motion support.
