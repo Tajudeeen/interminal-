@@ -30,6 +30,10 @@ The CI pipeline runs a live GeckoTerminal smoke test against the three configure
 
 The terminal chart is rendered with **TradingView Lightweight Charts 5.2.1**. The chart library does not provide market data itself; Interminal feeds it verified OHLCV returned by GeckoTerminal. A same-origin `/api/market-data` Vercel function proxies the GeckoTerminal request so the browser is not calling the public data endpoint directly. Lightweight Charts' built-in attribution logo remains enabled.
 
+### Timeframe switching
+
+The terminal timeframe controls are wired to the live market-data loader. Selecting `1m`, `5m`, `15m`, `1h`, `4h`, or `1D` updates the active timeframe immediately, requests the matching GeckoTerminal aggregation, recomputes indicators from the returned candles, and ignores stale responses when a user switches again before a request completes. USYC remains `1D` because its source is daily NAV reporting rather than intraday OHLCV.
+
 > TradingView Lightweight Charts™  
 > Copyright (с) 2025 TradingView, Inc. https://www.tradingview.com/
 
