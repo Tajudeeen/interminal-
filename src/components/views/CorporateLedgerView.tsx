@@ -16,7 +16,7 @@ export const CorporateLedgerView: React.FC = () => {
             Corporate Ledger & Audit Certificates
           </h1>
           <p className="font-mono text-xs text-muted mt-1">
-            Canonical JSON-LD Trade Receipts · SHA-256 Tamper Proofs · Arc Mainnet Anchor
+            Canonical JSON Receipts · SHA-256 Tamper Proofs · Arc Mainnet Anchor
           </p>
         </div>
 
@@ -43,7 +43,7 @@ export const CorporateLedgerView: React.FC = () => {
                   <th className="py-3 px-4 text-right">Value (USD)</th>
                   <th className="py-3 px-4 text-right">Effective Rate</th>
                   <th className="py-3 px-4 text-center">Integrity</th>
-                  <th className="py-3 px-4 text-center">Arc Anchor</th>
+                  <th className="py-3 px-4 text-center">Mode / Arc Anchor</th>
                   <th className="py-3 px-4 text-right">Certificate</th>
                 </tr>
               </thead>
@@ -87,7 +87,11 @@ export const CorporateLedgerView: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
-                        {rcpt.onchainAnchored && rcpt.anchorTx ? (
+                        {rcpt.mode === "simulation" ? (
+                          <span className="px-2 py-0.5 rounded-pill text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/30">
+                            SIMULATED
+                          </span>
+                        ) : rcpt.onchainAnchored && rcpt.anchorTx ? (
                           <a
                             href={`${ARC.explorer}/tx/${rcpt.anchorTx}`}
                             target="_blank"
