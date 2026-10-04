@@ -235,7 +235,7 @@ Interminal settles on-chain via [`contracts/InterminalSettlement.sol`](contracts
 
 Interminal includes **44 automated tests** across dual test suites:
 
-### 1. Vitest Unit & TypeScript Test Suite (16 Tests)
+### 1. Vitest Unit & TypeScript Test Suite (17 Tests)
 ```bash
 npm test
 ```
