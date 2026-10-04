@@ -43,7 +43,7 @@ export const MarketsView: React.FC = () => {
             Arc Markets & Liquidity Pools
           </h1>
           <p className="font-mono text-xs text-muted mt-1">
-            Institutional AMM Depth · DexScreener Uniswap V3 Live Oracles · Chain 5042
+            Arc DEX liquidity · GeckoTerminal OHLCV · Verified reference feeds · Chain 5042
           </p>
         </div>
 
