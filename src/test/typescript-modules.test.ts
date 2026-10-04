@@ -8,7 +8,7 @@ import {
 import { decodeTradeSettledExecution } from "../lib/arc/rpcClient";
 import { calculateFxParity } from "../lib/math/fx";
 import { quoteTrade, parseUnits, formatUnits } from "../lib/math/quotes";
-import { generateCandles, computeIndicators } from "../lib/math/indicators";
+import { generateCandles, computeIndicators, GECKO_RESOLUTION } from "../lib/math/indicators";
 import {
   createAgentMandateDescriptor,
   validateAgentExecution,
@@ -157,6 +157,12 @@ describe("React TypeScript Modular Engine", () => {
     expect(ind.rsi).toBeGreaterThan(0);
     expect(ind.rsi).toBeLessThan(100);
     expect(ind.support).toBeLessThanOrEqual(ind.resistance);
+    expect(GECKO_RESOLUTION["1m"]).toEqual({ bucket: "minute", aggregate: 1 });
+    expect(GECKO_RESOLUTION["5m"]).toEqual({ bucket: "minute", aggregate: 5 });
+    expect(GECKO_RESOLUTION["15m"]).toEqual({ bucket: "minute", aggregate: 15 });
+    expect(GECKO_RESOLUTION["1h"]).toEqual({ bucket: "hour", aggregate: 1 });
+    expect(GECKO_RESOLUTION["4h"]).toEqual({ bucket: "hour", aggregate: 4 });
+    expect(GECKO_RESOLUTION["1D"]).toEqual({ bucket: "day", aggregate: 1 });
   });
 
   it("Agent mandates validate bounded limits", () => {
@@ -182,6 +188,34 @@ describe("React TypeScript Modular Engine", () => {
     }, false);
     expect(overspend.valid).toBe(false);
     expect(overspend.code).toBe("amount_exceeds_mandate");
+
+    const wrongPair = validateAgentExecution(mandate, {
+      pair: "BTC/USDC",
+      amountUsdc: 50,
+      slippageBps: 20,
+    }, false);
+    expect(wrongPair.valid).toBe(false);
+    expect(wrongPair.code).toBe("unapproved_market");
+
+    const highSlip = validateAgentExecution(mandate, {
+      pair: "ETH/USDC",
+      amountUsdc: 50,
+      slippageBps: 40,
+    }, false);
+    expect(highSlip.valid).toBe(false);
+    expect(highSlip.code).toBe("slippage_exceeds_band");
+
+    const expired = {
+      ...mandate,
+      deadline: Math.floor(Date.now() / 1000) - 1,
+    };
+    const expiredResult = validateAgentExecution(expired, {
+      pair: "ETH/USDC",
+      amountUsdc: 50,
+      slippageBps: 20,
+    }, false);
+    expect(expiredResult.valid).toBe(false);
+    expect(expiredResult.code).toBe("mandate_expired");
 
     const mandateTicket = buildAgentMandateTicket(mandate);
     expect(mandateTicket.primaryType).toBe("AgentMandate");
