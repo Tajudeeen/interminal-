@@ -238,7 +238,7 @@ export const TreasuryCockpitView: React.FC = () => {
         </div>
       </div>
 
-      {/* Autonomous Capital Flow Topography Diagram */}
+      {/* Treasury Capital Flow Topography Diagram */}
       <CapitalFlowDiagram />
 
       {/* Main Interactive Controls: Target Operating Buffer & Yield Sweep */}
@@ -528,7 +528,7 @@ export const TreasuryCockpitView: React.FC = () => {
           <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/20 space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-bold text-themed">2. Yield Sweep Gate</span>
-              <span className="text-[10px] text-pos font-semibold">AUTOMATIC</span>
+              <span className="text-[10px] text-pos font-semibold">POLICY GATE</span>
             </div>
             <div className="p-2 rounded bg-themed/5 text-themed text-[11px] font-mono select-all">
               Sweep = max(0, Liquid USDC - Buffer)
