@@ -28,15 +28,6 @@ interface MarketChartProps {
   };
 }
 
-const fmtPrice = (value: number, pair: string) => {
-  if (pair === "USYC/USDC") return value.toFixed(6);
-  if (value < 10) return value.toFixed(4);
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-};
-
 export const MarketChart: React.FC<MarketChartProps> = ({
   candles,
   indicators,
@@ -191,7 +182,7 @@ export const MarketChart: React.FC<MarketChartProps> = ({
       })),
     );
 
-    if (showLevels && analysis && "createPriceLine" in mainSeries) {
+    if (showLevels && analysis) {
       mainSeries.createPriceLine({
         price: analysis.resistance,
         color: "#EF4444",
