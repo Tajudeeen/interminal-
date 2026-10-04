@@ -35,7 +35,8 @@ export function buildOnchainTradeTicket(
   side: TradeSide,
   amount: number,
   quote: TradeQuote,
-  nonce: number = 1
+  nonce: number = 1,
+  executionPriceUsd?: number
 ): TradeTicket {
   const p = PAIRS[assertPair(pairKey)];
   const traderAddr = normalizeAddress(address);
@@ -43,6 +44,10 @@ export function buildOnchainTradeTicket(
     ? { address: p.address, decimals: p.decimals ?? 18 }
     : ARC.tokens[p.base];
   const quoteToken = { address: ARC.usdcErc20, decimals: 6 };
+  const executionPrice = Number(executionPriceUsd ?? p.price);
+  if (!Number.isFinite(executionPrice) || executionPrice <= 0) {
+    throw new Error("Invalid execution price for " + pairKey);
+  }
   if (!baseToken?.address) {
     throw new Error("Pair " + pairKey + " has no verified Arc token address and cannot be executed on-chain");
   }
@@ -60,7 +65,7 @@ export function buildOnchainTradeTicket(
   } else {
     tokenIn = baseToken.address;
     tokenOut = quoteToken.address;
-    const baseAmount = amount / p.price;
+    const baseAmount = amount / executionPrice;
     amountIn = parseUnits(baseAmount, baseToken.decimals);
     minAmountOut = parseUnits(quote.minReceived, quoteToken.decimals);
   }
@@ -125,9 +130,10 @@ export function buildTradeTicket(
   side: TradeSide,
   amount: number,
   quote: TradeQuote,
-  nonce: number = 1
+  nonce: number = 1,
+  executionPriceUsd?: number
 ): TradeTicket {
-  return buildOnchainTradeTicket(address, pair, side, amount, quote, nonce);
+  return buildOnchainTradeTicket(address, pair, side, amount, quote, nonce, executionPriceUsd);
 }
 
 export function encodeExecuteTradeTicket(ticket: TradeTicket, sig: string): string {
