@@ -28,6 +28,7 @@ import {
   isMobileBrowser,
   openMobileWallet,
   switchOrAddNetwork,
+  subscribeWalletEvents,
 } from "../lib/arc/wallet";
 import {
   loadOnchainPortfolio,
@@ -169,6 +170,7 @@ export interface AppState {
 }
 
 const DEMO_ADDRESS = "0x000000000000000000000000000000000000dEee";
+let walletEventCleanup: (() => void) | null = null;
 
 function getInitialTheme(): "dark" | "light" {
   if (typeof window !== "undefined") {
@@ -408,6 +410,10 @@ export const useAppStore = create<AppState>((set, get) => {
         pendingQuote: null,
         reviewOpen: false,
         lastTx: null,
+        auditReceipts: [],
+        activity: [],
+        dcaOrders: [],
+        mandates: [],
         view: "portfolio",
       });
       get().addToast(
