@@ -27,6 +27,13 @@ describe("security regression guards", () => {
     expect(deploy).not.toContain("process.argv[2]");
   });
 
+  it("keeps imported tokens isolated from verified markets and live execution", () => {
+    const store = source("src/store/useAppStore.ts");
+    expect(store).toContain('const pairKey = "CUSTOM/" + sym + "-" + addr.slice(2, 8).toUpperCase() + "/USDC"');
+    expect(store).toContain('p.cat === "imported"');
+    expect(store).toContain("view-only until its contract is independently verified");
+  });
+
   it("pins approval writes to the verified settlement and token registry", () => {
     const rpc = source("src/lib/arc/rpcClient.ts");
     expect(rpc).toContain("Approval token is not in the verified Arc token registry");
