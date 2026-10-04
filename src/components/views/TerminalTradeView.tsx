@@ -57,6 +57,7 @@ export const TerminalTradeView: React.FC = () => {
     tradeAmountUsd: amount,
     liquidUsdc: userUsdcBal,
     usycBalance: balances.USYC || 0,
+    usycPriceUsd: PAIRS["USYC/USDC"].price,
     slippageBps: slippage * 100,
   });
 
