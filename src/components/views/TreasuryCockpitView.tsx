@@ -236,14 +236,14 @@ export const TreasuryCockpitView: React.FC = () => {
             <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
               livePortfolio ? "bg-pos/15 text-pos border border-pos/30" : "bg-amber-500/15 text-amber-500 border border-amber-500/30"
             }`}>
-              {livePortfolio ? "ON-CHAIN" : "SIMULATION"}
+              {livePortfolio ? "ON-CHAIN" : mainnetReview ? "REVIEW" : "SIMULATION"}
             </span>
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-themed tnum">
             {mainnetReview ? "—" : "$" + snapshot.total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="mt-1 font-mono text-[10px] text-muted">
-            Stables allocation: {snapshot.stables.toFixed(1)}%
+            {mainnetReview ? "Connect wallet to load on-chain NAV" : "Stables allocation: " + snapshot.stables.toFixed(1) + "%"}
           </div>
         </div>
 
@@ -282,7 +282,7 @@ export const TreasuryCockpitView: React.FC = () => {
             <span className="material-symbols-outlined text-[16px] text-amber-500">warning</span>
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-amber-500 tnum">
-            ${cost.annualYieldUsd.toFixed(2)}/yr
+            {mainnetReview ? "—" : "$" + cost.annualYieldUsd.toFixed(2) + "/yr"}
           </div>
           <div className="mt-1 font-mono text-[10px] text-muted">
             {mainnetReview ? "Live cost requires a wallet valuation" : "Forfeiting $" + cost.dailyYieldUsd.toFixed(3) + "/day"}
