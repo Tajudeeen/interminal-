@@ -926,20 +926,13 @@ export const useAppStore = create<AppState>((set, get) => {
         auditReceipts,
         activity,
         wrongNetwork,
+        environmentMode,
       } = get();
 
+      const liveIntent = environmentMode === "mainnet";
       if (!pendingQuote) return;
-      if (!livePortfolio) {
+      if (liveIntent) {
         if (wrongNetwork && get().environmentMode === "mainnet") {
-          get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) before executing.", "err");
-          return;
-        }
-      } else {
-        if (!address || !isAddress(address)) {
-          get().addToast("Wallet Required", "Connect an Arc Mainnet wallet to execute a live trade.", "err");
-          return;
-        }
-        if (wrongNetwork) {
           get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) before executing.", "err");
           return;
         }
@@ -965,7 +958,7 @@ export const useAppStore = create<AppState>((set, get) => {
       try {
         const trader = normalizeAddress(address || DEMO_ADDRESS);
 
-        if (!livePortfolio) {
+        if (!liveIntent) {
           const receipt = generateTradeReceipt({
             quote: pendingQuote,
             pairKey,
@@ -1259,7 +1252,12 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     createAgentMandate: async ({ spendUsd, slipBps, ttlHours, pairs, agent: requestedAgent }) => {
-      const { address, mandates, livePortfolio } = get();
+      const { address, mandates, livePortfolio, environmentMode } = get();
+      const liveIntent = environmentMode === "mainnet";
+      if (liveIntent && (!address || !isAddress(address))) {
+        get().addToast("Wallet Required", "Connect an Arc Mainnet wallet to sign a live mandate.", "err");
+        return;
+      }
       const trader = normalizeAddress(address || DEMO_ADDRESS);
       const agent = requestedAgent ? normalizeAddress(requestedAgent) : trader;
 
@@ -1271,11 +1269,11 @@ export const useAppStore = create<AppState>((set, get) => {
           maxSlippageBps: slipBps,
           allowedPairs: pairs,
           ttlSeconds: ttlHours * 3600,
-          nonce: livePortfolio ? await readMandateNonce(trader) : 0,
+          nonce: liveIntent ? await readMandateNonce(trader) : 0,
         });
 
         let signedMandate = mandate;
-        if (livePortfolio) {
+        if (liveIntent) {
           const ticket = buildAgentMandateTicket(mandate);
           const payload = serializeEip712(ticket);
           const signature = await walletRpc("eth_signTypedData_v4", [trader, payload]);
@@ -1288,8 +1286,8 @@ export const useAppStore = create<AppState>((set, get) => {
         });
 
         get().addToast(
-          livePortfolio ? "Mandate Signed" : "Simulation Mandate Created",
-          livePortfolio
+          liveIntent ? "Mandate Signed" : "Simulation Mandate Created",
+          liveIntent
             ? "EIP-712 mandate signed for agent " + shortAddr(agent) + ". No background executor is running in this browser."
             : "Simulation only · no Arc transaction was broadcast.",
           livePortfolio ? "ok" : "info",
@@ -1322,19 +1320,26 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     executeSweepOnchain: async (sweepAmountUsdc: number, direction: "sweep" | "unwind") => {
-      const { address, livePortfolio } = get();
+      const { address, livePortfolio, environmentMode } = get();
+      const liveIntent = environmentMode === "mainnet";
 
       if (!Number.isFinite(sweepAmountUsdc) || sweepAmountUsdc <= 0) {
         get().addToast("Invalid Treasury Amount", "Amount must be greater than zero.", "warn");
         return;
       }
 
-      if (get().wrongNetwork) {
-        get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) first.", "err");
-        return;
+      if (liveIntent) {
+        if (!address || !isAddress(address)) {
+          get().addToast("Wallet Required", "Connect an Arc Mainnet wallet to execute a live treasury action.", "err");
+          return;
+        }
+        if (get().wrongNetwork) {
+          get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) first.", "err");
+          return;
+        }
       }
 
-      if (get().environmentMode !== "mainnet" && (!livePortfolio || !address)) {
+      if (!liveIntent) {
         if (direction === "sweep") {
           const receipt = generateTradeReceipt({
             quote: {
@@ -1423,7 +1428,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
       set({ executing: true });
       try {
-        const trader = normalizeAddress(address);
+        const trader = normalizeAddress(address!);
         const isSweep = direction === "sweep";
         const tokenIn = isSweep ? ARC.usdcErc20 : ARC.tokens.USYC.address;
         const tokenOut = isSweep ? ARC.tokens.USYC.address : ARC.usdcErc20;
