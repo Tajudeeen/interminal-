@@ -7,7 +7,7 @@ import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
 
 export const LandingView: React.FC = () => {
-  const { launchDemo, launchTestnet, setView, startJudgeTour } = useAppStore();
+  const { launchDemo, launchTestnet, openMainnetReview, setView, startJudgeTour } = useAppStore();
   const [simTreasurySize, setSimTreasurySize] = useState<number>(250000);
 
   const previewKeys = ["ETH/USDC", "BTC/USDC", "EURC/USDC", "ARC/USDC"];
