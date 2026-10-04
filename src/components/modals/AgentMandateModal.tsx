@@ -7,6 +7,7 @@ export const AgentMandateModal: React.FC = () => {
   const { mandateModalOpen, setMandateModalOpen, createAgentMandate, address, balances, livePortfolio } = useAppStore();
 
   const [spendUsd, setSpendUsd] = useState<number>(500);
+  const [agent, setAgent] = useState<string>(address || "");
 
   const liveBudgetPresets = useMemo(() => {
     if (!livePortfolio) return [100, 250, 500, 1000];
@@ -25,7 +26,6 @@ export const AgentMandateModal: React.FC = () => {
     setAgent(address || "");
     setSpendUsd(liveBudgetPresets[0] || 0);
   }, [address, livePortfolio, liveBudgetPresets]);
-  const [agent, setAgent] = useState<string>(address || "");
   const [slipBps, setSlipBps] = useState<number>(30);
   const [ttlHours, setTtlHours] = useState<number>(4);
   const [selectedPairs, setSelectedPairs] = useState<string[]>(["ETH/USDC", "EURC/USDC"]);
