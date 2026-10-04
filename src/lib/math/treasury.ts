@@ -28,11 +28,14 @@ export function calculateJitUnwind({
   tradeAmountUsd,
   liquidUsdc = 0,
   usycBalance = 0,
+  usycPriceUsd = 1,
   slippageBps = 0,
 }: JitUnwindParams): JitUnwindResult {
   if (!Number.isFinite(tradeAmountUsd) || tradeAmountUsd <= 0) throw new Error("Invalid trade amount");
   const liquid = Math.max(0, Number(liquidUsdc) || 0);
   const usyc = Math.max(0, Number(usycBalance) || 0);
+  const navPrice = Number(usycPriceUsd);
+  if (!Number.isFinite(navPrice) || navPrice <= 0) throw new Error("Invalid USYC price");
 
   if (tradeAmountUsd <= liquid) {
     return {
@@ -46,9 +49,13 @@ export function calculateJitUnwind({
   }
 
   const deficit = tradeAmountUsd - liquid;
-  const slipMultiplier = 1 + (Number(slippageBps) || 0) / 10000;
-  const usycToRedeem = Math.ceil(deficit * slipMultiplier * 100) / 100;
-  const canCover = (liquid + usyc) >= tradeAmountUsd && usyc >= usycToRedeem;
+  const slip = Math.min(5000, Math.max(0, Number(slippageBps) || 0));
+  const effectiveUsycPrice = navPrice * (1 - slip / 10000);
+  if (effectiveUsycPrice <= 0) throw new Error("Invalid effective USYC price");
+
+  // Return the number of USYC tokens required, not a dollar amount.
+  const usycToRedeem = Math.ceil((deficit / effectiveUsycPrice) * 1e6) / 1e6;
+  const canCover = usyc * effectiveUsycPrice >= deficit;
   const remainingUsyc = Math.max(0, usyc - usycToRedeem);
 
   return {
