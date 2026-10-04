@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const componentsRoot = join(here, "..", "components");
+const appPath = join(here, "..", "App.tsx");
 const storePath = join(here, "..", "store", "useAppStore.ts");
 
 function walk(dir: string): string[] {
@@ -15,7 +16,10 @@ function walk(dir: string): string[] {
 }
 
 const componentFiles = walk(componentsRoot).filter((path) => /\.(tsx|ts)$/.test(path));
-const componentSource = componentFiles.map((path) => readFileSync(path, "utf8")).join("\n");
+const componentSource = [
+  ...componentFiles.map((path) => readFileSync(path, "utf8")),
+  readFileSync(appPath, "utf8"),
+].join("\n");
 const storeSource = readFileSync(storePath, "utf8");
 const actionsSectionStart = storeSource.indexOf("// Actions");
 const actionsSectionEnd = storeSource.indexOf("\n}\n\nconst DEMO_ADDRESS", actionsSectionStart);
