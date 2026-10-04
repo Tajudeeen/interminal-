@@ -142,14 +142,16 @@ function statsFromCandles(candles: Candle[]): CandleStats | undefined {
 
   const latest = valid[valid.length - 1];
   const cutoff = latest.time - 24 * 60 * 60 * 1000;
+  const window24h = valid.filter((c) => c.time >= cutoff);
   const prior = [...valid].reverse().find((c) => c.time <= cutoff);
+  const statsWindow = window24h.length ? window24h : [latest];
 
   return {
     price: latest.close,
     change: prior?.close ? ((latest.close / prior.close) - 1) * 100 : 0,
-    high: Math.max(...valid.map((c) => c.high)),
-    low: Math.min(...valid.map((c) => c.low)),
-    vol: valid.reduce((sum, c) => sum + Math.max(0, c.volume || 0), 0),
+    high: Math.max(...statsWindow.map((c) => c.high)),
+    low: Math.min(...statsWindow.map((c) => c.low)),
+    vol: statsWindow.reduce((sum, c) => sum + Math.max(0, c.volume || 0), 0),
   };
 }
 
