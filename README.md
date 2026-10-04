@@ -28,7 +28,7 @@ The CI pipeline runs a live GeckoTerminal smoke test against the three configure
 
 ### Chart rendering
 
-The terminal chart is rendered with **TradingView Lightweight Charts 5.2.1**. The chart library does not provide market data itself; Interminal feeds it verified OHLCV returned by GeckoTerminal. A same-origin `/api/market-data` Vercel function proxies the GeckoTerminal request so the browser is not calling the public data endpoint directly. Lightweight Charts' built-in attribution logo remains enabled.
+The terminal chart is rendered with **TradingView Lightweight Charts 5.2.1**. Desktop chart space uses a wider terminal-style proportion rather than a square 1:1 panel. The chart library does not provide market data itself; Interminal feeds it verified OHLCV returned by GeckoTerminal. A same-origin `/api/market-data` Vercel function proxies the GeckoTerminal request so the browser is not calling the public data endpoint directly. Lightweight Charts' built-in attribution logo remains enabled.
 
 ### Timeframe switching
 
@@ -177,7 +177,7 @@ Interminal is purpose-built to exploit Arc's unique L1 architectural capabilitie
 
 * **Low-cost USDC gas:** The UI uses ~$0.0012 USDC as an application-level gas estimate. Actual transaction cost depends on gas used and network conditions.
 * **USDC as Native Gas Token:** Gas is priced directly in USDC (18 decimals), eliminating foreign token friction for corporate accounting departments.
-* ****Dual-Scale USDC Accounting:** Separates native 18-decimal Arc gas USDC from 6-decimal operational ERC-20 USDC.
+* **Dual-Scale USDC Accounting:** Separates native 18-decimal Arc gas USDC from 6-decimal operational ERC-20 USDC.
 * **Fast deterministic settlement:** Supports rapid treasury rebalancing and repeated USDC-denominated execution on Arc. Exact execution remains subject to the selected route and transaction confirmation.
 
 ---
@@ -195,11 +195,11 @@ Interminal settles on-chain via [`contracts/InterminalSettlement.sol`](contracts
 | **Compiler** | Solidity `v0.8.28` (200 optimizer runs, 8,802 bytes bytecode) |
 | **Arc AMM Router** | `0x52FE40c00530db2e43d01652f903870571A14AFD` (Uniswap V2 Router on Arc) |
 | **Deployer** | `0x541291139b59570d1cd5d0e64df217b3f6efd7c8` |
-| **Block Height** | `23,367,508` |
+| **Deployment Block** | `23,367,508` |
 
 ### Core Functions:
 * `executeTradeTicket(...)`: Validates EIP-712 `TradeTicket` signatures and routes token swaps with strict slippage limits.
-* `executeAgentTrade(...)`: The deployed v1 contract includes signed-agent execution with nonce, expiry, cumulative-spend, per-transaction, pair-mask, and minimum-output checks. Interminal's browser currently signs mandates but does not run an unattended background executor.
+* `executeAgentTrade(...)`: Present in the deployed v1 contract with signed-agent authorization, nonce, expiry, cumulative-spend, per-transaction, pair-mask, and minimum-output checks. This is **not the primary live browser execution path** and is not presented as a fully unattended production agent. The hardened successor is preserved separately as `contracts/InterminalSettlementV2.sol` and is not deployed.
 * `anchorReceipt(bytes32 receiptHash)`: Stores receipt hashes permanently on-chain.
 * `isReceiptAnchored(bytes32)`: Read-only verification query for external auditors and compliance officers.
 
