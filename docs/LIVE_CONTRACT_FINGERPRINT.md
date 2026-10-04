@@ -23,9 +23,7 @@ This page records the immutable identity of the Interminal settlement contract c
 
 ## Source provenance
 
-The current maintained Solidity source contains additional hardening for a future deployment, including concrete agent pair mapping, USDC-denominated agent spend, and an on-chain slippage ceiling.
+The canonical `contracts/InterminalSettlement.sol` source is now the exact Solidity revision used for the live Arc deployment. CI compiles that file with the recorded optimizer settings and fails if the resulting runtime differs from the live contract byte-for-byte.
 
-Those changes are intentionally not represented as live-chain capabilities until a new contract deployment is completed. The live Microgrant execution path uses the already deployed settlement contract for signed TradeTickets, confirmed transactions, and receipt anchoring.
-
-The repository also preserves the historical Arc integration source snapshot used during the first protocol integration under `contracts/deployed/InterminalSettlementV1.sol`. It does not claim byte-identical reproduction of the currently deployed binary.
+The repository also preserves `contracts/deployed/InterminalSettlementV1.sol` as an explicitly labelled historical snapshot and `contracts/InterminalSettlementV2.sol` as a future hardened successor. V2 is **not deployed** and is never presented by the app as a live capability.
 
