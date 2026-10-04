@@ -216,11 +216,11 @@ export const TreasuryCockpitView: React.FC = () => {
         {/* USYC */}
         <div className="card-themed border border-themed rounded-card p-4">
           <div className="flex justify-between items-center text-muted font-mono text-[10px] uppercase">
-            <span>USYC Treasury Yield</span>
+            <span>USYC Treasury Position</span>
             <span className="material-symbols-outlined text-[16px] text-pos">trending_up</span>
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-pos tnum">
-            ${usycBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${usycNavUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="mt-1 font-mono text-[10px] text-pos font-semibold">
             +3.225% reference yield (${(usycNavUsd * USYC_APY).toFixed(2)}/yr)
@@ -420,7 +420,7 @@ export const TreasuryCockpitView: React.FC = () => {
               isLoading={executing}
               leftIcon={<span className="material-symbols-outlined text-[16px]">swap_horiz</span>}
             >
-              Execute JIT Unwind: ${jit.usycToRedeem.toLocaleString()} USYC → USDC{livePortfolio ? " (On-Chain)" : " (Sim)"}
+              Execute JIT USYC/USDC Rebalance: ${jit.usycToRedeem.toLocaleString(undefined, { maximumFractionDigits: 6 })} USYC → USDC{livePortfolio ? " (On-Chain)" : " (Sim)"}
             </Button>
           )}
         </div>
@@ -434,7 +434,7 @@ export const TreasuryCockpitView: React.FC = () => {
               Treasury Horizon Projection
             </div>
             <h3 className="font-display font-bold text-base text-themed mt-0.5">
-              Yield Earned on Current Holdings (${usycBalance.toLocaleString()} USYC)
+              Yield Earned on Current Holdings (~${usycNavUsd.toLocaleString("en-US", { maximumFractionDigits: 2 })} NAV)
             </h3>
           </div>
           {/* Horizon Period Buttons */}
