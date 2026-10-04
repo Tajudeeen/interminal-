@@ -7,7 +7,7 @@
 [![Arc Mainnet](https://img.shields.io/badge/Arc%20Mainnet-Chain%205042-00F0FF?style=flat-square)](https://explorer.arc.io)
 [![Smart Contract](https://img.shields.io/badge/Settlement%20Contract-0x2b38...ab36-10B981?style=flat-square)](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36)
 [![React 19 + TS](https://img.shields.io/badge/Stack-React%2019%20%7C%20TypeScript%20%7C%20Vite%20%7C%20Zustand-blue?style=flat-square)](https://react.dev)
-[![Tests Passing](https://img.shields.io/badge/Tests-44%2F44%20Passing-brightgreen?style=flat-square)](test.mjs)
+[![Tests Passing](https://img.shields.io/badge/Tests-45%2F45%20Passing-brightgreen?style=flat-square)](test.mjs)
 [![X / Twitter](https://img.shields.io/badge/Builder-%40Deeen__Codes-000000?style=flat-square&logo=x)](https://x.com/Deeen_Codes)
 [![GitHub](https://img.shields.io/badge/GitHub-Tajudeeen-181717?style=flat-square&logo=github)](https://github.com/Tajudeeen)
 
@@ -78,15 +78,13 @@ Interminal uses Arc for USDC-denominated settlement, low-cost repeated execution
 
 ## Environment flow
 
-Interminal now uses a three-stage product flow:
+Interminal keeps three environments, but Mainnet is now the primary product path:
 
-1. **Launch Treasury Demo** starts the full browser sandbox. Demo actions are intentionally wallet-free and can be used end-to-end without claiming blockchain execution.
+1. **Review Live Mainnet** opens the real Arc Mainnet treasury context immediately. The reviewer connects a wallet, and Interminal reads real ERC-20 operating USDC, supported Arc token balances, native USDC gas, and fresh market prices before sizing the policy controls. No testnet transaction is required.
+2. **Launch Treasury Demo** opens the full browser sandbox. Demo trades, sweeps, JIT scenarios, DCA, mandates, receipts, calculators and the guided tour remain wallet-free, clearly labelled as simulation, and never claim blockchain execution.
+3. **Arc Testnet Lab** is an optional wallet rehearsal. It reads the live testnet head and native USDC balance, then can send a 0.01 native-USDC self-transfer to prove wallet signing, network selection, submission and receipt confirmation. It does **not** represent an Interminal settlement-contract execution and it does not gate Mainnet.
 
- Treasury balances, trades, sweeps, DCA, mandates, receipts, calculators and the guided tour remain usable without connecting a wallet. Simulated actions are marked as simulation and never claim to be Arc transactions.
-2. **Arc Testnet Lab** is the rehearsal environment. It connects to Arc Testnet (chain 5042002), verifies the live testnet chain head and native USDC balance, runs the treasury policy drill, and performs a small confirmed wallet transaction before promotion. Arc Testnet is publicly observable and uses USDC as its native gas currency.
-3. **Perform Task on Mainnet** is deliberately gated behind the completed testnet checkpoint and its confirmed Testnet transaction hash. It switches the product into the mainnet execution context, where a wallet connection is required before any real transaction can be sent.
-
-Mobile browsers without an injected provider are handed off to the MetaMask mobile app, while desktop injected wallets are discovered through EIP-6963. This is the correct mobile-wallet model because ordinary iOS/Android browsers do not expose desktop browser extensions. MetaMask Connect documents the same cross-platform distinction. 
+Mobile browsers without an injected provider are handed off to the MetaMask mobile app, while desktop injected wallets are discovered through EIP-6963. This is the correct mobile-wallet model because ordinary iOS/Android browsers do not expose desktop browser extensions. 
 
 ## What Actually Works on Arc Mainnet?
 
