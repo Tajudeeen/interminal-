@@ -379,6 +379,7 @@ export const useAppStore = create<AppState>((set, get) => {
       set({
         environmentMode: "testnet",
         testnetTaskComplete: false,
+        testnetTxHash: null,
         connected: false,
         connecting: false,
         address: null,
@@ -393,6 +394,10 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     performMainnetFromTestnet: () => {
+      if (!get().testnetTaskComplete || !get().testnetTxHash) {
+        get().addToast("Testnet Proof Required", "Complete the confirmed Arc Testnet execution check before opening Mainnet execution.", "warn");
+        return;
+      }
       set({
         environmentMode: "mainnet",
         testnetTaskComplete: false,
@@ -777,6 +782,7 @@ export const useAppStore = create<AppState>((set, get) => {
       set({
         environmentMode: "demo",
         testnetTaskComplete: false,
+        testnetTxHash: null,
         connected: true,
         address: null,
         chainId: 5042,
@@ -999,7 +1005,6 @@ export const useAppStore = create<AppState>((set, get) => {
         amount,
         pendingQuote,
         address,
-        livePortfolio,
         balances,
         ticketNonce,
         auditReceipts,
@@ -1403,7 +1408,7 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     executeSweepOnchain: async (sweepAmountUsdc: number, direction: "sweep" | "unwind") => {
-      const { address, livePortfolio, environmentMode } = get();
+      const { address, environmentMode } = get();
       const liveIntent = environmentMode === "mainnet";
 
       if (!Number.isFinite(sweepAmountUsdc) || sweepAmountUsdc <= 0) {
