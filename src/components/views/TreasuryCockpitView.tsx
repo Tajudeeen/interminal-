@@ -41,13 +41,25 @@ export const TreasuryCockpitView: React.FC = () => {
   const idleCash = Math.max(0, liquidUsdc - targetBufferUsd);
   const cost = calculateOpportunityCost(idleCash, USYC_APY);
   const sweep = calculateYieldSweep(liquidUsdc, targetBufferUsd);
-  const jit = calculateJitUnwind({
-    tradeAmountUsd: stressTestAmount,
-    liquidUsdc,
-    usycBalance,
-    usycPriceUsd: PAIRS["USYC/USDC"].price,
-    slippageBps: 20,
-  });
+  // Mainnet review intentionally starts with empty balances and zero stress-test sizing
+  // until the wallet is connected. Keep the render path safe instead of passing an
+  // invalid zero trade amount into the strict JIT calculator.
+  const jit = mainnetReview
+    ? {
+        needed: false,
+        deficit: 0,
+        shortfall: 0,
+        usycToRedeem: 0,
+        canCover: false,
+        remainingUsyc: 0,
+      }
+    : calculateJitUnwind({
+        tradeAmountUsd: stressTestAmount,
+        liquidUsdc,
+        usycBalance,
+        usycPriceUsd: PAIRS["USYC/USDC"].price,
+        slippageBps: 20,
+      });
 
   const snapshot = portfolioSnapshot(balances, livePortfolio);
   const usycNavUsd = usycBalance * PAIRS["USYC/USDC"].price;
