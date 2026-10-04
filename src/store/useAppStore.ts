@@ -100,6 +100,7 @@ export interface AppState {
   block: number;
   latency: number;
   marketFeedStatus: { source: string; live: boolean; lastUpdate: number | null; error: string | null };
+  marketRequestId: number;
   toasts: ToastItem[];
   showLevels: boolean;
   executing: boolean;
@@ -313,6 +314,7 @@ export const useAppStore = create<AppState>((set, get) => {
     block: 0,
     latency: 12,
     marketFeedStatus: { source: "Waiting for live market data", live: false, lastUpdate: null, error: null },
+    marketRequestId: 0,
     toasts: [],
     showLevels: false,
     executing: false,
@@ -362,10 +364,33 @@ export const useAppStore = create<AppState>((set, get) => {
       try {
         assertPair(pair);
         const tf = pair === "USYC/USDC" ? "1D" : get().timeframe;
-        set({ pair, timeframe: tf, candles: [], indicators: null, candleSource: "unavailable", marketFeedStatus: { source: "Loading live market data", live: false, lastUpdate: null, error: null } });
+        const requestId = get().marketRequestId + 1;
 
-        getCandles(pair, tf).then((result) => {
-          if (get().pair !== pair) return;
+        set({
+          pair,
+          timeframe: tf,
+          candles: [],
+          indicators: null,
+          candleSource: "unavailable",
+          marketRequestId: requestId,
+          marketFeedStatus: {
+            source: "Loading live market data · " + tf,
+            live: false,
+            lastUpdate: null,
+            error: null,
+          },
+        });
+
+        void getCandles(pair, tf).then((result) => {
+          const state = get();
+          if (
+            state.pair !== pair ||
+            state.timeframe !== tf ||
+            state.marketRequestId !== requestId
+          ) {
+            return;
+          }
+
           const indicators = result.candles.length ? computeIndicators(result.candles) : null;
           const current = PAIRS[pair];
           if (current && result.stats) {
@@ -375,9 +400,8 @@ export const useAppStore = create<AppState>((set, get) => {
             current.low = result.stats.low;
             current.vol = result.stats.vol;
           }
+
           set({
-            pair,
-            timeframe: tf,
             candles: result.candles,
             indicators,
             candleSource: result.source,
@@ -397,12 +421,14 @@ export const useAppStore = create<AppState>((set, get) => {
     setTimeframe: (tf) => {
       const pair = get().pair;
       const nextTf = pair === "USYC/USDC" ? "1D" : tf;
+      const requestId = get().marketRequestId + 1;
 
-      // Make the requested timeframe authoritative before the async market
-      // request resolves. The response guard below then safely rejects stale
-      // responses when the user switches again before a request completes.
       set({
         timeframe: nextTf,
+        candles: [],
+        indicators: null,
+        candleSource: "unavailable",
+        marketRequestId: requestId,
         marketFeedStatus: {
           source: "Loading live market data · " + nextTf,
           live: false,
@@ -412,7 +438,14 @@ export const useAppStore = create<AppState>((set, get) => {
       });
 
       void getCandles(pair, nextTf).then((result) => {
-        if (get().pair !== pair || get().timeframe !== nextTf) return;
+        const state = get();
+        if (
+          state.pair !== pair ||
+          state.timeframe !== nextTf ||
+          state.marketRequestId !== requestId
+        ) {
+          return;
+        }
 
         const indicators = result.candles.length ? computeIndicators(result.candles) : null;
         const current = PAIRS[pair];
@@ -570,10 +603,29 @@ export const useAppStore = create<AppState>((set, get) => {
     syncMarketData: async () => {
       const activePair = get().pair;
       const activeTf = activePair === "USYC/USDC" ? "1D" : get().timeframe;
+      const requestId = get().marketRequestId + 1;
+
+      set({
+        marketRequestId: requestId,
+        marketFeedStatus: {
+          source: "Loading live market data · " + activeTf,
+          live: false,
+          lastUpdate: get().marketFeedStatus.lastUpdate,
+          error: null,
+        },
+      });
 
       try {
         const result = await getCandles(activePair, activeTf);
-        if (get().pair !== activePair || get().timeframe !== activeTf) return;
+        const state = get();
+        if (
+          state.pair !== activePair ||
+          state.timeframe !== activeTf ||
+          state.marketRequestId !== requestId
+        ) {
+          return;
+        }
+
         const indicators = result.candles.length ? computeIndicators(result.candles) : null;
         const current = PAIRS[activePair];
 
@@ -586,7 +638,6 @@ export const useAppStore = create<AppState>((set, get) => {
         }
 
         set({
-          timeframe: activeTf,
           candles: result.candles,
           indicators,
           candleSource: result.source,
@@ -598,12 +649,21 @@ export const useAppStore = create<AppState>((set, get) => {
           },
         });
       } catch (err: any) {
+        const state = get();
+        if (
+          state.pair !== activePair ||
+          state.timeframe !== activeTf ||
+          state.marketRequestId !== requestId
+        ) {
+          return;
+        }
+
         set({
           candles: [],
           indicators: null,
           candleSource: "unavailable",
           marketFeedStatus: {
-            source: "Live market data unavailable",
+            source: "Live market data unavailable · " + activeTf,
             live: false,
             lastUpdate: Date.now(),
             error: err.message || String(err),
@@ -611,6 +671,7 @@ export const useAppStore = create<AppState>((set, get) => {
         });
       }
     },
+
     runAiAnalysis: () => {
       const { pair, timeframe, indicators } = get();
       const analysis = analyzeMarket(pair, timeframe, indicators);
