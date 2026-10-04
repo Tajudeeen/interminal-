@@ -18,6 +18,8 @@ export const Header: React.FC = () => {
     nativeGasBalance,
     startJudgeTour,
     environmentMode,
+    wrongNetwork,
+    switchToCurrentNetwork,
   } = useAppStore();
 
   return (
@@ -85,14 +87,25 @@ export const Header: React.FC = () => {
 
         {/* Connect / Account */}
         {connected ? (
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-pill card-themed border border-themed text-[11px] font-mono">
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                livePortfolio ? "bg-pos animate-pulse" : "bg-neutral-500"
-              }`}
-            />
-            <span className="truncate max-w-[64px]">{shortAddr(address)}</span>
-          </div>
+          wrongNetwork ? (
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={switchToCurrentNetwork}
+              leftIcon={<span className="material-symbols-outlined text-[13px]">sync</span>}
+            >
+              Switch
+            </Button>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-pill card-themed border border-themed text-[11px] font-mono">
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  livePortfolio ? "bg-pos animate-pulse" : "bg-neutral-500"
+                }`}
+              />
+              <span className="truncate max-w-[64px]">{shortAddr(address)}</span>
+            </div>
+          )
         ) : (
           <Button
             size="xs"
