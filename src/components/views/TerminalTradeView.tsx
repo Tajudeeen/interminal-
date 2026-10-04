@@ -38,13 +38,16 @@ export const TerminalTradeView: React.FC = () => {
     prepareTradeReview,
     runAiAnalysis,
     livePortfolio,
+    environmentMode,
     analysis,
     showLevels,
     theme,
     setSearchOpen,
+    connectWallet,
   } = useAppStore();
 
   const p = PAIRS[pairKey] || PAIRS["ETH/USDC"];
+  const mainnetReview = environmentMode === "mainnet" && !livePortfolio;
 
   let quote;
   try {
@@ -100,6 +103,25 @@ export const TerminalTradeView: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-7xl mx-auto">
+      {mainnetReview && (
+        <section className="card-themed border border-cyan/30 bg-cyan/5 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="font-display font-black text-sm text-cyan uppercase tracking-wide">Live terminal locked until wallet connect</div>
+            <p className="font-mono text-[11px] text-sub mt-1 leading-relaxed">
+              Connect to Arc Mainnet to price this trade from your wallet holdings and submit a real EIP-712 ticket. Nothing here is simulated while Mainnet Review is active.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => connectWallet("mainnet")}
+            leftIcon={<span className="material-symbols-outlined text-[15px]">account_balance_wallet</span>}
+          >
+            Connect Mainnet
+          </Button>
+        </section>
+      )}
+
       {/* Pair Header & Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -377,7 +399,7 @@ export const TerminalTradeView: React.FC = () => {
                   disabled={!amount || amount <= 0}
                   leftIcon={<span className="material-symbols-outlined text-[18px]">{livePortfolio ? "verified" : "science"}</span>}
                 >
-                  {livePortfolio ? "Execute on Arc Mainnet" : "Simulate Trade"}
+                  {livePortfolio ? "Execute on Arc Mainnet" : mainnetReview ? "Connect Wallet to Trade" : "Simulate Trade"}
                 </Button>
                 <div className="flex flex-col gap-1 px-1 text-[10px] font-mono text-muted pt-1 border-t border-themed/20">
                   <div className="flex items-center justify-between">
@@ -385,7 +407,7 @@ export const TerminalTradeView: React.FC = () => {
                       <span className="w-1.5 h-1.5 rounded-full bg-pos" />
                       Zero-Custody EIP-712
                     </span>
-                    <span>Gas: ~$0.0012 USDC</span>
+                    <span>{livePortfolio ? "Est. gas: ~$0.0012 USDC" : mainnetReview ? "Connect wallet for live gas estimate" : "Gas: ~$0.0012 USDC"}</span>
                   </div>
                   <div className="flex items-center justify-between text-muted/80">
                     <span>Arc Settlement:</span>
