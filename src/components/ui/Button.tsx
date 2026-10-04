@@ -62,7 +62,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={isDisabled}
         className={`
           inline-flex items-center justify-center font-mono select-none
-          transition-all duration-220 ease-out
+          transition-all duration-[220ms] ease-out
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500/60 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg)]
           ${variantStyles[variant]}
           ${sizeStyles[size]}
