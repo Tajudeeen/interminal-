@@ -421,7 +421,7 @@ export function generateTradeReceipt({
     pair: effectivePairKey,
     baseSymbol: pairObj.base,
     quoteSymbol: pairObj.quote,
-    baseContract: ARC.tokens[pairObj.base]?.address || ARC.tokens.WETH.address,
+    baseContract: pairObj.address || ARC.tokens[pairObj.base]?.address || "SIMULATION_ONLY",
     quoteContract: ARC.usdcErc20,
     side: effectiveSide,
     amountUsd: effectiveAmount,
