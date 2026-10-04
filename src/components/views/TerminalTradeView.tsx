@@ -33,6 +33,7 @@ export const TerminalTradeView: React.FC = () => {
     startDcaPlan,
     prepareTradeReview,
     runAiAnalysis,
+    livePortfolio,
     analysis,
     showLevels,
     theme,
@@ -457,9 +458,9 @@ export const TerminalTradeView: React.FC = () => {
                   fullWidth
                   onClick={prepareTradeReview}
                   disabled={!amount || amount <= 0}
-                  leftIcon={<span className="material-symbols-outlined text-[18px]">verified</span>}
+                  leftIcon={<span className="material-symbols-outlined text-[18px]">{livePortfolio ? "verified" : "science"}</span>}
                 >
-                  Authorize & Execute Trade
+                  {livePortfolio ? "Execute on Arc Mainnet" : "Simulate Trade"}
                 </Button>
                 <div className="flex flex-col gap-1 px-1 text-[10px] font-mono text-muted pt-1 border-t border-themed/20">
                   <div className="flex items-center justify-between">
