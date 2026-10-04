@@ -88,7 +88,7 @@ export const Sidebar: React.FC = () => {
           return (
             <button
               key={item.id}
-              onClick={() => setView(item.id)}
+              onClick={() => item.id === "testnet" ? launchTestnet() : setView(item.id)}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-card text-xs font-display font-semibold transition-all ${
                 isActive
                   ? "bg-themed-card text-themed shadow-sm border border-lime-500/40"
