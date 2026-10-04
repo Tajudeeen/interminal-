@@ -252,6 +252,64 @@ export async function erc20Balance(token: { address: string; decimals: number },
   }
 }
 
+
+export interface Erc20Metadata {
+  address: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+}
+
+function decodeAbiString(hex: string): string {
+  if (typeof hex !== "string" || !hex.startsWith("0x")) throw new Error("Invalid ERC-20 metadata response");
+  const body = hex.slice(2);
+  if (!body || body.length < 64) throw new Error("Empty ERC-20 metadata response");
+
+  // Standard ABI dynamic string: offset, length, UTF-8 bytes.
+  if (body.length >= 128) {
+    const offset = Number(BigInt("0x" + body.slice(0, 64)));
+    const lengthPos = offset * 2;
+    if (Number.isFinite(offset) && lengthPos + 64 <= body.length) {
+      const length = Number(BigInt("0x" + body.slice(lengthPos, lengthPos + 64)));
+      const start = lengthPos + 64;
+      const end = start + length * 2;
+      if (Number.isFinite(length) && length >= 0 && end <= body.length) {
+        const bytes = body.slice(start, end).match(/.{1,2}/g) || [];
+        return new TextDecoder().decode(new Uint8Array(bytes.map((b) => Number.parseInt(b, 16)))).replace(/\0/g, "").trim();
+      }
+    }
+  }
+
+  // Some older ERC-20s return bytes32 instead.
+  const bytes = body.slice(0, 64).match(/.{1,2}/g) || [];
+  return new TextDecoder().decode(new Uint8Array(bytes.map((b) => Number.parseInt(b, 16)))).replace(/\0/g, "").trim();
+}
+
+export async function readErc20Metadata(address: string): Promise<Erc20Metadata> {
+  if (!isAddress(address)) throw new Error("Invalid ERC-20 contract address");
+  const safe = normalizeAddress(address);
+  const code = await publicRpc("eth_getCode", [safe, "latest"]);
+  if (typeof code !== "string" || code === "0x") {
+    throw new Error("Address has no deployed contract bytecode on Arc Mainnet");
+  }
+
+  const [nameHex, symbolHex, decimalsHex] = await Promise.all([
+    publicRpc("eth_call", [{ to: safe, data: "0x06fdde03" }, "latest"]),
+    publicRpc("eth_call", [{ to: safe, data: "0x95d89b41" }, "latest"]),
+    publicRpc("eth_call", [{ to: safe, data: "0x313ce567" }, "latest"]),
+  ]);
+
+  const name = decodeAbiString(nameHex);
+  const symbol = decodeAbiString(symbolHex);
+  const decimals = Number(BigInt(decimalsHex || "0x0"));
+  if (!name || !symbol) throw new Error("Contract does not expose standard ERC-20 name/symbol metadata");
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 36) {
+    throw new Error("Contract returned invalid ERC-20 decimals");
+  }
+
+  return { address: safe, name, symbol: symbol.toUpperCase(), decimals };
+}
+
 export async function loadOnchainPortfolio(address: string): Promise<Record<string, number>> {
   const safe = normalizeAddress(address);
   const erc20Usdc = await erc20Balance({ address: ARC.usdcErc20, decimals: 6 }, safe);
