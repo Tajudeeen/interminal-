@@ -261,3 +261,18 @@ Typechecks the repository with `tsc` and bundles optimized production assets int
 * **Built independently for Arc Mainnet.**
 * **No prior funding:** This project has received zero funding from any Circle or Arc grant program.
 * **Open Source:** MIT License.
+
+## Final submission readiness
+
+The final hardening pass is intentionally proof-first:
+
+- The canonical settlement source reproduces the live Arc Mainnet runtime byte-for-byte under the recorded compiler settings.
+- `npm run verify:arc` fails closed on chain, deployment receipt, contract address, bytecode, source/runtime, ABI, EIP-712 domain, and configured Arc infrastructure mismatches.
+- `npm run verify:market` checks the three configured Arc GeckoTerminal OHLCV feeds.
+- Timeframe selection is request-scoped and covered by regression tests for every supported GeckoTerminal resolution.
+- Policy regression coverage includes overspend, unauthorized market, excessive slippage, and expired mandate rejection.
+- `SECURITY.md` documents trust boundaries, known risks, and the limits of the current prototype.
+- `contracts/InterminalSettlementV2.sol` is a future hardened successor and is explicitly **not deployed**.
+- The judge walkthrough distinguishes simulation from real Arc execution and never presents a simulated JIT action as an on-chain transaction.
+
+For a reviewer, the strongest evidence path is: live app → Proof / Arc RPC → deployment transaction → verified source → real wallet execution → confirmed receipt → anchored certificate.
