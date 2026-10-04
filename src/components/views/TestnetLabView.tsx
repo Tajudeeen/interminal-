@@ -11,7 +11,6 @@ export const TestnetLabView: React.FC = () => {
     chainId,
     connected,
     connecting,
-    environmentMode,
     nativeGasBalance,
     targetBufferUsd,
     connectWallet,
@@ -35,7 +34,7 @@ export const TestnetLabView: React.FC = () => {
     usycBalance: scenarioUsyc,
     usycPriceUsd: 1.135836,
     slippageBps: 30,
-  }), [stressTestAmount, balances.USDC, balances.USYC]);
+  }), [stressTestAmount]);
 
   useEffect(() => {
     let cancelled = false;
