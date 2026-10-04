@@ -27,7 +27,7 @@ import { MarketSearchModal } from "./components/modals/MarketSearchModal";
 import { ImportTokenModal } from "./components/modals/ImportTokenModal";
 
 export const App: React.FC = () => {
-  const { view, theme, setTheme, setSearchOpen, syncMarketData } = useAppStore();
+  const { view, theme, setTheme, setSearchOpen, syncMarketData, environmentMode } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
@@ -43,16 +43,20 @@ export const App: React.FC = () => {
     };
     window.addEventListener("keydown", handleKeyDown);
 
-    void syncMarketData();
+    if (environmentMode !== "testnet") {
+      void syncMarketData();
+    }
     const refreshTimer = window.setInterval(() => {
-      void useAppStore.getState().syncMarketData();
+      if (useAppStore.getState().environmentMode !== "testnet") {
+        void useAppStore.getState().syncMarketData();
+      }
     }, 60_000);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.clearInterval(refreshTimer);
     };
-  }, [setSearchOpen, syncMarketData]);
+  }, [setSearchOpen, syncMarketData, environmentMode]);
 
   const renderCurrentView = () => {
     switch (view) {
