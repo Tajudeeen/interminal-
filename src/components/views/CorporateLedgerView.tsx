@@ -129,7 +129,7 @@ export const CorporateLedgerView: React.FC = () => {
             <span className="material-symbols-outlined text-[36px] text-muted">receipt_long</span>
             <div className="font-display font-bold text-sm text-themed">No Audit Receipts Yet</div>
             <p className="font-mono text-xs text-muted max-w-sm mx-auto">
-              Every EIP-712 signed order generates a canonical JSON-LD certificate with SHA-256 integrity proofs.
+              Every confirmed execution can generate a canonical JSON certificate with SHA-256 integrity proofs.
             </p>
             <Button
               variant="primary"
