@@ -164,8 +164,8 @@ export const CorporateLedgerView: React.FC = () => {
                     </span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 text-[10px]">
-                    <span className="text-muted">Budget <strong className="text-themed">\${order.totalBudget.toLocaleString()}</strong></span>
-                    <span className="text-muted">Slice <strong className="text-themed">\${order.sliceAmount.toLocaleString()}</strong></span>
+                    <span className="text-muted">Budget <strong className="text-themed">{"$" + order.totalBudget.toLocaleString()}</strong></span>
+                    <span className="text-muted">Slice <strong className="text-themed">{"$" + order.sliceAmount.toLocaleString()}</strong></span>
                     <span className="text-muted">Every <strong className="text-themed">{order.intervalSec >= 3600 ? order.intervalSec / 3600 + "h" : order.intervalSec / 60 + "m"}</strong></span>
                     <span className="text-muted">Slices <strong className="text-themed">{order.totalSlices}</strong></span>
                   </div>
@@ -197,8 +197,8 @@ export const CorporateLedgerView: React.FC = () => {
                     </span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 text-[10px]">
-                    <span className="text-muted">Budget <strong className="text-themed">\${mandate.maxSpendUsdc.toLocaleString()}</strong></span>
-                    <span className="text-muted">Remaining <strong className="text-themed">\${mandate.remainingSpend.toLocaleString()}</strong></span>
+                    <span className="text-muted">Budget <strong className="text-themed">{"$" + mandate.maxSpendUsdc.toLocaleString()}</strong></span>
+                    <span className="text-muted">Remaining <strong className="text-themed">{"$" + mandate.remainingSpend.toLocaleString()}</strong></span>
                     <span className="text-muted">Slippage <strong className="text-themed">{mandate.maxSlippageBps} bps</strong></span>
                   </div>
                   <div className="mt-2 text-[10px] text-muted truncate">Agent <span className="text-themed">{mandate.agent}</span></div>
