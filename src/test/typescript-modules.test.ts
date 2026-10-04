@@ -5,6 +5,7 @@ import {
   calculateJitUnwind,
   calculateYieldSweep,
 } from "../lib/math/treasury";
+import { decodeTradeSettledExecution } from "../lib/arc/rpcClient";
 import { calculateFxParity } from "../lib/math/fx";
 import { quoteTrade, parseUnits, formatUnits } from "../lib/math/quotes";
 import { generateCandles, computeIndicators } from "../lib/math/indicators";
@@ -23,6 +24,40 @@ describe("React TypeScript Modular Engine", () => {
   it("SHA-256 bitwise matches known vectors", () => {
     expect(sha256Hex("abc")).toBe("0xba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
     expect(sha256Hex("")).toBe("0xe3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+  });
+
+  it("TradeSettled event decoder extracts confirmed execution amounts", () => {
+    const trader = "0x1111111111111111111111111111111111111111";
+    const tokenIn = "0x3600000000000000000000000000000000000000";
+    const tokenOut = "0x128cC466B61f542da60c70e3aA11c10e19B84EDB";
+    const data =
+      "0x" +
+      tokenIn.slice(2).padStart(64, "0") +
+      tokenOut.slice(2).padStart(64, "0") +
+      (500000000n).toString(16).padStart(64, "0") +
+      (183000000000000000n).toString(16).padStart(64, "0") +
+      (12345n).toString(16).padStart(64, "0");
+
+    const decoded = decodeTradeSettledExecution(
+      {
+        logs: [
+          {
+            address: "0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36",
+            topics: ["0x0", "0x" + "a".repeat(64), "0x" + trader.slice(2).padStart(64, "0")],
+            data,
+          },
+        ],
+      },
+      "0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36",
+      trader,
+      tokenIn,
+      tokenOut,
+    );
+
+    expect(decoded).not.toBeNull();
+    expect(decoded?.trader.toLowerCase()).toBe(trader);
+    expect(decoded?.amountIn).toBe(500000000n);
+    expect(decoded?.amountOut).toBe(183000000000000000n);
   });
 
   it("Opportunity cost accurately projects yield loss on idle cash", () => {
