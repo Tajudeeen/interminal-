@@ -36,7 +36,7 @@ Market data is sourced from external public feeds. Chart data is not itself sett
 
 DCA scheduling and the browser walkthrough are simulations. The browser does not run a background autonomous executor.
 
-Agent-mandate signing is an authorization artifact in the current application. The live browser does not run an unattended agent, and the hardened successor contract in `contracts/InterminalSettlementV2.sol` has not been deployed.
+Agent-mandate signing is an authorization artifact in the current application. The live browser does not run an unattended agent. The deployed v1 `executeAgentTrade` path has pair-mask, spend, expiry, nonce, and minimum-output checks, but it does not contain the concrete token-to-pair binding and fresh-quote slippage ceiling present in V2. Therefore the browser does not advertise V1 as a production unattended executor, and `contracts/InterminalSettlementV2.sol` is explicitly not deployed.
 
 ## Receipt integrity
 
