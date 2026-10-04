@@ -16,6 +16,7 @@ import { MarketsView } from "./components/views/MarketsView";
 import { AiAnalystView } from "./components/views/AiAnalystView";
 import { CorporateLedgerView } from "./components/views/CorporateLedgerView";
 import { ProofRpcView } from "./components/views/ProofRpcView";
+import { TestnetLabView } from "./components/views/TestnetLabView";
 
 // Modals
 import { GasTankModal } from "./components/modals/GasTankModal";
@@ -69,6 +70,8 @@ export const App: React.FC = () => {
         return <CorporateLedgerView />;
       case "proof":
         return <ProofRpcView />;
+      case "testnet":
+        return <TestnetLabView />;
       default:
         return <LandingView />;
     }
@@ -88,7 +91,7 @@ export const App: React.FC = () => {
         <MarketTickerMarquee />
 
         {/* Dynamic Viewport Container with Smooth Transitions */}
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-8 scroll-smooth">
+        <main className="app-scroll flex-1 overflow-y-auto pb-16 lg:pb-8 scroll-smooth">
           <div key={view} className="animate-view-fade w-full h-full">
             {renderCurrentView()}
           </div>
