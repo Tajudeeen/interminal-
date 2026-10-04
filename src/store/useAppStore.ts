@@ -141,7 +141,7 @@ export interface AppState {
   prepareTradeReview: () => void;
   executeTrade: () => Promise<void>;
   refuelGasTank: (amountUsdc: number) => Promise<void>;
-  createAgentMandate: (params: { spendUsd: number; slipBps: number; ttlHours: number; pairs: string[] }) => Promise<void>;
+  createAgentMandate: (params: { spendUsd: number; slipBps: number; ttlHours: number; pairs: string[]; agent?: string }) => Promise<void>;
   runProof: () => Promise<void>;
   importCustomToken: (address: string) => Promise<void>;
   executeSweepOnchain: (sweepAmountUsdc: number, direction: "sweep" | "unwind") => Promise<void>;
