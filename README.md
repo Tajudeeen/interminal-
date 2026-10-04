@@ -47,6 +47,8 @@ The terminal timeframe controls are wired to the live market-data loader. Select
 
 The public GeckoTerminal API is cached for roughly one minute and is limited to 30 requests/minute, so Interminal caches chart responses locally for 45 seconds and refreshes market state no more than necessary.
 
+Timeframe changes are request-scoped: the UI clears the previous series while loading, validates that the API returned the requested timeframe, and ignores stale responses from earlier selections so an older request cannot overwrite the active chart.
+
 ---
 
 ## Builder
