@@ -127,6 +127,23 @@ export function providerName(eth: any): string {
   return "Injected wallet";
 }
 
+export type WalletEventHandlers = {
+  accountsChanged?: (accounts: string[]) => void | Promise<void>;
+  chainChanged?: (chainId: string) => void | Promise<void>;
+};
+
+export function subscribeWalletEvents(provider: any, handlers: WalletEventHandlers): () => void {
+  if (!provider?.on) return () => {};
+  const onAccountsChanged = (accounts: string[]) => { void handlers.accountsChanged?.(accounts); };
+  const onChainChanged = (chainId: string) => { void handlers.chainChanged?.(chainId); };
+  provider.on("accountsChanged", onAccountsChanged);
+  provider.on("chainChanged", onChainChanged);
+  return () => {
+    try { provider.removeListener?.("accountsChanged", onAccountsChanged); } catch {}
+    try { provider.removeListener?.("chainChanged", onChainChanged); } catch {}
+  };
+}
+
 export async function switchOrAddNetwork(
   provider: any,
   mode: Exclude<EnvironmentMode, "demo">,
