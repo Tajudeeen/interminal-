@@ -68,8 +68,8 @@ Timeframe changes are request-scoped: the UI clears the previous series while lo
 In corporate finance, **idle cash drag destroys enterprise value**. Traditional corporate bank accounts forfeit yields to institutional fees, while standard Web3 treasuries leave liquid operating cash sitting idle in non-yielding wallet balances to avoid high gas costs.
 
 Interminal uses Arc for USDC-denominated settlement, low-cost repeated execution, and a verifiable on-chain audit trail:
-1. **Operating Cash Reserve:** Maintains a user-configured liquid buffer (e.g. $5,000 USDC) for immediate expenses and gas.
-2. **Policy Sweep Engine:** Detects excess cash above the configured operating buffer and routes it into **USYC**. The app uses a dated net-yield reference and live Arc quotes for execution.
+1. **Operating Cash Reserve:** Maintains a user-configured liquid buffer for immediate expenses and gas.
+2. **Policy Sweep Engine:** Detects excess cash above the configured operating buffer and models a USDC → USYC treasury sweep using the current reference rate and live Arc quote path.
 3. **Just-In-Time (JIT) Liquidity Bridge:** When an outgoing operation exceeds liquid cash, Interminal calculates the USYC shortfall and can execute a quoted USYC → USDC route on Arc with a bounded minimum output.
 4. **Cryptographic Proofs & Arc Settlement:** Executed actions can produce a canonical SHA-256 JSON audit certificate whose digest can be anchored into Arc state through the deployed settlement contract.
 
@@ -95,6 +95,22 @@ Interminal deliberately separates browser simulation from confirmed Arc executio
 
 A live action is only marked confirmed after the Arc transaction receipt succeeds. The browser never presents a simulated balance update as a historical blockchain transaction.
 
+## Verification evidence
+
+Interminal is designed so a reviewer can independently verify its important claims without trusting the UI alone.
+
+| Claim | Evidence |
+|---|---|
+| Live Arc Mainnet deployment | Settlement address + deployment transaction in this README and the Arc Explorer |
+| Canonical source matches live bytecode | `npm run verify:arc` compiles `contracts/InterminalSettlement.sol` and fails on any runtime mismatch |
+| Deployment provenance | `verify:arc` checks the deployment receipt, contract address, and recorded block |
+| EIP-712 execution controls | Live source + ABI expose deadline, trader nonce, signer recovery, pause and reentrancy guards |
+| Real settlement | Confirmed `TradeSettled` receipt is decoded before the UI marks the trade successful |
+| Audit proof | Receipt SHA-256 digest is anchored and then queried through `isReceiptAnchored(bytes32)` |
+| Real market data | `npm run verify:market` checks the configured Arc GeckoTerminal OHLCV feeds |
+| Simulation boundary | Simulation transactions have no blockchain hash and are labelled as simulation throughout the UI |
+| Security boundaries | [SECURITY.md](SECURITY.md) documents trust assumptions, risks, and non-goals |
+
 
 | Component | Status on Arc Mainnet | Verification Details |
 |---|---|---|
@@ -102,7 +118,7 @@ A live action is only marked confirmed after the Arc transaction receipt succeed
 | **Deployment Transaction** | **Confirmed Block #23,367,508** | [`0x1d96a8c548268f851a22c23107fbac1a606bbd2b951856d5f9f0f4d3ecbae404`](https://explorer.arc.io/tx/0x1d96a8c548268f851a22c23107fbac1a606bbd2b951856d5f9f0f4d3ecbae404) |
 | **Receipt Anchoring** | **Live & Callable** | `anchorReceipt(bytes32)` anchors trade & reasoning certificates on-chain |
 | **Wallet Connection** | **Live EIP-1193** | Detects Arc Mainnet (`5042`), queries live native USDC and ERC-20 balances |
-| **EIP-712 Permit Verification** | **Active Protocol** | On-chain signature verification with fail-closed replay nonces and deadlines |
+| **EIP-712 TradeTicket Verification** | **Active Protocol** | On-chain signature verification with fail-closed replay nonces and deadlines |
 | **Dual-USDC accounting** | **Active application model** | Separates native 18-decimal Arc gas USDC from 6-decimal operational ERC-20 USDC |
 
 ---
@@ -113,8 +129,8 @@ A live action is only marked confirmed after the Arc transaction receipt succeed
 1. Open the live deployment: [https://useinterminal.vercel.app/](https://useinterminal.vercel.app/)
 2. Click **"Take a Tour"** on the landing page or in the navigation bar.
 3. Walk through the 3 core pillars using the pre-seeded simulation state:
-   - **Step 1:** Execute the 3.225% USYC Yield Sweep of excess liquid cash.
-   - **Step 2:** Simulate a $25,000 liquidity need and inspect the USYC/USDC unwind calculation.
+   - **Step 1:** Simulate the USDC → USYC yield sweep above the operating buffer.
+   - **Step 2:** Open the $25,000 JIT scenario and inspect the calculated USYC shortfall. No transaction is broadcast.
    - **Step 3:** Inspect the cryptographic JSON certificate and SHA-256 integrity proof.
 
 ### Option B: Live Arc Mainnet Execution (With MetaMask / Rabby)
@@ -142,7 +158,7 @@ A live action is only marked confirmed after the Arc transaction receipt succeed
                  (Spend Caps · Slippage · Whitelist)
                                 │
                          Execution Layer
-                   (Zero-Custody EIP-712 Permits)
+                   (Zero-Custody EIP-712 TradeTickets)
                                 │
                            Arc Mainnet
                      (Chain ID: 5042 · USDC)
