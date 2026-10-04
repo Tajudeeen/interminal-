@@ -367,6 +367,8 @@ export interface GenerateReceiptParams {
   mode?: "simulation" | "mainnet";
   status?: "simulated" | "draft" | "signed" | "pending" | "confirmed" | "failed";
   transactionHash?: string;
+  executionReceiptHash?: string;
+  actualReceived?: number;
   quote: TradeQuote;
   pairKey?: string;
   pair?: string;
