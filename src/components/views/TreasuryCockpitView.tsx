@@ -317,7 +317,7 @@ export const TreasuryCockpitView: React.FC = () => {
                 Just-In-Time (JIT) Liquidity Bridge
               </h2>
               <p className="font-mono text-xs text-muted mt-1 leading-relaxed">
-                When an outgoing wire or trade exceeds liquid USDC, calculate the USYC shortfall and execute a fresh USYC/USDC route on Arc with a bounded output floor.
+                When an outgoing wire or trade exceeds liquid USDC, calculate the USYC shortfall and execute a fresh USYC/USDC AMM route on Arc with a bounded output floor.
               </p>
             </div>
             <span
@@ -369,7 +369,7 @@ export const TreasuryCockpitView: React.FC = () => {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">USYC Amount to Unwind:</span>
+              <span className="text-muted">USYC Amount to Rebalance:</span>
               <span className="text-pos font-bold tnum">${jit.usycToRedeem.toLocaleString()}</span>
             </div>
             <div className="flex justify-between pt-1 border-t border-themed/20">
@@ -380,7 +380,7 @@ export const TreasuryCockpitView: React.FC = () => {
 
           <div className="text-[11px] font-mono text-muted flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[15px] text-pos">verified</span>
-            Live execution uses a fresh Arc AMM quote and bounded output. Simulation uses the configured reference price.
+            Live execution uses a fresh Arc AMM quote and bounded output. This is an AMM rebalance, not a direct Hashnote Teller redemption. Simulation uses the configured reference price.
           </div>
 
           {/* JIT Unwind Execute Button */}
@@ -523,7 +523,7 @@ export const TreasuryCockpitView: React.FC = () => {
           {/* Formula 3: JIT Redemption Parity */}
           <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/20 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-themed">3. JIT USYC/USDC Unwind</span>
+              <span className="font-bold text-themed">3. JIT USYC/USDC Rebalance</span>
               <span className="text-[10px] text-cyan font-semibold">BOUNDED OUTPUT</span>
             </div>
             <div className="p-2 rounded bg-themed/5 text-themed text-[11px] font-mono select-all">
