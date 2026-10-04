@@ -155,7 +155,7 @@ export const AgentMandateModal: React.FC = () => {
         <div className="p-3 rounded-card bg-themed-card/40 border border-themed/20 font-mono text-[11px] text-muted space-y-1">
           <div className="text-themed font-semibold">Deterministic Policy Enforcer:</div>
           <div>Agent cannot exceed ${spendUsd} total or trade outside selected pairs.</div>
-          <div>Revocable on-chain at any time via `revokeMandate(bytes32)`.</div>
+          <div>Revocation is enforced on-chain through the deployed mandate revocation function.</div>
         </div>
 
         {/* CTA */}
