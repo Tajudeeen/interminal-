@@ -21,8 +21,11 @@ export const TerminalTradeView: React.FC = () => {
     setSlippage,
     timeframe,
     setTimeframe,
+    chartMode,
     candles,
     indicators,
+    candleSource,
+    marketFeedStatus,
     balances,
     dcaSpendTotal,
     setDcaSpendTotal,
@@ -75,17 +78,18 @@ export const TerminalTradeView: React.FC = () => {
     }
   };
 
-  // Draw chart
+  // Draw only verified/live market data. USYC is NAV-reported, so render it as a line.
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !candles.length) return;
+    if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const w = rect.width;
@@ -95,6 +99,8 @@ export const TerminalTradeView: React.FC = () => {
     const isDark = theme === "dark";
     ctx.fillStyle = isDark ? "#080808" : "#FBFBFB";
     ctx.fillRect(0, 0, w, h);
+
+    if (!candles.length) return;
 
     const padR = 64;
     const padB = 22;
@@ -110,12 +116,13 @@ export const TerminalTradeView: React.FC = () => {
       min = Math.min(min, analysis.support);
       max = Math.max(max, analysis.resistance);
     }
-    const span = max - min || 1;
 
-    const x = (i: number) => padL + (i / (candles.length - 1)) * (w - padL - padR);
-    const y = (price: number) => padT + (1 - (price - min) / span) * (h - padT - padB);
+    const span = max - min || Math.max(Math.abs(max) * 0.001, 1);
+    const x = (i: number) =>
+      padL + (i / Math.max(1, candles.length - 1)) * (w - padL - padR);
+    const y = (price: number) =>
+      padT + (1 - (price - min) / span) * (h - padT - padB);
 
-    // Grid lines
     ctx.strokeStyle = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
     ctx.lineWidth = 1;
     const gridSteps = 4;
@@ -130,10 +137,13 @@ export const TerminalTradeView: React.FC = () => {
       ctx.fillStyle = isDark ? "#666" : "#999";
       ctx.font = "10px monospace";
       ctx.textAlign = "left";
-      ctx.fillText(pLevel < 10 ? pLevel.toFixed(4) : `$${pLevel.toFixed(1)}`, w - padR + 6, yy + 3);
+      ctx.fillText(
+        pLevel < 10 ? pLevel.toFixed(4) : "$" + pLevel.toFixed(1),
+        w - padR + 6,
+        yy + 3,
+      );
     }
 
-    // Indicators: EMA20 & EMA50
     if (indicators?.series) {
       const drawEma = (arr: number[], color: string) => {
         ctx.strokeStyle = color;
@@ -157,7 +167,6 @@ export const TerminalTradeView: React.FC = () => {
       if (indicators.series.e50) drawEma(indicators.series.e50, isDark ? "#C084FC" : "#A855F7");
     }
 
-    // Support / Resistance Lines
     if (showLevels && analysis) {
       const drawLevel = (price: number, color: string, label: string) => {
         const yy = y(price);
@@ -178,14 +187,36 @@ export const TerminalTradeView: React.FC = () => {
       drawLevel(analysis.support, "#10B981", "SUPPORT");
     }
 
-    // Candles
+    const isNavSeries = pairKey === "USYC/USDC" || chartMode === "line";
+
+    if (isNavSeries) {
+      ctx.strokeStyle = "#10B981";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      candles.forEach((c, i) => {
+        const xx = x(i);
+        const yy = y(c.close);
+        if (i === 0) ctx.moveTo(xx, yy);
+        else ctx.lineTo(xx, yy);
+      });
+      ctx.stroke();
+
+      const latest = candles[candles.length - 1];
+      const lx = x(candles.length - 1);
+      const ly = y(latest.close);
+      ctx.fillStyle = "#10B981";
+      ctx.beginPath();
+      ctx.arc(lx, ly, 3, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+
     const candleWidth = Math.max(2, ((w - padL - padR) / candles.length) * 0.7);
     candles.forEach((c, i) => {
       const xx = x(i);
       const isUp = c.close >= c.open;
       const color = isUp ? "#10B981" : "#EF4444";
 
-      // Wick
       ctx.strokeStyle = color;
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -193,16 +224,23 @@ export const TerminalTradeView: React.FC = () => {
       ctx.lineTo(xx, y(c.low));
       ctx.stroke();
 
-      // Body
       const top = y(Math.max(c.open, c.close));
       const bot = y(Math.min(c.open, c.close));
       const height = Math.max(1, bot - top);
       ctx.fillStyle = color;
       ctx.fillRect(xx - candleWidth / 2, top, candleWidth, height);
     });
-  }, [candles, indicators, showLevels, analysis, theme]);
+  }, [candles, indicators, showLevels, analysis, theme, chartMode, pairKey]);
 
-  const tfOptions: Timeframe[] = ["1m", "5m", "15m", "1h", "4h", "1D"];
+  useEffect(() => {
+    if (pairKey === "USYC/USDC" && timeframe !== "1D") {
+      setTimeframe("1D");
+    }
+  }, [pairKey, timeframe, setTimeframe]);
+
+  const tfOptions: Timeframe[] = pairKey === "USYC/USDC"
+    ? ["1D"]
+    : ["1m", "5m", "15m", "1h", "4h", "1D"];
   const quickSizes = [100, 500, 1000, 2500];
 
   return (
@@ -273,6 +311,18 @@ export const TerminalTradeView: React.FC = () => {
           </div>
           <div className="flex-1 w-full relative mt-2">
             <canvas ref={canvasRef} className="w-full h-full block rounded" />
+            {!candles.length && (
+              <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
+                <div className="max-w-sm rounded-card border border-themed/40 bg-themed-card/80 px-4 py-3 font-mono text-[11px] text-muted">
+                  <div className="text-themed font-bold mb-1">No synthetic chart data</div>
+                  <div>{marketFeedStatus.error || "Waiting for live market data..."}</div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="pt-2 text-[10px] font-mono text-muted flex items-center justify-between gap-3">
+            <span>{marketFeedStatus.live ? "LIVE" : "OFFLINE"} · {marketFeedStatus.source}</span>
+            <span>{pairKey === "USYC/USDC" ? "NAV series · daily reports" : "OHLCV source only"}</span>
           </div>
         </div>
 
