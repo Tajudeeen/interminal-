@@ -31,6 +31,7 @@ import {
   readTraderNonce,
   readMandateNonce,
   routerAmountOut,
+  decodeTradeSettledExecution,
   verifyArcLive,
   erc20Allowance,
   sendApproval,
@@ -871,12 +872,46 @@ export const useAppStore = create<AppState>((set, get) => {
         get().addToast("Pending", "Arc accepted the transaction. Waiting for confirmation.", "info");
         const confirmed = await waitForTransactionReceipt(txHash);
 
+        const settled = decodeTradeSettledExecution(
+          confirmed,
+          ARC.settlement,
+          trader,
+          tokenIn,
+          tokenOut,
+        );
+        if (!settled) {
+          throw new Error("Arc transaction confirmed, but the deployed settlement event could not be verified");
+        }
+
+        const settledReceived = formatUnits(
+          "0x" + settled.amountOut.toString(16),
+          outputDecimals,
+        );
+        const settledInput = formatUnits(
+          "0x" + settled.amountIn.toString(16),
+          inputDecimals,
+        );
+
+        const confirmedEffective =
+          side === "buy"
+            ? amount / Math.max(settledReceived, Number.EPSILON)
+            : settledReceived / Math.max(Number(settledInput), Number.EPSILON);
+
+        const confirmedQuote = {
+          ...liveQuote,
+          received: settledReceived,
+          effective: confirmedEffective,
+          rate: confirmedEffective,
+        };
+
         const receipt = generateTradeReceipt({
-          quote: liveQuote,
+          quote: confirmedQuote,
           pairKey,
           trader,
           sig,
           transactionHash: txHash,
+          executionReceiptHash: settled.receiptHash,
+          actualReceived: Number(settledReceived),
           side,
           amount,
           mode: "mainnet",
@@ -919,7 +954,7 @@ export const useAppStore = create<AppState>((set, get) => {
             },
             ...activity,
           ],
-          lastTx: { show: true, hash: txHash, price: liveQuote.effective, label, receipt },
+          lastTx: { show: true, hash: txHash, price: confirmedEffective, label, receipt },
           reviewOpen: false,
           pendingQuote: null,
           executing: false,
