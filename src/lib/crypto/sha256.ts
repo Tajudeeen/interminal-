@@ -15,15 +15,21 @@ const SHA256_K = [
 ];
 
 export function sha256Hex(ascii: string | any): string {
-  let str = typeof ascii !== "string" ? JSON.stringify(ascii || "") : ascii;
+  const input = typeof ascii !== "string" ? JSON.stringify(ascii || "") : ascii;
+  const bytes =
+    typeof TextEncoder !== "undefined"
+      ? Array.from(new TextEncoder().encode(input))
+      : Array.from(unescape(encodeURIComponent(input))).map((c) => c.charCodeAt(0));
+
   function rr(v: number, n: number) { return (v >>> n) | (v << (32 - n)); }
   const h = SHA256_H0.slice(0);
   const words: number[] = [];
-  const bitLen = str.length * 8;
-  str += "\x80";
-  while (str.length % 64 !== 56) str += "\x00";
-  for (let i = 0; i < str.length; i++) {
-    words[i >> 2] |= (str.charCodeAt(i) & 0xff) << ((3 - (i % 4)) * 8);
+  const padded = bytes.slice();
+  const bitLen = padded.length * 8;
+  padded.push(0x80);
+  while (padded.length % 64 !== 56) padded.push(0);
+  for (let i = 0; i < padded.length; i++) {
+    words[i >> 2] |= (padded[i] & 0xff) << ((3 - (i % 4)) * 8);
   }
   words.push((bitLen / 0x100000000) | 0);
   words.push(bitLen | 0);
