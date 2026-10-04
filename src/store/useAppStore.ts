@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { ARC, TOKEN_ALLOW } from "../constants/arc";
+import { EnvironmentMode, NETWORKS } from "../constants/networks";
 import { PAIRS, assertPair } from "../constants/pairs";
 import { Candle, ChartMode, Indicators, MarketAnalysis, Timeframe } from "../types/market";
 import { DcaPlan, OrderType, TradeQuote, TradeSide } from "../types/trade";
@@ -23,6 +24,9 @@ import {
   providerName,
   shortAddr,
   walletRpc,
+  isMobileBrowser,
+  openMobileWallet,
+  switchOrAddNetwork,
 } from "../lib/arc/wallet";
 import {
   loadOnchainPortfolio,
@@ -48,7 +52,9 @@ export interface ToastItem {
 
 export interface AppState {
   theme: "dark" | "light";
-  view: "landing" | "portfolio" | "terminal" | "markets" | "ai" | "ledger" | "proof";
+  view: "landing" | "portfolio" | "terminal" | "markets" | "ai" | "ledger" | "proof" | "testnet";
+  environmentMode: EnvironmentMode;
+  testnetTaskComplete: boolean;
   connected: boolean;
   connecting: boolean;
   address: string | null;
@@ -111,6 +117,9 @@ export interface AppState {
   setTheme: (theme: "dark" | "light") => void;
   toggleTheme: () => void;
   setView: (view: AppState["view"]) => void;
+  setEnvironmentMode: (mode: EnvironmentMode) => void;
+  launchTestnet: () => void;
+  performMainnetFromTestnet: () => void;
   setPair: (pair: string) => void;
   setTimeframe: (tf: Timeframe) => void;
   setChartMode: (mode: ChartMode) => void;
@@ -134,7 +143,9 @@ export interface AppState {
   setShowLevels: (show: boolean) => void;
   addToast: (title: string, body: string, kind?: ToastItem["kind"]) => void;
   removeToast: (id: string) => void;
-  connectWallet: () => Promise<void>;
+  connectWallet: (target?: "testnet" | "mainnet") => Promise<void>;
+  switchToCurrentNetwork: () => Promise<void>;
+  completeTestnetTask: () => void;
   launchDemo: () => void;
   disconnectWallet: () => void;
   syncMarketData: () => Promise<void>;
@@ -153,6 +164,8 @@ export interface AppState {
   setJudgeTourStep: (step: number) => void;
   startJudgeTour: () => void;
 }
+
+const DEMO_ADDRESS = "0x000000000000000000000000000000000000dEee";
 
 function getInitialTheme(): "dark" | "light" {
   if (typeof window !== "undefined") {
@@ -256,6 +269,8 @@ export const useAppStore = create<AppState>((set, get) => {
   return {
     theme: getInitialTheme(),
     view: "landing",
+    environmentMode: "demo",
+    testnetTaskComplete: false,
     connected: false,
     connecting: false,
     address: null,
@@ -350,10 +365,57 @@ export const useAppStore = create<AppState>((set, get) => {
       }
     },
 
+    setEnvironmentMode: (mode) => {
+      set({
+        environmentMode: mode,
+        testnetTaskComplete: mode === "testnet" ? get().testnetTaskComplete : false,
+      });
+    },
+
+    launchTestnet: () => {
+      set({
+        environmentMode: "testnet",
+        testnetTaskComplete: false,
+        connected: false,
+        connecting: false,
+        address: null,
+        chainId: null,
+        wrongNetwork: false,
+        livePortfolio: false,
+        providerLabel: null,
+        walletError: "",
+        view: "testnet",
+      });
+      get().addToast("Arc Testnet Lab", "Test the treasury policy flow on Arc Testnet before touching mainnet.", "info");
+    },
+
+    performMainnetFromTestnet: () => {
+      set({
+        environmentMode: "mainnet",
+        testnetTaskComplete: false,
+        connected: false,
+        address: null,
+        chainId: null,
+        wrongNetwork: false,
+        livePortfolio: false,
+        providerLabel: null,
+        view: "terminal",
+      });
+      get().addToast("Mainnet Execution Ready", "Connect an Arc Mainnet wallet to perform the verified task for real.", "ok");
+    },
+
+    completeTestnetTask: () => {
+      set({ testnetTaskComplete: true });
+      get().addToast("Testnet Task Complete", "The testnet drill is complete. Mainnet execution is now unlocked.", "ok");
+    },
+
     setView: (view) => {
       if (typeof document !== "undefined" && "startViewTransition" in document) {
         (document as any).startViewTransition(() => {
           set({ view, searchOpen: false });
+          requestAnimationFrame(() => {
+            document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
+          });
         });
       } else {
         set({ view, searchOpen: false });
@@ -504,52 +566,72 @@ export const useAppStore = create<AppState>((set, get) => {
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
     },
 
-    connectWallet: async () => {
+    connectWallet: async (target) => {
+      const requested = target || (get().environmentMode === "testnet" ? "testnet" : "mainnet");
       const eth = getInjected();
       if (!eth) {
-        set({ walletError: "No injected EVM wallet found. Install MetaMask or Rabby." });
-        get().addToast("Wallet Missing", "Install MetaMask or Rabby to connect to Arc Mainnet.", "err");
+        if (isMobileBrowser()) {
+          openMobileWallet("metamask");
+          get().addToast("Opening MetaMask", "Continue the connection inside the MetaMask mobile app.", "info");
+          return;
+        }
+        set({ walletError: "No injected EVM wallet found. Install MetaMask, Rabby, or another EIP-1193 wallet." });
+        get().addToast("Wallet Missing", "Install a desktop wallet extension or open Interminal inside a mobile wallet app.", "err");
         return;
       }
       set({ connecting: true, walletError: "" });
       try {
+        const network = NETWORKS[requested];
         const accounts = await walletRpc("eth_requestAccounts");
         if (!accounts?.length) throw new Error("No account authorized");
         const address = normalizeAddress(accounts[0]);
-        const { id } = await readChainId();
-        const wrongNetwork = id !== ARC.chainId;
-        let balances = get().balances;
-        let nativeGasBalance = get().nativeGasBalance;
-        let ticketNonce = 0;
-        if (!wrongNetwork) {
-          balances = await loadOnchainPortfolio(address);
-          try {
-            ticketNonce = await readTraderNonce(address);
-          } catch {}
-          try {
-            const nativeHex = await publicRpc("eth_getBalance", [address, "latest"]);
-            nativeGasBalance = formatUnits(nativeHex, ARC.nativeDecimals);
-          } catch {}
+        const rawChain = await walletRpc("eth_chainId");
+        const id = Number.parseInt(String(rawChain), 16);
+        const wrongNetwork = id !== network.chainId;
+        let nativeGasBalance = 0;
+        try {
+          nativeGasBalance = formatUnits(await walletRpc("eth_getBalance", [address, "latest"]), network.nativeCurrency.decimals);
+        } catch {}
+
+        if (requested === "mainnet" && !wrongNetwork) {
+          const balances = await loadOnchainPortfolio(address);
+          let ticketNonce = 0;
+          try { ticketNonce = await readTraderNonce(address); } catch {}
+          set({
+            connected: true,
+            connecting: false,
+            address,
+            chainId: id,
+            wrongNetwork: false,
+            providerLabel: providerName(eth),
+            livePortfolio: true,
+            balances,
+            nativeGasBalance,
+            ticketNonce,
+            environmentMode: "mainnet",
+            view: "portfolio",
+          });
+        } else {
+          set({
+            connected: true,
+            connecting: false,
+            address,
+            chainId: id,
+            wrongNetwork,
+            providerLabel: providerName(eth) + " · " + network.name,
+            livePortfolio: false,
+            nativeGasBalance,
+            environmentMode: requested,
+            view: requested === "testnet" ? "testnet" : "terminal",
+          });
         }
-        set({
-          connected: true,
-          connecting: false,
-          address,
-          chainId: id,
-          wrongNetwork,
-          providerLabel: providerName(eth),
-          livePortfolio: true,
-          balances,
-          nativeGasBalance,
-          ticketNonce,
-          view: "portfolio",
-        });
+
         get().addToast(
           wrongNetwork ? "Wallet Connected · Wrong Network" : "Wallet Connected",
           wrongNetwork
-            ? "Connected " + shortAddr(address) + " on chain " + id + ". Switch to Arc Mainnet (5042) before executing."
-            : "Authorized " + shortAddr(address) + " on Arc Mainnet.",
-          wrongNetwork ? "warn" : "ok"
+            ? "Connected " + shortAddr(address) + " · switch to " + network.name + " (" + network.chainId + ")."
+            : "Connected " + shortAddr(address) + " on " + network.name + ".",
+          wrongNetwork ? "warn" : "ok",
         );
       } catch (err: any) {
         set({ connecting: false, walletError: err.message || String(err) });
@@ -557,9 +639,29 @@ export const useAppStore = create<AppState>((set, get) => {
       }
     },
 
+    switchToCurrentNetwork: async () => {
+      const mode = get().environmentMode;
+      if (mode === "demo") return;
+      const eth = getInjected();
+      if (!eth) {
+        if (isMobileBrowser()) openMobileWallet("metamask");
+        get().addToast("Wallet Required", "Open Interminal in MetaMask or another mobile wallet app first.", "err");
+        return;
+      }
+      try {
+        await switchOrAddNetwork(eth, mode);
+        const chainId = Number.parseInt(String(await walletRpc("eth_chainId")), 16);
+        set({ chainId, wrongNetwork: false });
+        get().addToast("Network Ready", "Connected to " + NETWORKS[mode].name + " (" + NETWORKS[mode].chainId + ").", "ok");
+      } catch (err: any) {
+        get().addToast("Network Switch Failed", err.message || String(err), "err");
+      }
+    },
     launchDemo: () => {
       const demoPair = "ETH/USDC";
       set({
+        environmentMode: "demo",
+        testnetTaskComplete: false,
         connected: true,
         address: null,
         chainId: 5042,
@@ -777,13 +879,20 @@ export const useAppStore = create<AppState>((set, get) => {
       } = get();
 
       if (!pendingQuote) return;
-      if (!address || !isAddress(address)) {
-        get().addToast("Wallet Required", "Connect an Arc Mainnet wallet to execute a live trade.", "err");
-        return;
-      }
-      if (wrongNetwork) {
-        get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) before executing.", "err");
-        return;
+      if (!livePortfolio) {
+        if (wrongNetwork && get().environmentMode === "mainnet") {
+          get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) before executing.", "err");
+          return;
+        }
+      } else {
+        if (!address || !isAddress(address)) {
+          get().addToast("Wallet Required", "Connect an Arc Mainnet wallet to execute a live trade.", "err");
+          return;
+        }
+        if (wrongNetwork) {
+          get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) before executing.", "err");
+          return;
+        }
       }
       if (Date.now() > pendingQuote.expiresAt) {
         get().addToast("Quote Expired", "Please request a fresh trade quote.", "err");
@@ -804,7 +913,7 @@ export const useAppStore = create<AppState>((set, get) => {
       set({ executing: true });
 
       try {
-        const trader = normalizeAddress(address);
+        const trader = normalizeAddress(address || DEMO_ADDRESS);
 
         if (!livePortfolio) {
           const receipt = generateTradeReceipt({
@@ -1101,12 +1210,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
     createAgentMandate: async ({ spendUsd, slipBps, ttlHours, pairs, agent: requestedAgent }) => {
       const { address, mandates, livePortfolio } = get();
-      if (!address || !isAddress(address)) {
-        get().addToast("Wallet Required", "Connect an Arc wallet to sign a mandate.", "err");
-        return;
-      }
-
-      const trader = normalizeAddress(address);
+      const trader = normalizeAddress(address || DEMO_ADDRESS);
       const agent = requestedAgent ? normalizeAddress(requestedAgent) : trader;
 
       try {
@@ -1194,7 +1298,7 @@ export const useAppStore = create<AppState>((set, get) => {
               expiresAt: Date.now() + 600000,
             },
             pairKey: "USYC/USDC",
-            trader: normalizeAddress(address),
+            trader: normalizeAddress(address || DEMO_ADDRESS),
             side: "buy",
             amountUsd: sweepAmountUsdc,
             mode: "simulation",
