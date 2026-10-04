@@ -39,8 +39,8 @@ export const ImportTokenModal: React.FC = () => {
         </div>
 
         <div className="p-3 rounded-card bg-themed-card/40 border border-themed/20 font-mono text-[11px] text-muted space-y-1">
-          <div>Importing adds the token to local market feeds and enables trading against USDC.</div>
-          <div>Make sure the contract is verified on Arc Explorer.</div>
+          <div>Importing adds the token to local market feeds for inspection.</div>
+          <div>Imported contracts are view-only until independently verified and never overwrite a verified market.</div>
         </div>
 
         <Button
