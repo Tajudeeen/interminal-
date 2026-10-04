@@ -318,7 +318,10 @@ contract InterminalSettlement {
         // Agent mandates are intentionally scoped to USDC-denominated treasury spend.
         require(execution.tokenIn == ARC_USDC_ERC20, "Interminal: agent input must be Arc USDC");
 
-        // Gating Check 1: Pair bitmask and concrete token mapping.
+        // Gating Check 1: Pair index must resolve to one of the four concrete
+        // supported markets before the bitmask is evaluated. This prevents an
+        // oversized/invalid pair index from becoming an ambiguous authorization.
+        require(execution.pairIndex < 4, "Interminal: invalid agent pair index");
         require((mandate.allowedPairsMask & (1 << execution.pairIndex)) != 0, "Interminal: pair not authorized by mandate");
         require(execution.tokenOut == _agentPairTokenOut(execution.pairIndex), "Interminal: token pair does not match mandate");
 
