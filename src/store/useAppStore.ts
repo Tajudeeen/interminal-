@@ -31,7 +31,6 @@ import {
 import {
   loadOnchainPortfolio,
   publicRpc,
-  readChainId,
   readTraderNonce,
   readMandateNonce,
   routerAmountOut,
