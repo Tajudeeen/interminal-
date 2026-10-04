@@ -60,6 +60,10 @@ describe("React TypeScript Modular Engine", () => {
     expect(decoded?.amountOut).toBe(183000000000000000n);
   });
 
+  it("SHA-256 uses UTF-8 bytes for non-ASCII input", () => {
+    expect(sha256Hex("₦")).toBe("0x8c0e184ef8d588e464cfea95ef83eddf266ca3a7350379a1c78b4cf6bd0113fc");
+  });
+
   it("Opportunity cost accurately projects yield loss on idle cash", () => {
     const cost = calculateOpportunityCost(10000, 5.1);
     expect(cost.idleUsdc).toBe(10000);
