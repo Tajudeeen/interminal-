@@ -20,9 +20,7 @@ export const Header: React.FC = () => {
     environmentMode,
     wrongNetwork,
     switchToCurrentNetwork,
-    launchTestnet,
     openMainnetReview,
-    environmentMode,
   } = useAppStore();
 
   return (
