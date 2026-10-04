@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
 import { ARC } from "../../constants/arc";
@@ -7,6 +7,7 @@ import { quoteTrade } from "../../lib/math/quotes";
 import { calculateJitUnwind } from "../../lib/math/treasury";
 import { Timeframe } from "../../types/market";
 import { Button } from "../ui/Button";
+import { MarketChart } from "../market/MarketChart";
 
 export const TerminalTradeView: React.FC = () => {
   const {
@@ -77,7 +78,6 @@ export const TerminalTradeView: React.FC = () => {
     }
   };
 
-  // Draw only verified/live market data. USYC is NAV-reported, so render it as a line.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -308,20 +308,28 @@ export const TerminalTradeView: React.FC = () => {
               <span className="text-purple-400">EMA50</span>
             </div>
           </div>
-          <div className="flex-1 w-full relative mt-2">
-            <canvas ref={canvasRef} className="w-full h-full block rounded" />
-            {!candles.length && (
-              <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
-                <div className="max-w-sm rounded-card border border-themed/40 bg-themed-card/80 px-4 py-3 font-mono text-[11px] text-muted">
-                  <div className="text-themed font-bold mb-1">No synthetic chart data</div>
-                  <div>{marketFeedStatus.error || "Waiting for live market data..."}</div>
-                </div>
-              </div>
-            )}
+          <div className="flex-1 w-full relative mt-2 min-h-[320px]">
+            <MarketChart
+              candles={candles}
+              indicators={indicators}
+              chartMode={chartMode}
+              theme={theme}
+              pair={pairKey}
+              showLevels={showLevels}
+              analysis={analysis}
+              marketFeedStatus={marketFeedStatus}
+            />
           </div>
           <div className="pt-2 text-[10px] font-mono text-muted flex items-center justify-between gap-3">
             <span>{marketFeedStatus.live ? "LIVE" : "OFFLINE"} · {marketFeedStatus.source}</span>
-            <span>{pairKey === "USYC/USDC" ? "NAV series · daily reports" : "OHLCV source only"}</span>
+            <a
+              href="https://www.geckoterminal.com/arc"
+              target="_blank"
+              rel="noreferrer"
+              className="text-cyan hover:underline"
+            >
+              Market data by GeckoTerminal
+            </a>
           </div>
         </div>
 
