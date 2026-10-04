@@ -129,6 +129,11 @@ Interminal is designed so a reviewer can independently verify its important clai
 | Real market data | `npm run verify:market` checks the configured Arc GeckoTerminal OHLCV feeds |
 | Simulation boundary | Simulation transactions have no blockchain hash and are labelled as simulation throughout the UI |
 | Security boundaries | [SECURITY.md](SECURITY.md) documents trust assumptions, risks, and non-goals |
+| Agent security | Live agent-mandate signing is disabled against deployed v1. V2 is hardened but not deployed |
+
+### Security hardening note
+
+A security review identified a concrete authorization-boundary issue in the deployed v1 agent executor: the signed pair bitmask was not sufficient to bind the execution token addresses to the selected pair. Interminal now blocks new live agent-mandate signing against that deployment. The hardened successor in `contracts/InterminalSettlementV2.sol` binds the input to Arc USDC, maps each pair index to a concrete output token, and enforces the slippage ceiling against a fresh router quote. V2 requires a fresh deployment and independent verification before it can be enabled on Mainnet.
 
 
 | Component | Status on Arc Mainnet | Verification Details |
