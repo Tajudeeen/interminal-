@@ -427,6 +427,23 @@ export const useAppStore = create<AppState>((set, get) => {
 
     setPair: (pair) => {
       try {
+        if (get().environmentMode === "testnet") {
+          assertPair(pair);
+          set({
+            pair,
+            timeframe: pair === "USYC/USDC" ? "1D" : get().timeframe,
+            candles: [],
+            indicators: null,
+            candleSource: "unavailable",
+            marketFeedStatus: {
+              source: "Testnet Lab · mainnet market feed disabled",
+              live: false,
+              lastUpdate: Date.now(),
+              error: null,
+            },
+          });
+          return;
+        }
         assertPair(pair);
         const tf = pair === "USYC/USDC" ? "1D" : get().timeframe;
         const requestId = get().marketRequestId + 1;
@@ -485,6 +502,22 @@ export const useAppStore = create<AppState>((set, get) => {
 
     setTimeframe: (tf) => {
       const pair = get().pair;
+      if (get().environmentMode === "testnet") {
+        const nextTf = pair === "USYC/USDC" ? "1D" : tf;
+        set({
+          timeframe: nextTf,
+          candles: [],
+          indicators: null,
+          candleSource: "unavailable",
+          marketFeedStatus: {
+            source: "Testnet Lab · mainnet market feed disabled",
+            live: false,
+            lastUpdate: Date.now(),
+            error: null,
+          },
+        });
+        return;
+      }
       const nextTf = pair === "USYC/USDC" ? "1D" : tf;
       const requestId = get().marketRequestId + 1;
 
@@ -706,6 +739,20 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     syncMarketData: async () => {
+      if (get().environmentMode === "testnet") {
+        set({
+          candles: [],
+          indicators: null,
+          candleSource: "unavailable",
+          marketFeedStatus: {
+            source: "Testnet Lab · mainnet market feed disabled",
+            live: false,
+            lastUpdate: Date.now(),
+            error: null,
+          },
+        });
+        return;
+      }
       const activePair = get().pair;
       const activeTf = activePair === "USYC/USDC" ? "1D" : get().timeframe;
       const requestId = get().marketRequestId + 1;
