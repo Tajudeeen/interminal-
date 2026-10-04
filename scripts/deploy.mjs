@@ -16,7 +16,10 @@ const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
 
 const ARC_RPC = process.env.ARC_RPC || "https://rpc.mainnet.arc.io";
 const ARC_CHAIN_ID = 5042;
-const privateKey = process.env.PRIVATE_KEY || process.argv[2];
+// Never accept private keys as CLI arguments. Shell history, process listings, CI logs,
+// and pasted commands can expose argv values. Deployment credentials must come from
+// the process environment or the deployment platform's secret manager.
+const privateKey = process.env.PRIVATE_KEY;
 
 async function main() {
   console.log("=== Interminal Settlement — Arc Mainnet Deployer ===");
