@@ -181,9 +181,6 @@ function getInitialAuditReceipts(): TradeReceipt[] {
       blockNumber: 4892010,
       txHash: "0x8fa4093910c2847291a0b3e58193821039bc2710398402941029481029381023",
     });
-    r1.onchainAnchored = true;
-    r1.anchorTx = "0x8fa4093910c2847291a0b3e58193821039bc2710398402941029481029381023";
-
     const r2 = generateTradeReceipt({
       quote: {
         received: 27112.5,
@@ -203,9 +200,6 @@ function getInitialAuditReceipts(): TradeReceipt[] {
       blockNumber: 4892065,
       txHash: "0x12a9381039821039481029381023840291a0b3e58193821039bc271039840294",
     });
-    r2.onchainAnchored = true;
-    r2.anchorTx = "0x12a9381039821039481029381023840291a0b3e58193821039bc271039840294";
-
     const r3 = generateTradeReceipt({
       quote: {
         received: 0.0778,
@@ -238,20 +232,20 @@ function getInitialActivity() {
     {
       ts: now - 3600000 * 2,
       type: "sweep",
-      label: "Yield Sweep: $12,500 USDC -> USYC T-Bills",
-      detail: "Continuous compounding active: +$618.75/yr @ 4.95% APY",
+      label: "Simulated Yield Sweep: $12,500 USDC -> USYC",
+      detail: "Simulation only · reference USYC yield is used for the demo model.",
     },
     {
       ts: now - 3600000 * 7,
       type: "trade",
-      label: "FX Corridor Rebalance: EURC/USDC",
-      detail: "Settled on Arc (Chain 5042) via zero-custody EIP-712 permit",
+      label: "Simulated FX Rebalance: EURC/USDC",
+      detail: "Simulation only · no Arc transaction is associated with this activity.",
     },
     {
       ts: now - 3600000 * 18,
       type: "mandate",
-      label: "Autonomous DCA Execution: 1 ETH @ $2,481.42",
-      detail: "Enforced within $5,000 mandate cap and 30 bps slippage bound",
+      label: "Simulated DCA Execution: 1 ETH @ $2,481.42",
+      detail: "Simulation only · DCA scheduling runs in the browser.",
     },
   ];
 }
