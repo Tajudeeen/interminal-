@@ -190,7 +190,7 @@ async function fetchArcPoolCandles(
   // surprises. Non-browser environments can still call GeckoTerminal directly.
   const json =
     typeof window !== "undefined"
-      ? await fetchJson("/api/market-data" + query)
+      ? await fetchJson("/api/market-data" + query, 9000)
       : await fetchJson(
           GECKO_BASE +
             "/networks/arc/pools/" +
@@ -215,6 +215,12 @@ async function fetchArcPoolCandles(
           c.volume,
         ])
       : json?.data?.attributes?.ohlcv_list;
+  if (typeof window !== "undefined" && json?.timeframe && json.timeframe !== timeframe) {
+    throw new Error(
+      "Market data timeframe mismatch: requested " + timeframe + ", received " + String(json.timeframe),
+    );
+  }
+
   if (!Array.isArray(raw)) throw new Error("GeckoTerminal returned no OHLCV data");
 
   // GeckoTerminal OHLCV tuples are [timestamp, open, high, low, close, volume].
