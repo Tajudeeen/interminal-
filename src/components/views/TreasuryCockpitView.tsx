@@ -18,6 +18,8 @@ export const TreasuryCockpitView: React.FC = () => {
     stressTestAmount,
     setStressTestAmount,
     livePortfolio,
+    wrongNetwork,
+    chainId,
     address,
     connectWallet,
     addToast,
@@ -128,53 +130,29 @@ export const TreasuryCockpitView: React.FC = () => {
       </div>
 
       {/* Network & Execution Status Banner */}
-      {livePortfolio ? (
+      {livePortfolio && !wrongNetwork ? (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-card bg-pos/10 border border-pos/40 text-xs gap-3">
           <div className="flex items-center gap-2.5">
             <span className="w-2.5 h-2.5 rounded-full bg-pos animate-pulse shrink-0" />
             <div>
-              <span className="font-display font-black text-pos uppercase tracking-wider">
-                LIVE ARC MAINNET CONNECTED
-              </span>
-              <span className="font-mono text-muted text-[11px] ml-2">
-                Chain ID: 5042 · Wallet: {address} · Real Balances Synced via Arc Public RPC
-              </span>
+              <span className="font-display font-black text-pos uppercase tracking-wider">LIVE ARC MAINNET CONNECTED</span>
+              <span className="font-mono text-muted text-[11px] ml-2">Chain ID: 5042 · Wallet: {address} · Real balances synced via Arc public RPC</span>
             </div>
           </div>
-          <a
-            href={`${ARC.explorer}/address/${address}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-mono text-[11px] text-pos hover:underline flex items-center gap-1 shrink-0"
-          >
+          <a href={ARC.explorer + "/address/" + address} target="_blank" rel="noopener noreferrer" className="font-mono text-[11px] text-pos hover:underline flex items-center gap-1 shrink-0">
             <span>View on Explorer</span>
             <span className="material-symbols-outlined text-[13px]">open_in_new</span>
           </a>
         </div>
-      ) : (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-card bg-amber-500/10 border border-amber-500/40 text-xs gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
-            <div>
-              <span className="font-display font-black text-amber-500 uppercase tracking-wider">
-                DEMO / SIMULATION MODE
-              </span>
-              <span className="font-mono text-muted text-[11px] ml-2">
-                Displaying an illustrative portfolio. Live wallet mode reads balances from Arc.
-              </span>
-            </div>
+      ) : livePortfolio && wrongNetwork ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-card bg-neg/10 border border-neg/40 text-xs gap-3">
+          <div>
+            <div className="font-display font-black text-neg uppercase tracking-wider">WALLET CONNECTED · WRONG NETWORK</div>
+            <div className="font-mono text-muted text-[11px] mt-1">Connected to chain {chainId}. Switch to Arc Mainnet (5042) before executing.</div>
           </div>
-          <Button
-            size="xs"
-            variant="primary"
-            onClick={() => connectWallet()}
-            leftIcon={<span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>}
-          >
-            Connect Live Arc Wallet
-          </Button>
+          <Button size="xs" variant="danger" onClick={() => connectWallet()}>Recheck Wallet</Button>
         </div>
-      )}
-
+      ) : (
       {/* Primary KPI Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* NAV */}
