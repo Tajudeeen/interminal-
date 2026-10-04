@@ -4,6 +4,11 @@
 .vscode/
 node_modules/
 dist/
+coverage/
+.vite/
+.vercel/
+*.tsbuildinfo
+contractArtifact.js
 
 .env
 .env.*
