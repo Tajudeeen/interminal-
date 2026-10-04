@@ -193,25 +193,24 @@ export const Sidebar: React.FC = () => {
               <span className="material-symbols-outlined text-[16px]">logout</span>
             </button>
           </div>
+        ) : environmentMode === "demo" ? (
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={launchTestnet}
+            leftIcon={<span className="material-symbols-outlined text-[14px]">science</span>}
+          >
+            Testnet
+          </Button>
         ) : (
-          <div className="grid grid-cols-2 gap-1.5">
-            <Button
-              size="sm"
-              variant="primary"
-              onClick={() => connectWallet()}
-              leftIcon={<span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>}
-            >
-              Connect
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={launchDemo}
-              leftIcon={<span className="material-symbols-outlined text-[14px]">play_circle</span>}
-            >
-              Demo
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => connectWallet(environmentMode === "testnet" ? "testnet" : "mainnet")}
+            leftIcon={<span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>}
+          >
+            Connect
+          </Button>
         )}
 
         {/* Verified Arc Contract Explorer Link */}
