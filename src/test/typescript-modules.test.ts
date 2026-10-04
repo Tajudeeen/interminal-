@@ -34,11 +34,12 @@ describe("React TypeScript Modular Engine", () => {
     expect(Math.abs(cost.dailyYieldUsd - 1.397)).toBeLessThan(0.01);
   });
 
-  it("JIT USYC liquidity unwind covers shortfalls correctly", () => {
+  it("JIT USYC liquidity unwind converts USD shortfall using USYC NAV", () => {
     const noUnwind = calculateJitUnwind({
       tradeAmountUsd: 100,
       liquidUsdc: 250,
       usycBalance: 1000,
+      usycPriceUsd: 1.135836,
       slippageBps: 20,
     });
     expect(noUnwind.needed).toBe(false);
@@ -49,12 +50,26 @@ describe("React TypeScript Modular Engine", () => {
       tradeAmountUsd: 500,
       liquidUsdc: 150,
       usycBalance: 1000,
+      usycPriceUsd: 1.135836,
       slippageBps: 0,
     });
     expect(withUnwind.needed).toBe(true);
     expect(withUnwind.canCover).toBe(true);
     expect(withUnwind.shortfall).toBe(350);
-    expect(withUnwind.usycToRedeem).toBe(350);
+    expect(withUnwind.usycToRedeem).toBeCloseTo(350 / 1.135836, 6);
+    expect(withUnwind.remainingUsyc).toBeCloseTo(1000 - 350 / 1.135836, 6);
+  });
+
+  it("JIT coverage fails closed when USYC NAV is insufficient", () => {
+    const result = calculateJitUnwind({
+      tradeAmountUsd: 1500,
+      liquidUsdc: 100,
+      usycBalance: 1000,
+      usycPriceUsd: 1.135836,
+      slippageBps: 50,
+    });
+    expect(result.needed).toBe(true);
+    expect(result.canCover).toBe(false);
   });
 
   it("Yield sweep triggers above operating cash buffer", () => {
