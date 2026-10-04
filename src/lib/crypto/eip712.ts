@@ -435,6 +435,8 @@ export function generateTradeReceipt({
     mandateId: mandateId || "NONE (Manual EIP-712 Signature)",
     signature: effectiveSig,
     transactionHash: transactionHash || null,
+    executionReceiptHash: executionReceiptHash || null,
+    actualReceived: actualReceived ?? null,
   };
 
   const canonicalPayload = { ...receipt };
