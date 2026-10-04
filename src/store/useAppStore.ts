@@ -8,9 +8,11 @@ import { TradeReceipt } from "../types/receipt";
 import { sha256Hex } from "../lib/crypto/sha256";
 import {
   buildTradeTicket,
+  buildAgentMandateTicket,
   createAgentMandateDescriptor,
   failClosedLocalProofs,
   generateTradeReceipt,
+  serializeEip712,
 } from "../lib/crypto/eip712";
 import { calculateJitUnwind } from "../lib/math/treasury";
 import { computeIndicators, generateCandles, analyzeMarket, getCandles } from "../lib/math/indicators";
@@ -915,30 +917,52 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     refuelGasTank: async (amountUsdc: number) => {
-      const { balances } = get();
-      if ((balances.USDC || 0) < amountUsdc) {
-        get().addToast("Insufficient Balance", "Not enough liquid USDC to refuel gas.", "err");
+      const { balances, livePortfolio } = get();
+      if (livePortfolio) {
+        get().addToast(
+          "Live Gas Tank Disabled",
+          "Arc uses native USDC directly for gas. Interminal reads the wallet's native USDC balance instead of simulating a conversion.",
+          "warn",
+        );
+        return;
+      }
+      if (!Number.isFinite(amountUsdc) || amountUsdc <= 0 || (balances.USDC || 0) < amountUsdc) {
+        get().addToast("Invalid Gas Refill", "Enter a valid amount within the simulated USDC balance.", "err");
         return;
       }
       set({ gasRefueling: true });
-      await new Promise((r) => setTimeout(r, 1200));
-      const addedGas = amountUsdc * 0.005; // $10 USDC = 0.05 Arc Gas
+      await new Promise((r) => setTimeout(r, 500));
       set((s) => ({
         gasRefueling: false,
         gasTankModalOpen: false,
-        nativeGasBalance: s.nativeGasBalance + addedGas,
+        nativeGasBalance: s.nativeGasBalance + amountUsdc,
         balances: {
           ...s.balances,
           USDC: Math.max(0, (s.balances.USDC || 0) - amountUsdc),
         },
+        activity: [
+          {
+            ts: Date.now(),
+            type: "gas",
+            label: "Simulated Gas Tank Refill: $" + amountUsdc.toFixed(2) + " USDC",
+            detail: "Simulation only · no Arc transaction was broadcast.",
+          },
+          ...s.activity,
+        ],
       }));
-      get().addToast("Gas Tank Refueled", `Converted $${amountUsdc} USDC to +${addedGas.toFixed(3)} Arc Gas.`, "ok");
+      get().addToast("Simulation Gas Refilled", "Native gas balance is simulated for the demo only.", "info");
     },
 
-    createAgentMandate: async ({ spendUsd, slipBps, ttlHours, pairs }) => {
-      const { address, mandates } = get();
-      const trader = address || "0x89205A3A3b2A69De6Dbf7f01ED13B2108B2c43e7";
-      const agent = ARC.settlement;
+    createAgentMandate: async ({ spendUsd, slipBps, ttlHours, pairs, agent: requestedAgent }) => {
+      const { address, mandates, livePortfolio } = get();
+      if (!address || !isAddress(address)) {
+        get().addToast("Wallet Required", "Connect an Arc wallet to sign a mandate.", "err");
+        return;
+      }
+
+      const trader = normalizeAddress(address);
+      const agent = requestedAgent ? normalizeAddress(requestedAgent) : trader;
+
       try {
         const mandate = createAgentMandateDescriptor({
           trader,
@@ -947,12 +971,29 @@ export const useAppStore = create<AppState>((set, get) => {
           maxSlippageBps: slipBps,
           allowedPairs: pairs,
           ttlSeconds: ttlHours * 3600,
+          nonce: livePortfolio ? await readTraderNonce(trader) : 0,
         });
+
+        let signedMandate = mandate;
+        if (livePortfolio) {
+          const ticket = buildAgentMandateTicket(mandate);
+          const payload = serializeEip712(ticket);
+          const signature = await walletRpc("eth_signTypedData_v4", [trader, payload]);
+          signedMandate = { ...mandate, signature };
+        }
+
         set({
-          mandates: [mandate, ...mandates],
+          mandates: [signedMandate, ...mandates],
           mandateModalOpen: false,
         });
-        get().addToast("Agent Mandate Active", `Autonomous quota: $${spendUsd} across ${pairs.join(", ")}.`, "ok");
+
+        get().addToast(
+          livePortfolio ? "Mandate Signed" : "Simulation Mandate Created",
+          livePortfolio
+            ? "EIP-712 mandate signed for agent " + shortAddr(agent) + ". No background executor is running in this browser."
+            : "Simulation only · no Arc transaction was broadcast.",
+          livePortfolio ? "ok" : "info",
+        );
       } catch (e: any) {
         get().addToast("Mandate Error", e.message || String(e), "err");
       }
