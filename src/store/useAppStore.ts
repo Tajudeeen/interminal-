@@ -17,6 +17,7 @@ import {
 import { calculateJitUnwind } from "../lib/math/treasury";
 import { CandleSource, computeIndicators, analyzeMarket, getCandles } from "../lib/math/indicators";
 import { formatUnits, parseUnits, quoteTrade } from "../lib/math/quotes";
+import { deriveLiveControlSizing } from "../lib/math/liveSizing";
 import {
   getInjected,
   isAddress,
@@ -713,6 +714,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
         if (requested === "mainnet" && !wrongNetwork) {
           const balances = await loadOnchainPortfolio(address);
+          const liveSizing = deriveLiveControlSizing(balances);
           let ticketNonce = 0;
           try { ticketNonce = await readTraderNonce(address); } catch {}
           set({
@@ -726,6 +728,12 @@ export const useAppStore = create<AppState>((set, get) => {
             balances,
             nativeGasBalance,
             ticketNonce,
+            targetBufferUsd: liveSizing.targetBufferUsd || get().targetBufferUsd,
+            stressTestAmount: liveSizing.stressTestAmount || get().stressTestAmount,
+            amount: liveSizing.tradeDefaultUsd || get().amount,
+            dcaSpendTotal: liveSizing.dcaSpendTotal || get().dcaSpendTotal,
+            dcaSliceSize: liveSizing.dcaSliceSize || get().dcaSliceSize,
+            mandateSpend: liveSizing.mandateSpendUsd || get().mandateSpend,
             environmentMode: "mainnet",
             view: "portfolio",
           });
@@ -1251,6 +1259,7 @@ export const useAppStore = create<AppState>((set, get) => {
         }
 
         const freshBalances = await loadOnchainPortfolio(trader);
+        const liveSizing = deriveLiveControlSizing(freshBalances);
         let nativeGasBalance = get().nativeGasBalance;
         try {
           const nativeHex = await publicRpc("eth_getBalance", [trader, "latest"]);
@@ -1266,6 +1275,10 @@ export const useAppStore = create<AppState>((set, get) => {
           balances: freshBalances,
           nativeGasBalance,
           ticketNonce: onchainNonce + 1,
+          // Keep explicit user edits, but nudge defaults only when their values
+          // were still using the old demo defaults at the time of execution.
+          targetBufferUsd: get().targetBufferUsd === 5000 ? (liveSizing.targetBufferUsd || get().targetBufferUsd) : get().targetBufferUsd,
+          stressTestAmount: get().stressTestAmount === 25000 ? (liveSizing.stressTestAmount || get().stressTestAmount) : get().stressTestAmount,
           auditReceipts: [receipt, ...auditReceipts].slice(0, 50),
           activity: [
             {
