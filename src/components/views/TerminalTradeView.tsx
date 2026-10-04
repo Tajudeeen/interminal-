@@ -68,12 +68,16 @@ export const TerminalTradeView: React.FC = () => {
   // Calculate percentage sizing
   const handlePercentageSize = (pct: number) => {
     if (isBuy) {
-      const maxUsdc = userUsdcBal;
-      const targetAmt = Math.max(10, Math.floor((maxUsdc * pct) / 100));
+      const maxUsdc = Math.max(0, userUsdcBal);
+      const targetAmt = livePortfolio
+        ? Math.floor((maxUsdc * pct) / 100)
+        : Math.max(10, Math.floor((maxUsdc * pct) / 100));
       setAmount(targetAmt);
     } else {
-      const maxBaseUsd = userBaseBal * p.price;
-      const targetAmt = Math.max(10, Math.floor((maxBaseUsd * pct) / 100));
+      const maxBaseUsd = Math.max(0, userBaseBal * p.price);
+      const targetAmt = livePortfolio
+        ? Math.floor((maxBaseUsd * pct) / 100)
+        : Math.max(10, Math.floor((maxBaseUsd * pct) / 100));
       setAmount(targetAmt);
     }
   };
