@@ -24,6 +24,10 @@ Interminal does not generate production chart candles.
 
 GeckoTerminal attribution: https://www.geckoterminal.com/arc
 
+### Chart rendering
+
+The terminal chart is rendered with **TradingView Lightweight Charts 5.2.1**. The chart library does not provide market data itself; Interminal feeds it verified OHLCV returned by GeckoTerminal. A same-origin `/api/market-data` Vercel function proxies the GeckoTerminal request so the browser is not calling the public data endpoint directly. Lightweight Charts' built-in attribution logo remains enabled.
+
 ### Arc chart pools
 
 | Market | GeckoTerminal pool | Venue |
