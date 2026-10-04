@@ -27,6 +27,16 @@ async function main() {
   const settlementCode = await provider.getCode(SETTLEMENT);
   ok("settlement contract bytecode exists", settlementCode !== "0x");
 
+  const artifactUrl = new URL("../artifacts/InterminalSettlement.json", import.meta.url);
+  const artifact = JSON.parse(await (await fetch(artifactUrl)).text());
+  const deployedArtifact = String(artifact.deployedBytecode || "");
+  ok("committed artifact is for InterminalSettlement", artifact.contractName === "InterminalSettlement");
+  ok(
+    "deployed Arc bytecode matches committed artifact",
+    deployedArtifact.startsWith("0x") &&
+      settlementCode.toLowerCase() === deployedArtifact.toLowerCase()
+  );
+
   const routerCode = await provider.getCode(ROUTER);
   ok("Arc router target resolves", routerCode !== "0x");
 
