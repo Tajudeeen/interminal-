@@ -1,5 +1,7 @@
 export interface TradeReceipt {
   receiptVersion: string;
+  mode: "simulation" | "mainnet";
+  status: "simulated" | "draft" | "signed" | "pending" | "confirmed" | "failed";
   network: string;
   chainId: number;
   rpc: string;
@@ -25,6 +27,7 @@ export interface TradeReceipt {
   gasUsd: number | string;
   mandateId: string;
   signature: string;
+  transactionHash?: string | null;
   integrityDigest: string;
   onchainAnchored?: boolean;
   anchorTx?: string;
