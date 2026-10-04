@@ -111,7 +111,7 @@ const BINANCE_INTERVAL_MAP: Record<Timeframe, string> = {
   "1D": "1d",
 };
 
-const GECKO_RESOLUTION: Record<Timeframe, { bucket: string; aggregate: number }> = {
+export const GECKO_RESOLUTION: Record<Timeframe, { bucket: string; aggregate: number }> = {
   "1m": { bucket: "minute", aggregate: 1 },
   "5m": { bucket: "minute", aggregate: 5 },
   "15m": { bucket: "minute", aggregate: 15 },
