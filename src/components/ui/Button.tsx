@@ -14,19 +14,19 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-lime-500 text-black font-bold hover:bg-lime-400 shadow-sm shadow-lime-500/20 hover:shadow-lime-500/40 border border-lime-500/50",
+    "btn-primary",
   secondary:
     "bg-card hover:bg-card-hover text-themed border border-border hover:border-lime-500/30 shadow-sm",
   pos:
-    "bg-pos text-black font-bold hover:bg-pos/90 shadow-sm shadow-pos/25 hover:shadow-pos/40 border border-pos/50",
+    "btn-positive",
   danger:
-    "bg-neg text-white font-bold hover:bg-neg/90 shadow-sm shadow-neg/25 hover:shadow-neg/40 border border-neg/50",
+    "btn-danger",
   outline:
     "bg-transparent hover:bg-lime-500/10 text-themed hover:text-lime-500 border border-border hover:border-lime-500/50",
   ghost:
     "bg-transparent hover:bg-card-hover text-muted hover:text-themed border border-transparent",
   lime:
-    "bg-lime-500 text-black font-bold hover:bg-lime-400 shadow-sm shadow-lime-500/20 hover:shadow-lime-500/40 border border-lime-500/50",
+    "btn-primary",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -62,7 +62,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={isDisabled}
         className={`
           inline-flex items-center justify-center font-mono select-none
-          transition-all duration-150 ease-out
+          transition-all duration-220 ease-out
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-500/60 focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--bg)]
           ${variantStyles[variant]}
           ${sizeStyles[size]}
