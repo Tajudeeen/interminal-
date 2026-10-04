@@ -158,7 +158,9 @@ export async function switchOrAddNetwork(
     });
   } catch (error: any) {
     const code = error?.code;
-    if (code !== 4902 && code !== -32603 && code !== "4902") throw error;
+    // Only 4902 means the wallet explicitly reports an unknown chain. Do not
+    // treat generic RPC failures as permission to add a network configuration.
+    if (code !== 4902 && code !== "4902") throw error;
     await provider.request({
       method: "wallet_addEthereumChain",
       params: [{
