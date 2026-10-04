@@ -731,6 +731,111 @@ export const useAppStore = create<AppState>((set, get) => {
       set({ connecting: true, walletError: "" });
       try {
         const network = NETWORKS[requested];
+
+        walletEventCleanup?.();
+        walletEventCleanup = subscribeWalletEvents(eth, {
+          accountsChanged: async (accounts) => {
+            if (!accounts?.length) {
+              walletEventCleanup?.();
+              walletEventCleanup = null;
+              set({
+                connected: false,
+                address: null,
+                chainId: null,
+                wrongNetwork: false,
+                livePortfolio: false,
+                balances: {},
+                nativeGasBalance: 0,
+                view: "landing",
+              });
+              get().addToast("Wallet Disconnected", "The wallet account was disconnected from Interminal.", "warn");
+              return;
+            }
+
+            const nextAddress = normalizeAddress(accounts[0]);
+            const currentMode = get().environmentMode;
+            const rawNextChain = await walletRpc("eth_chainId");
+            const nextChainId = Number.parseInt(String(rawNextChain), 16);
+            const nextNetwork = currentMode === "testnet" ? NETWORKS.testnet : NETWORKS.mainnet;
+            const nextWrongNetwork = nextChainId !== nextNetwork.chainId;
+
+            if (currentMode === "mainnet" && !nextWrongNetwork) {
+              const balances = await loadOnchainPortfolio(nextAddress);
+              await refreshLivePairValuation();
+              const liveSizing = deriveLiveControlSizing(balances);
+              let ticketNonce = 0;
+              try { ticketNonce = await readTraderNonce(nextAddress); } catch {}
+              let nextNativeGasBalance = 0;
+              try {
+                nextNativeGasBalance = formatUnits(await walletRpc("eth_getBalance", [nextAddress, "latest"]), ARC.nativeDecimals);
+              } catch {}
+              set({
+                connected: true,
+                address: nextAddress,
+                chainId: nextChainId,
+                wrongNetwork: false,
+                livePortfolio: true,
+                providerLabel: providerName(eth),
+                balances,
+                nativeGasBalance: nextNativeGasBalance,
+                ticketNonce,
+                targetBufferUsd: liveSizing.targetBufferUsd,
+                stressTestAmount: liveSizing.stressTestAmount,
+                amount: liveSizing.tradeDefaultUsd,
+                dcaSpendTotal: liveSizing.dcaSpendTotal,
+                dcaSliceSize: liveSizing.dcaSliceSize,
+                mandateSpend: liveSizing.mandateSpendUsd,
+              });
+              get().addToast("Wallet Refreshed", "Account changed. Mainnet holdings, prices, and controls were reloaded.", "ok");
+            } else {
+              set({
+                connected: true,
+                address: nextAddress,
+                chainId: nextChainId,
+                wrongNetwork: nextWrongNetwork,
+                livePortfolio: false,
+                providerLabel: providerName(eth) + " · " + nextNetwork.name,
+              });
+            }
+          },
+          chainChanged: async (rawChainId) => {
+            const nextChainId = Number.parseInt(String(rawChainId), 16);
+            const currentMode = get().environmentMode;
+            const nextNetwork = currentMode === "testnet" ? NETWORKS.testnet : NETWORKS.mainnet;
+            const wrongNetwork = nextChainId !== nextNetwork.chainId;
+
+            if (currentMode === "mainnet" && !wrongNetwork) {
+              const nextAddress = get().address;
+              if (!nextAddress || !isAddress(nextAddress)) return;
+              const balances = await loadOnchainPortfolio(nextAddress);
+              await refreshLivePairValuation();
+              const liveSizing = deriveLiveControlSizing(balances);
+              set({
+                connected: true,
+                chainId: nextChainId,
+                wrongNetwork: false,
+                livePortfolio: true,
+                balances,
+                targetBufferUsd: liveSizing.targetBufferUsd,
+                stressTestAmount: liveSizing.stressTestAmount,
+                amount: liveSizing.tradeDefaultUsd,
+                dcaSpendTotal: liveSizing.dcaSpendTotal,
+                dcaSliceSize: liveSizing.dcaSliceSize,
+                mandateSpend: liveSizing.mandateSpendUsd,
+              });
+              get().addToast("Arc Mainnet Ready", "Wallet moved back to Arc Mainnet. Live treasury state was refreshed.", "ok");
+            } else {
+              set({ chainId: nextChainId, wrongNetwork, livePortfolio: false });
+              get().addToast(
+                wrongNetwork ? "Wrong Network" : "Network Ready",
+                wrongNetwork
+                  ? "Wallet moved to chain " + nextChainId + ". Switch back to " + nextNetwork.name + " before live execution."
+                  : "Wallet network is now " + nextNetwork.name + ".",
+                wrongNetwork ? "warn" : "ok",
+              );
+            }
+          },
+        });
         const accounts = await walletRpc("eth_requestAccounts");
         if (!accounts?.length) throw new Error("No account authorized");
         const address = normalizeAddress(accounts[0]);
@@ -876,6 +981,8 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     disconnectWallet: () => {
+      walletEventCleanup?.();
+      walletEventCleanup = null;
       set({
         connected: false,
         address: null,
