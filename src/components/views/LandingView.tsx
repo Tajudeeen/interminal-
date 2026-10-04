@@ -130,25 +130,39 @@ export const LandingView: React.FC = () => {
         </div>
 
         {/* Primary paths */}
-        <div className="mt-4 w-full max-w-md grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="mt-4 w-full max-w-md space-y-2.5">
           <Button
             size="lg"
             variant="primary"
             fullWidth
-            onClick={launchDemo}
-            leftIcon={<span className="material-symbols-outlined text-[18px]">play_circle</span>}
+            onClick={openMainnetReview}
+            leftIcon={<span className="material-symbols-outlined text-[18px]">bolt</span>}
           >
-            Launch Treasury Demo
+            Review Live Mainnet
           </Button>
-          <Button
-            size="lg"
-            variant="secondary"
-            fullWidth
-            onClick={launchTestnet}
-            leftIcon={<span className="material-symbols-outlined text-[18px]">science</span>}
-          >
-            Open Arc Testnet Lab
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <Button
+              size="md"
+              variant="secondary"
+              fullWidth
+              onClick={launchDemo}
+              leftIcon={<span className="material-symbols-outlined text-[16px]">play_circle</span>}
+            >
+              Launch Demo
+            </Button>
+            <Button
+              size="md"
+              variant="secondary"
+              fullWidth
+              onClick={launchTestnet}
+              leftIcon={<span className="material-symbols-outlined text-[16px]">science</span>}
+            >
+              Testnet Rehearsal
+            </Button>
+          </div>
+          <div className="text-center font-mono text-[10px] text-muted pt-1">
+            mainnet is the real product path. testnet is optional and only proves wallet/network execution.
+          </div>
         </div>
 
 
