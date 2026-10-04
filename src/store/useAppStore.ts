@@ -716,7 +716,16 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     connectWallet: async (target) => {
-      const requested = target || (get().environmentMode === "testnet" ? "testnet" : "mainnet");
+      // Testnet is an explicit rehearsal mode only. A generic wallet connect
+      // action can never silently redirect a user to Arc Testnet.
+      const explicitTestnet = target === "testnet" && (
+        get().environmentMode === "testnet" || get().view === "testnet"
+      );
+      const requested = explicitTestnet
+        ? "testnet"
+        : target === "mainnet"
+          ? "mainnet"
+          : "mainnet";
       const eth = getInjected();
       if (!eth) {
         if (isMobileBrowser()) {
