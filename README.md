@@ -1,7 +1,7 @@
-# INTERMINAL — Autonomous Treasury Infrastructure for USDC on Arc
+# INTERMINAL — Policy-Controlled Treasury Infrastructure for USDC on Arc
 
 > **Live Deployment:** [https://useinterminal.vercel.app/](https://useinterminal.vercel.app/)  
-> **Arc Mainnet (Chain ID: 5042)** · Autonomous operating cash reserves, automated 4.95% USYC Treasury sweeps, and just-in-time par liquidity orchestration.
+> **Arc Mainnet (Chain ID: 5042)** · Policy-controlled USDC reserves, USYC treasury rebalancing, quoted JIT liquidity execution, and cryptographic receipt anchoring.
 
 [![Live App](https://img.shields.io/badge/Live%20App-useinterminal.vercel.app-blueviolet?style=flat-square)](https://useinterminal.vercel.app/)
 [![Arc Mainnet](https://img.shields.io/badge/Arc%20Mainnet-Chain%205042-00F0FF?style=flat-square)](https://explorer.arc.io)
@@ -25,19 +25,35 @@
 
 ## What is Interminal?
 
-**Interminal** is autonomous treasury infrastructure for USDC-denominated operations on Arc.
+**Interminal** is policy-controlled treasury infrastructure for USDC-denominated operations on Arc.
 
 In corporate finance, **idle cash drag destroys enterprise value**. Traditional corporate bank accounts forfeit yields to institutional fees, while standard Web3 treasuries leave liquid operating cash sitting idle in non-yielding wallet balances to avoid high gas costs.
 
-Interminal solves this on Arc by leveraging Arc's sub-cent gas fees and deterministic finality to build an **autonomous capital flow pipeline**:
+Interminal uses Arc for USDC-denominated settlement, low-cost repeated execution, and a verifiable on-chain audit trail:
 1. **Operating Cash Reserve:** Maintains a user-configured liquid buffer (e.g. $5,000 USDC) for immediate expenses and gas.
-2. **Auto-Sweep Yield Engine:** Detects excess idle cash drag above the buffer and sweeps funds into **Hashnote USYC** (tokenized short-duration US Treasury bills yielding **~4.95% APY**).
-3. **Just-In-Time (JIT) Liquidity Bridge:** If an outgoing wire, vendor invoice, or trade exceeds liquid cash, the engine automatically unwinds USYC back into liquid USDC at 1:1 par with zero capital drag.
-4. **Cryptographic Proofs & Arc Settlement:** Every action generates a canonical **SHA-256 JSON-LD Audit Certificate** that can be anchored directly into Arc blockchain state via the verified settlement contract.
+2. **Policy Sweep Engine:** Detects excess cash above the configured operating buffer and routes it into **USYC**. The app uses a dated net-yield reference and live Arc quotes for execution.
+3. **Just-In-Time (JIT) Liquidity Bridge:** When an outgoing operation exceeds liquid cash, Interminal calculates the USYC shortfall and can execute a quoted USYC → USDC route on Arc with a bounded minimum output.
+4. **Cryptographic Proofs & Arc Settlement:** Executed actions can produce a canonical SHA-256 JSON audit certificate whose digest can be anchored into Arc state through the deployed settlement contract.
 
 ---
 
 ## What Actually Works on Arc Mainnet?
+## Live versus simulation
+
+Interminal deliberately separates browser simulation from confirmed Arc execution.
+
+| Capability | Mode | Proof |
+|---|---|---|
+| Wallet and Arc network detection | Live | EIP-1193 wallet + chain ID 5042 |
+| Native USDC and ERC-20 balance reads | Live | Arc public RPC |
+| AMM route quotes | Live | Verified Arc router |
+| Trade ticket signing | Live | EIP-712 domain bound to chain 5042 and settlement contract |
+| Trade settlement | Live | executeTradeTicket + confirmation receipt |
+| Audit digest anchoring | Live | anchorReceipt(bytes32) + isReceiptAnchored(bytes32) |
+| Seeded treasury, DCA scheduling, walkthrough | Simulation | Explicitly labeled in the UI |
+
+A live action is only marked confirmed after the Arc transaction receipt succeeds. The browser never presents a simulated balance update as a historical blockchain transaction.
+
 
 | Component | Status on Arc Mainnet | Verification Details |
 |---|---|---|
@@ -46,17 +62,17 @@ Interminal solves this on Arc by leveraging Arc's sub-cent gas fees and determin
 | **Receipt Anchoring** | **Live & Callable** | `anchorReceipt(bytes32)` anchors trade & reasoning certificates on-chain |
 | **Wallet Connection** | **Live EIP-1193** | Detects Arc Mainnet (`5042`), queries live native USDC and ERC-20 balances |
 | **EIP-712 Permit Verification** | **Active Protocol** | On-chain signature verification with fail-closed replay nonces and deadlines |
-| **Dual-USDC Gas Tank** | **Active Protocol** | Bridges native 18-decimal gas USDC and 6-decimal operational ERC-20 USDC |
+| **Dual-USDC accounting** | **Active application model** | Separates native 18-decimal Arc gas USDC from 6-decimal operational ERC-20 USDC |
 
 ---
 
 ## What to Try (3-Step Reviewer Guide)
 
-### Option A: 3-Minute Tour (No Wallet or Gas Required)
+### Option A: 3-Minute Simulation Tour (No Wallet or Gas Required)
 1. Open the live deployment: [https://useinterminal.vercel.app/](https://useinterminal.vercel.app/)
 2. Click **"Take a Tour"** on the landing page or in the navigation bar.
 3. Walk through the 3 core pillars using the pre-seeded simulation state:
-   - **Step 1:** Execute the 4.95% USYC Yield Sweep of excess liquid cash.
+   - **Step 1:** Execute the 3.225% USYC Yield Sweep of excess liquid cash.
    - **Step 2:** Simulate a $25,000 disbursement demonstrating the JIT par redemption bridge ($1.00).
    - **Step 3:** Inspect the cryptographic JSON-LD certificate with verified SHA-256 integrity proofs.
 
@@ -65,7 +81,7 @@ Interminal solves this on Arc by leveraging Arc's sub-cent gas fees and determin
 2. The Treasury Cockpit will instantly switch to **"LIVE ARC MAINNET CONNECTED"** mode, querying your real on-chain native USDC and token balances via Arc's public RPC.
 3. Open the **Corporate Ledger** or any trade certificate, and click **"Anchor to Arc Settlement"**. Your wallet will prompt an `anchorReceipt(bytes32)` transaction to contract `0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36`. Once confirmed, click the link to view the live block and transaction on the [Arc Explorer](https://explorer.arc.io).
 
-*Note on Gas:* Transacting on Arc Mainnet requires a tiny fraction of native USDC (~0.0012 USDC). If your wallet has no USDC on Arc, you can use the pre-seeded simulation mode to test the complete mathematical workflow without gas.
+*Note on Gas:* Arc uses native USDC for gas. The app's ~$0.0012 figure is an estimate, not a fixed network fee. Simulation mode requires no wallet or gas.
 
 ---
 
@@ -102,10 +118,10 @@ Interminal solves this on Arc by leveraging Arc's sub-cent gas fees and determin
 
 Interminal is purpose-built to exploit Arc's unique L1 architectural capabilities:
 
-* **Sub-Cent Gas (< $0.0012 USDC):** Frequent micro-sweeps and continuous rebalancing are economically impossible on Ethereum L1 ($15–$60 per sweep) and costly on standard L2s. On Arc, sweeping $500 costs less than a tenth of a cent, unlocking true continuous cash management.
+* **Low-cost USDC gas:** The UI uses ~$0.0012 USDC as an application-level gas estimate. Actual transaction cost depends on gas used and network conditions.
 * **USDC as Native Gas Token:** Gas is priced directly in USDC (18 decimals), eliminating foreign token friction for corporate accounting departments.
 * **Dual-Scale Accounting & Gas Tank:** Bridges native 18-decimal gas USDC and 6-decimal operational ERC-20 USDC seamlessly via the integrated Gas Tank runway controller.
-* **Deterministic Sub-Second Finality:** Enables instant JIT par redemption of T-Bills at time of execution with zero latency or re-org risk.
+* **Fast deterministic settlement:** Supports rapid treasury rebalancing and repeated USDC-denominated execution on Arc. Exact execution remains subject to the selected route and transaction confirmation.
 
 ---
 
@@ -138,7 +154,7 @@ Interminal settles on-chain via [`contracts/InterminalSettlement.sol`](contracts
 |---|---|---|---|
 | **USDC (Native)** | Native gas | 18 | Arc L1 gas token |
 | **USDC (ERC-20)** | `0x3600000000000000000000000000000000000000` | 6 | Operational liquidity & settlement |
-| **USYC** | `0x8a5D989Bbb96929F689B0200f435f53dA42bF490` | 6 | Hashnote Tokenized US Treasuries (~4.95% APY illustrative) |
+| **USYC** | `0x8a5D989Bbb96929F689B0200f435f53dA42bF490` | 6 | Hashnote Tokenized US Treasuries (3.225% net-yield reference as of 2026-10-04) |
 | **EURC** | `0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1` | 6 | Circle Euro Stablecoin |
 | **WETH** | `0x128cC466B61f542da60c70e3aA11c10e19B84EDB` | 18 | Wrapped Ether on Arc |
 | **cirBTC** | `0x171A4217b86A807A64eB94757Db6849fb4bDbAA0` | 8 | Arc Bridged Bitcoin |
@@ -177,6 +193,7 @@ Open `http://localhost:5173` to launch the workspace.
 ### Production Build
 ```bash
 npm run build
+npm run verify:arc
 ```
 Typechecks the entire repository with `tsc --noEmit` and bundles optimized production assets into `dist/`.
 
