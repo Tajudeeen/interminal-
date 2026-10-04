@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 
 const RPC = process.env.ARC_RPC || "https://rpc.mainnet.arc.io";
 const EXPECTED_CHAIN_ID = 5042;
+const EXPECTED_SETTLEMENT_RUNTIME_HASH = "0x0f8491da3d30f0441520308dfb21175d9272f81b5f3bb6bca60347ebbd2fcac8";
 const SETTLEMENT = "0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36";
 const ROUTER = "0x52FE40c00530db2e43d01652f903870571A14AFD";
 const USDC = "0x3600000000000000000000000000000000000000";
@@ -97,6 +98,7 @@ async function main() {
   console.log("INFO fresh runtime prefix: " + freshCore.slice(0, 66));
   const deployedRuntimeHash = ethers.keccak256(settlementCode);
   console.log("INFO live settlement runtime keccak256: " + deployedRuntimeHash);
+  ok("live settlement runtime fingerprint matches recorded Arc deployment", deployedRuntimeHash.toLowerCase() === EXPECTED_SETTLEMENT_RUNTIME_HASH);
   const sourceRuntimeMatches = deployedCore.toLowerCase() === freshCore.toLowerCase();
   console.log("WARN current source reproduces live runtime: " + sourceRuntimeMatches);
 
