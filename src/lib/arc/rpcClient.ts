@@ -12,6 +12,11 @@ export async function publicRpc(method: string, params: any[] = [], retries = 2)
       throw new Error("eth_getCode target blocked");
     }
   }
+  if (method === "eth_getTransactionReceipt") {
+    if (typeof params[0] !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(params[0])) {
+      throw new Error("Invalid transaction hash");
+    }
+  }
   if (method === "eth_call") {
     const to = params[0]?.to;
     if (!isAddress(to) || (!TOKEN_ALLOW.has(to.toLowerCase()) && !isTokenAllowed(to))) {
@@ -32,8 +37,13 @@ export async function publicRpc(method: string, params: any[] = [], retries = 2)
         (data.startsWith("0x3f40b75a") && data.length === 74) || // mandateNonces(address)
         (data.startsWith("0x5ac3de83") && data.length === 74) || // mandateCumulativeSpend(bytes32)
         (data.startsWith("0x3644e515") && data.length === 10)); // DOMAIN_SEPARATOR()
+    const isRouterQuote =
+      to?.toLowerCase() === ARC.router.toLowerCase() &&
+      typeof data === "string" &&
+      data.startsWith("0xd06ca61f") &&
+      data.length >= 330; // getAmountsOut(uint256,address[])
 
-    if (!isErc20Balance && !isErc20Allowance && !isErc20Meta && !isSettlementQuery) {
+    if (!isErc20Balance && !isErc20Allowance && !isErc20Meta && !isSettlementQuery && !isRouterQuote) {
       throw new Error("eth_call data blocked");
     }
   }
@@ -76,6 +86,71 @@ export async function publicRpc(method: string, params: any[] = [], retries = 2)
       if (timer) clearTimeout(timer);
     }
   }
+}
+
+export async function waitForTransactionReceipt(
+  txHash: string,
+  options: { timeoutMs?: number; pollMs?: number } = {},
+): Promise<{ transactionHash: string; blockNumber: number; status: string }> {
+  if (!/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
+    throw new Error("Invalid transaction hash");
+  }
+
+  const timeoutMs = options.timeoutMs ?? 120_000;
+  const pollMs = options.pollMs ?? 1_500;
+  const started = Date.now();
+
+  while (Date.now() - started < timeoutMs) {
+    const receipt = await publicRpc("eth_getTransactionReceipt", [txHash]);
+    if (receipt) {
+      const status = String(receipt.status || "0x1");
+      if (status !== "0x1") {
+        throw new Error("Arc transaction reverted: " + txHash);
+      }
+      return {
+        transactionHash: txHash,
+        blockNumber: parseInt(String(receipt.blockNumber || "0x0"), 16),
+        status,
+      };
+    }
+    await new Promise((resolve) => setTimeout(resolve, pollMs));
+  }
+
+  throw new Error("Timed out waiting for Arc transaction confirmation: " + txHash);
+}
+
+export async function readTraderNonce(address: string): Promise<number> {
+  const safe = normalizeAddress(address);
+  const data = "0x506ee1ef" + padAddr(safe);
+  const hex = await publicRpc("eth_call", [{ to: ARC.settlement, data }, "latest"]);
+  return Number(BigInt(hex || "0x0"));
+}
+
+export async function routerAmountOut(
+  tokenIn: string,
+  tokenOut: string,
+  amountIn: bigint,
+): Promise<bigint> {
+  if (!isAddress(tokenIn) || !isAddress(tokenOut) || amountIn <= 0n) {
+    throw new Error("Invalid router quote parameters");
+  }
+
+  const pathOffset = "40".padStart(64, "0");
+  const pathLength = "2".padStart(64, "0");
+  const data =
+    "0xd06ca61f" +
+    amountIn.toString(16).padStart(64, "0") +
+    pathOffset +
+    pathLength +
+    padAddr(tokenIn) +
+    padAddr(tokenOut);
+
+  const encoded = await publicRpc("eth_call", [{ to: ARC.router, data }, "latest"]);
+  if (typeof encoded !== "string" || !/^0x[0-9a-fA-F]+$/.test(encoded) || encoded.length < 258) {
+    throw new Error("Arc router returned an invalid quote");
+  }
+
+  return BigInt("0x" + encoded.slice(194, 258));
 }
 
 export async function readChainId(): Promise<{ hex: string; id: number }> {
