@@ -1,6 +1,6 @@
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
-import { ARC } from "../../constants/arc";
+import { ARC, USYC_APY } from "../../constants/arc";
 import { shortAddr } from "../../lib/arc/wallet";
 import { Button } from "../ui/Button";
 
@@ -28,7 +28,7 @@ export const JudgeTourBar: React.FC = () => {
   // Step 1: Execute Sweep
   const handleStep1Sweep = () => {
     if (excessCash <= 0) {
-      addToast("Cash Already Optimized", "Idle cash is already swept into USYC T-Bills.", "info");
+      addToast("Cash Already Optimized", "Idle cash is already swept into USYC.", "info");
       return;
     }
     useAppStore.setState((s) => ({
@@ -42,14 +42,14 @@ export const JudgeTourBar: React.FC = () => {
           ts: Date.now(),
           type: "sweep",
           label: `Interactive Sweep: $${excessCash.toLocaleString()} USDC -> USYC T-Bills`,
-          detail: `Earns +$${(excessCash * 0.0495).toFixed(2)}/yr continuous yield @ 4.95% APY`,
+          detail: `Simulation: +${(excessCash * USYC_APY).toFixed(2)}/yr at the current reference rate`,
         },
         ...s.activity,
       ],
     }));
     addToast(
       "Yield Sweep Complete!",
-      `Swept $${excessCash.toLocaleString()} USDC into USYC T-Bills at 4.95% APY.`,
+      `Simulated ${excessCash.toLocaleString()} USDC → USYC using the current reference rate.`,
       "ok"
     );
   };
@@ -108,7 +108,7 @@ export const JudgeTourBar: React.FC = () => {
         {/* Step Indicator Tabs */}
         <div className="grid grid-cols-3 gap-1.5 font-mono text-[11px]">
           {[
-            { step: 1, label: "1. 4.95% Sweep" },
+            { step: 1, label: "1. Policy Sweep" },
             { step: 2, label: "2. JIT Unwind" },
             { step: 3, label: "3. Arc Audit" },
           ].map((item) => (
@@ -130,8 +130,8 @@ export const JudgeTourBar: React.FC = () => {
         {judgeTourStep === 1 && (
           <div className="space-y-3">
             <div className="font-mono text-xs text-themed leading-relaxed">
-              <span className="font-bold">Pillar 1: Continuous Cash Optimization.</span> Operating cash buffer retains $5,000 for gas & wires; detects{" "}
-              <span className="text-pos font-bold">${excessCash.toLocaleString()} USDC</span> idle cash drag and automatically sweeps to USYC T-Bills.
+              <span className="font-bold">Pillar 1: Policy-Driven Cash Optimization.</span> Operating cash buffer retains liquid USDC for operations; detects{" "}
+              <span className="text-pos font-bold">${excessCash.toLocaleString()} USDC</span> excess cash and routes it to USYC in simulation mode.
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -157,8 +157,8 @@ export const JudgeTourBar: React.FC = () => {
         {judgeTourStep === 2 && (
           <div className="space-y-3">
             <div className="font-mono text-xs text-themed leading-relaxed">
-              <span className="font-bold">Pillar 2: Just-In-Time (JIT) Liquidity Bridge.</span> An outgoing wire or trade of{" "}
-              <span className="text-lime-500 font-bold">$25,000</span> exceeds liquid USDC. USYC T-Bills automatically redeem at par ($1.00) instantly with zero capital drag.
+              <span className="font-bold">Pillar 2: Just-In-Time (JIT) Liquidity.</span> An outgoing wire or trade of{" "}
+              <span className="text-lime-500 font-bold">$25,000</span> exceeds liquid USDC. The demo calculates a USYC shortfall, while live mode can execute a fresh USYC/USDC route on Arc with bounded output.
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -184,7 +184,7 @@ export const JudgeTourBar: React.FC = () => {
         {judgeTourStep === 3 && (
           <div className="space-y-3">
             <div className="font-mono text-xs text-themed leading-relaxed">
-              <span className="font-bold">Pillar 3: Zero-Custody EIP-712 Mandates & Arc Settlement.</span> Every ticket generates a canonical JSON-LD certificate with SHA-256 integrity proofs anchored to verified Arc contract{" "}
+              <span className="font-bold">Pillar 3: Signed EIP-712 Controls & Arc Settlement.</span> Executed tickets generate a canonical JSON certificate with SHA-256 integrity proofs that can be anchored to the deployed Arc contract{" "}
               <span className="text-pos font-bold font-mono">{shortAddr(ARC.settlement)}</span> on Chain 5042.
             </div>
             <div className="flex items-center gap-2">
