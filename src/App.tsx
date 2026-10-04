@@ -51,7 +51,7 @@ export const App: React.FC = () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.clearInterval(refreshTimer);
     };
-  }, [setSearchOpen, syncMarketData, theme, setTheme]);
+  }, [setSearchOpen, syncMarketData]);
 
   const renderCurrentView = () => {
     switch (view) {
