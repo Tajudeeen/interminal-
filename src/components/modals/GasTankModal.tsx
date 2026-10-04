@@ -19,7 +19,7 @@ export const GasTankModal: React.FC = () => {
       isOpen={gasTankModalOpen}
       onClose={() => setGasTankModalOpen(false)}
       title="Arc Native Gas Tank"
-      subtitle="Autonomous Fuel Cell · Sub-Cent Execution"
+      subtitle="Native USDC Gas Balance · Transaction Cost Estimate"
       maxWidth="max-w-md"
     >
       <div className="space-y-5">
@@ -100,7 +100,7 @@ export const GasTankModal: React.FC = () => {
             </Button>
           </>
         )}
-      </div>      </div>
+      </div>
     </GlassModalWrapper>
   );
 };
