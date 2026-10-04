@@ -15,7 +15,7 @@ export const CapitalFlowDiagram: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-widest text-lime-500 font-bold">
-            Autonomous Pipeline Topography
+            Treasury Policy Flow
           </div>
           <h3 className="font-display font-bold text-base text-themed mt-0.5">
             Arc Continuous Treasury Capital Flow
@@ -64,7 +64,7 @@ export const CapitalFlowDiagram: React.FC = () => {
             <span>Stage 3 · JIT</span>
             <span className="material-symbols-outlined text-[16px] text-amber-500">swap_calls</span>
           </div>
-          <div className="font-display font-bold text-sm text-themed mt-1">Par Unwind Bridge</div>
+          <div className="font-display font-bold text-sm text-themed mt-1">USYC/USDC Rebalance</div>
           <div className="font-mono text-lg font-black text-themed mt-0.5 tnum">
             $1.00 : $1.00
           </div>
