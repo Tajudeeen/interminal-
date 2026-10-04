@@ -55,6 +55,7 @@ export interface AppState {
   view: "landing" | "portfolio" | "terminal" | "markets" | "ai" | "ledger" | "proof" | "testnet";
   environmentMode: EnvironmentMode;
   testnetTaskComplete: boolean;
+  testnetTxHash: string | null;
   connected: boolean;
   connecting: boolean;
   address: string | null;
@@ -146,6 +147,7 @@ export interface AppState {
   connectWallet: (target?: "testnet" | "mainnet") => Promise<void>;
   switchToCurrentNetwork: () => Promise<void>;
   completeTestnetTask: () => void;
+  runTestnetProof: () => Promise<void>;
   launchDemo: () => void;
   disconnectWallet: () => void;
   syncMarketData: () => Promise<void>;
@@ -271,6 +273,7 @@ export const useAppStore = create<AppState>((set, get) => {
     view: "landing",
     environmentMode: "demo",
     testnetTaskComplete: false,
+    testnetTxHash: null,
     connected: false,
     connecting: false,
     address: null,
@@ -407,6 +410,82 @@ export const useAppStore = create<AppState>((set, get) => {
     completeTestnetTask: () => {
       set({ testnetTaskComplete: true });
       get().addToast("Testnet Task Complete", "The testnet drill is complete. Mainnet execution is now unlocked.", "ok");
+    },
+
+    runTestnetProof: async () => {
+      const { environmentMode, address, connected, wrongNetwork } = get();
+      if (environmentMode !== "testnet") {
+        get().addToast("Open Testnet Lab", "Run the rehearsal from the Arc Testnet Lab.", "warn");
+        return;
+      }
+      if (!connected || !address || !isAddress(address)) {
+        get().addToast("Wallet Required", "Connect a funded Arc Testnet wallet first.", "err");
+        return;
+      }
+      if (wrongNetwork) {
+        get().addToast("Wrong Network", "Switch the wallet to Arc Testnet (5042002) first.", "err");
+        return;
+      }
+
+      set({ executing: true });
+      try {
+        const trader = normalizeAddress(address);
+        const testValue = parseUnits("0.01", 18);
+        get().addToast("Testnet Execution", "Sending a 0.01 native USDC self-transfer to prove wallet signing and Arc Testnet settlement.", "info");
+
+        const txHash = await walletRpc("eth_sendTransaction", [{
+          from: trader,
+          to: trader,
+          value: "0x" + testValue.toString(16),
+        }]);
+
+        if (typeof txHash !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
+          throw new Error("Wallet returned an invalid testnet transaction hash");
+        }
+
+        get().addToast("Testnet Pending", "Waiting for Arc Testnet confirmation.", "info");
+
+        let confirmed: any = null;
+        for (let i = 0; i < 30; i++) {
+          confirmed = await walletRpc("eth_getTransactionReceipt", [txHash]);
+          if (confirmed) break;
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+        if (!confirmed) throw new Error("Arc Testnet transaction was not confirmed within the polling window");
+        if (confirmed.status !== "0x1" && confirmed.status !== 1) {
+          throw new Error("Arc Testnet transaction reverted");
+        }
+
+        const blockNumber = typeof confirmed.blockNumber === "string"
+          ? Number.parseInt(confirmed.blockNumber, 16)
+          : Number(confirmed.blockNumber || 0);
+
+        set((s) => ({
+          executing: false,
+          testnetTaskComplete: true,
+          testnetTxHash: txHash,
+          activity: [{
+            ts: Date.now(),
+            type: "testnet",
+            label: "Testnet Execution Check · 0.01 USDC self-transfer",
+            detail: "Arc Testnet · chain 5042002 · confirmed block #" + blockNumber.toLocaleString(),
+            hash: txHash,
+          }, ...s.activity],
+        }));
+
+        get().addToast(
+          "Testnet Task Confirmed",
+          "Arc Testnet confirmed the transaction. Mainnet execution is now unlocked.",
+          "ok",
+        );
+      } catch (err: any) {
+        set({ executing: false });
+        get().addToast(
+          "Testnet Task Failed",
+          err?.code === 4001 ? "Wallet action rejected." : (err?.message || String(err)),
+          "err",
+        );
+      }
     },
 
     setView: (view) => {
@@ -932,7 +1011,11 @@ export const useAppStore = create<AppState>((set, get) => {
       const liveIntent = environmentMode === "mainnet";
       if (!pendingQuote) return;
       if (liveIntent) {
-        if (wrongNetwork && get().environmentMode === "mainnet") {
+        if (!address || !isAddress(address)) {
+          get().addToast("Wallet Required", "Connect an Arc Mainnet wallet to execute a live trade.", "err");
+          return;
+        }
+        if (wrongNetwork) {
           get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) before executing.", "err");
           return;
         }
@@ -944,7 +1027,7 @@ export const useAppStore = create<AppState>((set, get) => {
       }
 
       const p = PAIRS[assertPair(pairKey)];
-      if (livePortfolio && !p.address) {
+      if (liveIntent && !p.address) {
         get().addToast(
           "Live Market Unavailable",
           pairKey + " has no verified Arc token contract in the registry. This market is simulation-only.",
