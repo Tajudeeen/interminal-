@@ -8,6 +8,7 @@ import {
 import { decodeTradeSettledExecution } from "../lib/arc/rpcClient";
 import { calculateFxParity } from "../lib/math/fx";
 import { quoteTrade, parseUnits, formatUnits } from "../lib/math/quotes";
+import { deriveLiveControlSizing, liveSizePresets } from "../lib/math/liveSizing";
 import { generateCandles, computeIndicators, GECKO_RESOLUTION } from "../lib/math/indicators";
 import {
   createAgentMandateDescriptor,
@@ -255,6 +256,24 @@ describe("React TypeScript Modular Engine", () => {
     const rows = failClosedLocalProofs();
     expect(rows.length).toBeGreaterThanOrEqual(14);
     rows.forEach((r) => expect(r.ok).toBe(true));
+  });
+
+
+  it("live control sizing adapts to wallet holdings", () => {
+    const empty = deriveLiveControlSizing({ USDC: 0, USYC: 0 });
+    expect(empty.targetBufferUsd).toBe(0);
+    expect(empty.stressTestAmount).toBe(0);
+    expect(empty.tradeDefaultUsd).toBe(0);
+
+    const wallet = deriveLiveControlSizing({ USDC: 20000, USYC: 10000 }, 1.1);
+    expect(wallet.targetBufferUsd).toBe(4000);
+    expect(wallet.stressTestAmount).toBe(25000);
+    expect(wallet.tradeDefaultUsd).toBe(2000);
+    expect(wallet.dcaSpendTotal).toBe(2000);
+    expect(wallet.dcaSliceSize).toBe(400);
+    expect(wallet.mandateSpendUsd).toBe(1000);
+
+    expect(liveSizePresets(20000)).toEqual([500, 1000, 2000, 5000]);
   });
 
   it("Zustand app store initializes with clean state and responds to actions", () => {
