@@ -73,8 +73,8 @@ A live action is only marked confirmed after the Arc transaction receipt succeed
 2. Click **"Take a Tour"** on the landing page or in the navigation bar.
 3. Walk through the 3 core pillars using the pre-seeded simulation state:
    - **Step 1:** Execute the 3.225% USYC Yield Sweep of excess liquid cash.
-   - **Step 2:** Simulate a $25,000 disbursement demonstrating the JIT par redemption bridge ($1.00).
-   - **Step 3:** Inspect the cryptographic JSON-LD certificate with verified SHA-256 integrity proofs.
+   - **Step 2:** Simulate a $25,000 liquidity need and inspect the USYC/USDC unwind calculation.
+   - **Step 3:** Inspect the cryptographic JSON certificate and SHA-256 integrity proof.
 
 ### Option B: Live Arc Mainnet Execution (With MetaMask / Rabby)
 1. Connect your wallet to **Arc Mainnet (Chain ID: 5042)**.
