@@ -1,7 +1,7 @@
 {
   "name": "interminal",
   "version": "1.0.0",
-  "description": "Autonomous treasury infrastructure for USDC on Arc.",
+  "description": "Policy-controlled treasury infrastructure for USDC-denominated operations on Arc.",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
