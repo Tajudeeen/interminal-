@@ -254,8 +254,6 @@ export async function erc20Balance(token: { address: string; decimals: number },
 
 export async function loadOnchainPortfolio(address: string): Promise<Record<string, number>> {
   const safe = normalizeAddress(address);
-  const nativeHex = await publicRpc("eth_getBalance", [safe, "latest"]);
-  const nativeUsdc = formatUnits(nativeHex, ARC.nativeDecimals);
   const erc20Usdc = await erc20Balance({ address: ARC.usdcErc20, decimals: 6 }, safe);
 
   const next: Record<string, number> = {
