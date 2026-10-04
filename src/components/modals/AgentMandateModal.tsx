@@ -1,12 +1,30 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
 import { Button } from "../ui/Button";
 
 export const AgentMandateModal: React.FC = () => {
-  const { mandateModalOpen, setMandateModalOpen, createAgentMandate, address } = useAppStore();
+  const { mandateModalOpen, setMandateModalOpen, createAgentMandate, address, balances, livePortfolio } = useAppStore();
 
   const [spendUsd, setSpendUsd] = useState<number>(500);
+
+  const liveBudgetPresets = useMemo(() => {
+    if (!livePortfolio) return [100, 250, 500, 1000];
+    const usdc = Math.max(0, balances.USDC || 0);
+    if (usdc <= 0) return [];
+    const values = [0.01, 0.025, 0.05, 0.10].map((ratio) => {
+      const raw = usdc * ratio;
+      const step = raw >= 1000 ? 100 : 50;
+      return Math.min(usdc, Math.max(25, Math.round(raw / step) * step));
+    });
+    return [...new Set(values)].sort((a, b) => a - b);
+  }, [balances.USDC, livePortfolio]);
+
+  useEffect(() => {
+    if (!livePortfolio) return;
+    setAgent(address || "");
+    setSpendUsd(liveBudgetPresets[0] || 0);
+  }, [address, livePortfolio, liveBudgetPresets]);
   const [agent, setAgent] = useState<string>(address || "");
   const [slipBps, setSlipBps] = useState<number>(30);
   const [ttlHours, setTtlHours] = useState<number>(4);
@@ -65,7 +83,7 @@ export const AgentMandateModal: React.FC = () => {
             Maximum Cumulative Budget (USDC)
           </label>
           <div className="flex gap-2">
-            {[100, 250, 500, 1000].map((amt) => (
+            {(livePortfolio ? liveBudgetPresets : [100, 250, 500, 1000]).map((amt) => (
               <button
                 key={amt}
                 onClick={() => setSpendUsd(amt)}
@@ -154,7 +172,9 @@ export const AgentMandateModal: React.FC = () => {
         {/* Safety Note */}
         <div className="p-3 rounded-card bg-themed-card/40 border border-themed/20 font-mono text-[11px] text-muted space-y-1">
           <div className="text-themed font-semibold">Deterministic Policy Enforcer:</div>
-          <div>Agent cannot exceed ${spendUsd} total or trade outside selected pairs.</div>
+          <div>
+            Agent cannot exceed ${spendUsd.toLocaleString()} ${livePortfolio ? "of your current liquid USDC" : "in simulation"} or trade outside selected pairs.
+          </div>
           <div>Revocation is enforced on-chain through the deployed mandate revocation function.</div>
         </div>
 
