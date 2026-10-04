@@ -43,7 +43,6 @@ export const TerminalTradeView: React.FC = () => {
     livePortfolio,
     environmentMode,
     analysis,
-    showLevels,
     theme,
     setSearchOpen,
     connectWallet,
