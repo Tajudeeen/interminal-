@@ -361,7 +361,7 @@ export const AiAnalystView: React.FC = () => {
                 onClick={() => setMandateModalOpen(true)}
                 leftIcon={<span className="material-symbols-outlined text-[16px]">verified_user</span>}
               >
-                Deploy Scoped Agent Mandate
+                Sign Scoped Agent Mandate
               </Button>
             </div>
           </div>
