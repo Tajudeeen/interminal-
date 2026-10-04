@@ -19,7 +19,6 @@ export const Sidebar: React.FC = () => {
     nativeGasBalance,
     setGasTankModalOpen,
     setSearchOpen,
-    launchDemo,
     startJudgeTour,
     launchTestnet,
     environmentMode,
