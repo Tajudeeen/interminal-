@@ -175,7 +175,7 @@ function getInitialAuditReceipts(): TradeReceipt[] {
         expiresAt: Date.now() + 600000,
       },
       pairKey: "ETH/USDC",
-      trader: "0x71C5689E281249b6b6C1864A496E25bCc4965042",
+      trader: "0x000000000000000000000000000000000000dEee",
       side: "buy",
       amountUsd: 10000,
       amount: 10000,
@@ -216,7 +216,7 @@ function getInitialAuditReceipts(): TradeReceipt[] {
       amountUsd: 5000,
       amount: 5000,
       mandateId: "mandate-twap-btc-01",
-      blockNumber: 4892098,
+      blockNumber: 0,
     });
 
     return [r1, r2, r3];
@@ -312,7 +312,7 @@ export const useAppStore = create<AppState>((set, get) => {
     importTokenError: "",
     customTokens: [],
     proof: { running: false, live: null, local: null, checkedAt: null },
-    block: 4892104,
+    block: 0,
     latency: 12,
     marketFeedStatus: { source: "DexScreener Uniswap V3", live: false, lastUpdate: null, error: null },
     toasts: [],
