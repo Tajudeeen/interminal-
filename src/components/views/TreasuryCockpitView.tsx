@@ -313,7 +313,7 @@ export const TreasuryCockpitView: React.FC = () => {
               )}
             </div>
             <span className="font-display font-black text-xl text-pos tnum">
-              ${targetBufferUsd.toLocaleString()}
+              {mainnetReview ? "—" : "$" + targetBufferUsd.toLocaleString()}
             </span>
           </div>
 
@@ -328,6 +328,7 @@ export const TreasuryCockpitView: React.FC = () => {
                   key={val}
                   type="button"
                   onClick={() => setTargetBufferUsd(val)}
+                  disabled={mainnetReview}
                   className={`py-2 px-3 rounded-card font-mono text-xs transition-all ${
                     targetBufferUsd === val
                       ? "bg-lime-500 text-black font-black shadow-md scale-102"
@@ -353,6 +354,7 @@ export const TreasuryCockpitView: React.FC = () => {
               step={100}
               value={Math.min(targetBufferUsd, bufferSliderMax)}
               onChange={(e) => setTargetBufferUsd(Number(e.target.value))}
+              disabled={mainnetReview}
               className="w-full accent-lime-500 cursor-pointer"
             />
           </div>
@@ -362,13 +364,13 @@ export const TreasuryCockpitView: React.FC = () => {
             <div className="flex justify-between">
               <span className="text-muted">Excess Idle Cash:</span>
               <span className="text-themed font-bold tnum">
-                ${Math.max(0, liquidUsdc - targetBufferUsd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC
+                {mainnetReview ? "—" : "$" + Math.max(0, liquidUsdc - targetBufferUsd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " USDC"}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted">Projected Extra Yield:</span>
               <span className="text-pos font-bold tnum">
-                +${sweep.annualExtraYield.toFixed(2)}/yr
+                {mainnetReview ? "—" : "+$" + sweep.annualExtraYield.toFixed(2) + "/yr"}
               </span>
             </div>
             <div className="pt-2 border-t border-themed/20">
@@ -377,7 +379,7 @@ export const TreasuryCockpitView: React.FC = () => {
                 fullWidth
                 size="md"
                 onClick={handleSweepNow}
-                disabled={!sweep.recommended || executing}
+                disabled={mainnetReview || !sweep.recommended || executing}
                 isLoading={executing && sweep.recommended}
                 leftIcon={<span className="material-symbols-outlined text-[16px]">bolt</span>}
               >
@@ -407,7 +409,7 @@ export const TreasuryCockpitView: React.FC = () => {
                   : "bg-neg/15 border-neg/40 text-neg"
               }`}
             >
-              {jit.canCover ? "SOLVENT" : "SHORTFALL"}
+              {mainnetReview ? "WALLET REQUIRED" : jit.canCover ? "SOLVENT" : "SHORTFALL"}
             </span>
           </div>
 
@@ -427,6 +429,7 @@ export const TreasuryCockpitView: React.FC = () => {
                   key={val}
                   type="button"
                   onClick={() => setStressTestAmount(val)}
+                  disabled={mainnetReview}
                   className={`py-2 px-3 rounded-card font-mono text-xs transition-all ${
                     stressTestAmount === val
                       ? "bg-lime-500 text-black font-black shadow-md scale-102"
@@ -444,13 +447,13 @@ export const TreasuryCockpitView: React.FC = () => {
             <div className="flex justify-between">
               <span className="text-muted">Liquid USDC Covered:</span>
               <span className="text-themed font-medium tnum">
-                ${Math.min(liquidUsdc, stressTestAmount).toLocaleString()}
+                {mainnetReview ? "—" : "$" + Math.min(liquidUsdc, stressTestAmount).toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted">Deficit Requiring JIT Unwind:</span>
               <span className={`${jit.needed ? "text-amber-500 font-bold" : "text-muted"} tnum`}>
-                ${jit.deficit.toLocaleString()}
+                {mainnetReview ? "—" : "$" + jit.deficit.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">
