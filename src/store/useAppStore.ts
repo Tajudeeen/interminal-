@@ -419,6 +419,9 @@ export const useAppStore = create<AppState>((set, get) => {
         });
       } else {
         set({ view, searchOpen: false });
+        requestAnimationFrame(() => {
+          document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
+        });
       }
     },
 
@@ -1284,7 +1287,7 @@ export const useAppStore = create<AppState>((set, get) => {
         return;
       }
 
-      if (!livePortfolio || !address) {
+      if (get().environmentMode !== "mainnet" && (!livePortfolio || !address)) {
         if (direction === "sweep") {
           const receipt = generateTradeReceipt({
             quote: {
