@@ -27,5 +27,8 @@ jobs:
       - name: Protocol and legacy regression suite
         run: npm run test:legacy
 
+      - name: GeckoTerminal Arc market-data verification
+        run: npm run verify:market
+
       - name: Arc mainnet verification
         run: npm run verify:arc
