@@ -66,20 +66,20 @@ export const LandingView: React.FC = () => {
 
         {/* Hero Title */}
         <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.08] text-themed">
-          The autonomous treasury desk for <span className="text-shimmer">Arc</span>.
+          The policy-controlled treasury desk for <span className="text-shimmer">Arc</span>.
         </h1>
 
         <p className="mt-5 text-sm sm:text-base max-w-xl leading-relaxed text-sub">
-          Continuous cash optimization, automated 4.95% USYC T-Bill yield sweeps, and Just-In-Time liquidity
-          clearing—governed by zero-custody EIP-712 mandates.
+          Continuous cash optimization, automated 3.225% USYC T-Bill yield sweeps, and Just-In-Time liquidity
+          clearing—governed by signed EIP-712 execution controls.
         </p>
 
         {/* Highlight Stats */}
         <div className="mt-8 flex flex-wrap justify-center gap-8 sm:gap-12">
           <div className="text-center">
-            <div className="font-display font-extrabold text-2xl sm:text-3xl text-pos">4.95%</div>
+            <div className="font-display font-extrabold text-2xl sm:text-3xl text-pos">{(USYC_APY * 100).toFixed(3)}%</div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-muted mt-0.5">
-              USYC T-Bill Yield
+              USYC Net Reference Yield · {USYC_YIELD_AS_OF}
             </div>
           </div>
           <div className="text-center">
@@ -153,7 +153,7 @@ export const LandingView: React.FC = () => {
                 Interactive Treasury Calculator
               </div>
               <h3 className="font-display font-bold text-base text-themed mt-0.5">
-                Simulate Your Idle Cash Returns on Arc
+                Model idle cash returns using a USYC reference yield
               </h3>
             </div>
             <div className="flex items-center gap-1.5 font-mono text-xs text-muted">
@@ -196,7 +196,7 @@ export const LandingView: React.FC = () => {
           {/* Real-Time Comparative Yield Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/30">
-              <div className="font-mono text-[10px] uppercase text-muted">Arc USYC (4.95% APY)</div>
+              <div className="font-mono text-[10px] uppercase text-muted">USYC Net Reference Yield (3.225%)</div>
               <div className="font-display font-extrabold text-xl text-pos mt-1 tnum">
                 +${usycAnnualReturn.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/yr
               </div>
@@ -211,7 +211,7 @@ export const LandingView: React.FC = () => {
                 ${bankAnnualReturn.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/yr
               </div>
               <div className="font-mono text-[10px] text-muted mt-0.5">
-                Forfeiting yield to corporate bank fees
+                Illustrative bank benchmark
               </div>
             </div>
 
@@ -248,13 +248,13 @@ export const LandingView: React.FC = () => {
                 icon: "account_balance",
               },
               {
-                label: "Auto-Sweep Engine",
-                sub: "Excess cash swept to 4.95% USYC T-Bills",
+                label: "Policy Sweep Engine",
+                sub: "Excess cash routed into USYC when policy permits",
                 icon: "trending_up",
               },
               {
-                label: "JIT Unwind Bridge",
-                sub: "Instant par redemption on outgoing trades",
+                label: "JIT USYC/USDC Unwind",
+                sub: "Quoted USYC/USDC unwind for outgoing liquidity needs",
                 icon: "swap_calls",
               },
               {
