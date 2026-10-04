@@ -7,7 +7,7 @@ import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
 
 export const LandingView: React.FC = () => {
-  const { connectWallet, launchDemo, connecting, setView, startJudgeTour } = useAppStore();
+  const { connectWallet, launchDemo, launchTestnet, connecting, setView, startJudgeTour } = useAppStore();
   const [simTreasurySize, setSimTreasurySize] = useState<number>(250000);
 
   const previewKeys = ["ETH/USDC", "BTC/USDC", "EURC/USDC", "ARC/USDC"];
@@ -126,27 +126,42 @@ export const LandingView: React.FC = () => {
           </button>
         </div>
 
-        {/* CTA Buttons with True React Button Component */}
-        <div className="mt-4 flex flex-col sm:flex-row items-center gap-3 w-full max-w-md">
+        {/* Primary paths */}
+        <div className="mt-4 w-full max-w-md grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Button
             size="lg"
             variant="primary"
             fullWidth
-            isLoading={connecting}
-            onClick={() => connectWallet()}
-            leftIcon={<span className="material-symbols-outlined text-[18px]">account_balance_wallet</span>}
+            onClick={launchDemo}
+            leftIcon={<span className="material-symbols-outlined text-[18px]">play_circle</span>}
           >
-            {connecting ? "Connecting Wallet..." : "Connect Treasury Wallet"}
+            Launch Treasury Demo
           </Button>
           <Button
             size="lg"
             variant="secondary"
             fullWidth
-            onClick={launchDemo}
-            leftIcon={<span className="material-symbols-outlined text-[18px]">savings</span>}
+            onClick={launchTestnet}
+            leftIcon={<span className="material-symbols-outlined text-[18px]">science</span>}
           >
-            Launch Treasury Demo
+            Open Arc Testnet Lab
           </Button>
+        </div>
+
+        <div className="mt-3 w-full max-w-md flex flex-col sm:flex-row items-center gap-2">
+          <Button
+            size="md"
+            variant="outline"
+            fullWidth
+            isLoading={connecting}
+            onClick={() => connectWallet("mainnet")}
+            leftIcon={<span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>}
+          >
+            {connecting ? "Connecting..." : "Connect Mainnet Wallet"}
+          </Button>
+          <span className="text-[10px] font-mono text-muted text-center leading-relaxed px-2">
+            Mobile: use the MetaMask/Rabby mobile app browser. Desktop extensions are discovered automatically.
+          </span>
         </div>
 
         {/* Interactive Yield Calculator Preview */}
