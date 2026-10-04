@@ -158,11 +158,13 @@ export const TerminalTradeView: React.FC = () => {
           </div>
           <div className="flex-1 w-full relative mt-2 min-h-[320px]">
             <MarketChart
+              key={`${pairKey}:${timeframe}:${chartMode}`}
               candles={candles}
               indicators={indicators}
               chartMode={chartMode}
               theme={theme}
               pair={pairKey}
+              timeframe={timeframe}
               showLevels={showLevels}
               analysis={analysis}
               marketFeedStatus={marketFeedStatus}
