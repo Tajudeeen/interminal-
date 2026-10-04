@@ -517,10 +517,17 @@ export async function sendApproval(
   spender: string,
   amount: bigint,
 ): Promise<string> {
+  if (!isAddress(from)) throw new Error("Invalid approval owner address");
+  if (!isTokenAllowed(tokenAddress)) throw new Error("Approval token is not in the verified Arc token registry");
+  if (normalizeAddress(spender) !== normalizeAddress(ARC.settlement)) {
+    throw new Error("Approval spender is not the verified Interminal settlement contract");
+  }
+  if (amount <= 0n) throw new Error("Approval amount must be greater than zero");
+
   const amountHex = amount.toString(16).padStart(64, "0");
-  const spenderPadded = spender.replace(/^0x/i, "").toLowerCase().padStart(64, "0");
+  const spenderPadded = normalizeAddress(spender).replace(/^0x/i, "").padStart(64, "0");
   const data = "0x095ea7b3" + spenderPadded + amountHex; // approve(address,uint256)
   return walletRpc("eth_sendTransaction", [
-    { from, to: tokenAddress, data, gas: "0xC350" }, // 50 000 gas
+    { from: normalizeAddress(from), to: normalizeAddress(tokenAddress), data, gas: "0xC350" }, // 50 000 gas
   ]);
 }
