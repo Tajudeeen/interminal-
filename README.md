@@ -38,6 +38,7 @@ Interminal uses Arc for USDC-denominated settlement, low-cost repeated execution
 ---
 
 ## What Actually Works on Arc Mainnet?
+
 ## Live versus simulation
 
 Interminal deliberately separates browser simulation from confirmed Arc execution.
@@ -120,7 +121,7 @@ Interminal is purpose-built to exploit Arc's unique L1 architectural capabilitie
 
 * **Low-cost USDC gas:** The UI uses ~$0.0012 USDC as an application-level gas estimate. Actual transaction cost depends on gas used and network conditions.
 * **USDC as Native Gas Token:** Gas is priced directly in USDC (18 decimals), eliminating foreign token friction for corporate accounting departments.
-* **Dual-Scale Accounting & Gas Tank:** Bridges native 18-decimal gas USDC and 6-decimal operational ERC-20 USDC seamlessly via the integrated Gas Tank runway controller.
+* ****Dual-Scale USDC Accounting:** Separates native 18-decimal Arc gas USDC from 6-decimal operational ERC-20 USDC.
 * **Fast deterministic settlement:** Supports rapid treasury rebalancing and repeated USDC-denominated execution on Arc. Exact execution remains subject to the selected route and transaction confirmation.
 
 ---
@@ -142,7 +143,7 @@ Interminal settles on-chain via [`contracts/InterminalSettlement.sol`](contracts
 
 ### Core Functions:
 * `executeTradeTicket(...)`: Validates EIP-712 `TradeTicket` signatures and routes token swaps with strict slippage limits.
-* `executeAgentTrade(...)`: Verifies `AgentMandate` signatures, checks spending limits and expiration, and executes trades on behalf of the corporate treasury.
+* `executeAgentTrade(...)`: The deployed v1 contract includes signed-agent execution with nonce, expiry, cumulative-spend, per-transaction, pair-mask, and minimum-output checks. Interminal's browser currently signs mandates but does not run an unattended background executor.
 * `anchorReceipt(bytes32 receiptHash)`: Stores receipt hashes permanently on-chain.
 * `isReceiptAnchored(bytes32)`: Read-only verification query for external auditors and compliance officers.
 
