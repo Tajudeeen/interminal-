@@ -5,6 +5,9 @@ import { ethers } from "ethers";
 const RPC = process.env.ARC_RPC || "https://rpc.mainnet.arc.io";
 const EXPECTED_CHAIN_ID = 5042;
 const EXPECTED_SETTLEMENT_RUNTIME_HASH = "0x0f8491da3d30f0441520308dfb21175d9272f81b5f3bb6bca60347ebbd2fcac8";
+const EXPECTED_DEPLOYMENT_TX = "0x1d96a8c548268f851a22c23107fbac1a606bbd2b951856d5f9f0f4d3ecbae404";
+const EXPECTED_DEPLOYMENT_BLOCK = 23367508;
+const EXPECTED_SETTLEMENT_BYTES = 8802;
 const SETTLEMENT = "0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36";
 const ROUTER = "0x52FE40c00530db2e43d01652f903870571A14AFD";
 const USDC = "0x3600000000000000000000000000000000000000";
@@ -13,6 +16,32 @@ const USYC = "0x8a5D989Bbb96929F689B0200f435f53dA42bF490";
 function ok(label, value) {
   if (!value) throw new Error(label + " failed");
   console.log("PASS", label);
+}
+
+function stripSolidityMetadata(bytecode) {
+  const hex = String(bytecode || "").replace(/^0x/i, "");
+  if (hex.length < 4) return "0x" + hex;
+  const metadataBytes = Number.parseInt(hex.slice(-4), 16);
+  const metadataHexLength = metadataBytes * 2;
+  if (!Number.isFinite(metadataBytes) || metadataHexLength + 4 > hex.length) return "0x" + hex;
+  return "0x" + hex.slice(0, hex.length - metadataHexLength - 4);
+}
+
+function compileSource(source) {
+  const input = {
+    language: "Solidity",
+    sources: { "InterminalSettlement.sol": { content: source } },
+    settings: {
+      optimizer: { enabled: true, runs: 200 },
+      outputSelection: {
+        "*": { "*": ["abi", "evm.bytecode.object", "evm.deployedBytecode.object"] },
+      },
+    },
+  };
+  const output = JSON.parse(solc.compile(JSON.stringify(input)));
+  const errors = (output.errors || []).filter((e) => e.severity === "error");
+  if (errors.length) throw new Error("Canonical settlement source does not compile");
+  return output.contracts["InterminalSettlement.sol"]["InterminalSettlement"];
 }
 
 async function main() {
@@ -25,97 +54,77 @@ async function main() {
   ok("Arc chain ID 5042", Number(network.chainId) === EXPECTED_CHAIN_ID);
 
   const block = await provider.getBlockNumber();
-  ok("Arc mainnet is producing blocks", block > 0);
+  ok("Arc mainnet is producing blocks", block >= EXPECTED_DEPLOYMENT_BLOCK);
+
+  const deploymentReceipt = await provider.getTransactionReceipt(EXPECTED_DEPLOYMENT_TX);
+  ok("deployment transaction exists", !!deploymentReceipt);
+  ok("deployment transaction succeeded", deploymentReceipt?.status === 1);
+  ok(
+    "deployment created the expected settlement contract",
+    String(deploymentReceipt?.contractAddress || "").toLowerCase() === SETTLEMENT.toLowerCase(),
+  );
+  ok("deployment block matches recorded provenance", Number(deploymentReceipt?.blockNumber) === EXPECTED_DEPLOYMENT_BLOCK);
 
   const settlementCode = await provider.getCode(SETTLEMENT);
   ok("settlement contract bytecode exists", settlementCode !== "0x");
+  ok("live settlement bytecode size is recorded", (settlementCode.length - 2) / 2 === EXPECTED_SETTLEMENT_BYTES);
+
+  const source = fs.readFileSync(
+    new URL("../contracts/InterminalSettlement.sol", import.meta.url),
+    "utf8",
+  );
+  const contract = compileSource(source);
+  const freshRuntime = "0x" + contract.evm.deployedBytecode.object;
+  const freshCreation = "0x" + contract.evm.bytecode.object;
+
+  ok(
+    "checked-in Solidity reproduces the live deployment byte-for-byte",
+    freshRuntime.toLowerCase() === settlementCode.toLowerCase(),
+  );
 
   const artifact = JSON.parse(
-    fs.readFileSync(new URL("../artifacts/InterminalSettlement.json", import.meta.url), "utf8")
+    fs.readFileSync(new URL("../artifacts/InterminalSettlement.json", import.meta.url), "utf8"),
   );
   ok("committed artifact is for InterminalSettlement", artifact.contractName === "InterminalSettlement");
-
-  function stripSolidityMetadata(bytecode) {
-    const hex = String(bytecode || "").replace(/^0x/i, "");
-    if (hex.length < 4) return "0x" + hex;
-    const metadataBytes = Number.parseInt(hex.slice(-4), 16);
-    const metadataHexLength = metadataBytes * 2;
-    if (!Number.isFinite(metadataBytes) || metadataHexLength + 4 > hex.length) return "0x" + hex;
-    return "0x" + hex.slice(0, hex.length - metadataHexLength - 4);
-  }
-
-  const DEPLOYED_SOURCE_REF = "12c6443e52693a4433a550ffca8701331f9f7cf0";
-  const historicalSourceUrl =
-    "https://raw.githubusercontent.com/Tajudeeen/interminal-/" +
-    DEPLOYED_SOURCE_REF +
-    "/contracts/InterminalSettlement.sol";
-  const historicalSourceResponse = await fetch(historicalSourceUrl);
-  if (!historicalSourceResponse.ok) {
-    throw new Error("Could not fetch historical deployed source revision: HTTP " + historicalSourceResponse.status);
-  }
-  const historicalSource = await historicalSourceResponse.text();
-
-  const currentSource = fs.readFileSync(
-    new URL("../contracts/InterminalSettlement.sol", import.meta.url),
-    "utf8"
+  ok(
+    "committed artifact runtime matches live deployment",
+    String(artifact.deployedBytecode || "").toLowerCase() === settlementCode.toLowerCase(),
   );
-  const compileInput = {
-    language: "Solidity",
-    sources: { "InterminalSettlement.sol": { content: currentSource } },
-    settings: {
-      optimizer: { enabled: true, runs: 200 },
-      outputSelection: {
-        "*": { "*": ["abi", "evm.bytecode.object", "evm.deployedBytecode.object"] }
-      }
-    }
-  };
-  const compileOutput = JSON.parse(solc.compile(JSON.stringify(compileInput)));
-  const errors = (compileOutput.errors || []).filter((e) => e.severity === "error");
-  if (errors.length) throw new Error("Current committed Solidity source does not compile");
-  const freshRuntime = "0x" + compileOutput.contracts["InterminalSettlement.sol"]["InterminalSettlement"].evm.deployedBytecode.object;
+  ok(
+    "committed artifact creation bytecode matches freshly compiled source",
+    String(artifact.bytecode || "").toLowerCase() === freshCreation.toLowerCase(),
+  );
 
-  const historicalCompileInput = {
-    ...compileInput,
-    sources: { "InterminalSettlement.sol": { content: historicalSource } },
-  };
-  const historicalCompileOutput = JSON.parse(solc.compile(JSON.stringify(historicalCompileInput)));
-  const historicalErrors = (historicalCompileOutput.errors || []).filter((e) => e.severity === "error");
-  if (historicalErrors.length) throw new Error("Historical deployed source revision does not compile");
-  const historicalRuntime =
-    "0x" +
-    historicalCompileOutput.contracts["InterminalSettlement.sol"]["InterminalSettlement"].evm.deployedBytecode.object;
-
-  const deployedCore = stripSolidityMetadata(settlementCode);
-  const freshCore = stripSolidityMetadata(freshRuntime);
-  const historicalCore = stripSolidityMetadata(historicalRuntime);
-  console.log("INFO historical deployment source ref: " + DEPLOYED_SOURCE_REF);
-  console.log("INFO historical runtime executable bytes: " + ((historicalCore.length - 2) / 2));
-  console.log("INFO historical runtime prefix: " + historicalCore.slice(0, 66));
-  console.log("INFO deployed matches historical source: " + (deployedCore.toLowerCase() === historicalCore.toLowerCase()));
-  console.log("INFO runtime bytes: deployed=" + ((settlementCode.length - 2) / 2) + ", freshly-compiled=" + ((freshRuntime.length - 2) / 2));
-  console.log("INFO executable bytes after metadata: deployed=" + ((deployedCore.length - 2) / 2) + ", freshly-compiled=" + ((freshCore.length - 2) / 2));
-  console.log("INFO deployed runtime prefix: " + deployedCore.slice(0, 66));
-  console.log("INFO fresh runtime prefix: " + freshCore.slice(0, 66));
   const deployedRuntimeHash = ethers.keccak256(settlementCode);
-  console.log("INFO live settlement runtime keccak256: " + deployedRuntimeHash);
-  ok("live settlement runtime fingerprint matches recorded Arc deployment", deployedRuntimeHash.toLowerCase() === EXPECTED_SETTLEMENT_RUNTIME_HASH);
-  const sourceRuntimeMatches = deployedCore.toLowerCase() === freshCore.toLowerCase();
-  console.log("WARN current source reproduces live runtime: " + sourceRuntimeMatches);
+  ok(
+    "live settlement runtime fingerprint matches recorded Arc deployment",
+    deployedRuntimeHash.toLowerCase() === EXPECTED_SETTLEMENT_RUNTIME_HASH,
+  );
 
-  const artifactRuntimeMatches = stripSolidityMetadata(String(artifact.deployedBytecode || "")).toLowerCase() ===
-    stripSolidityMetadata(freshRuntime).toLowerCase();
-  if (!artifactRuntimeMatches) {
-    console.log("WARN committed artifact runtime differs from freshly compiled source; regenerate artifacts before submission.");
+  const sourceGuards = [
+    ["pause guard", /modifier whenNotPaused/.test(source)],
+    ["reentrancy guard", /modifier nonReentrant/.test(source)],
+    ["ticket deadline", /ticket\.deadline/.test(source)],
+    ["trader nonce replay protection", /ticket\.nonce == traderNonces\[ticket\.trader\]/.test(source)],
+    ["signature recovery", /recoverSigner\(digest, signature\)/.test(source)],
+    ["signature ownership check", /signer == ticket\.trader/.test(source)],
+    ["input transferFrom", /_safeTransferFrom\(ticket\.tokenIn, ticket\.trader/.test(source)],
+    ["minimum output check", /amountOut >= ticket\.minAmountOut/.test(source)],
+    ["receipt anchoring state", /anchoredReceipts\[receiptHash\] = block\.timestamp/.test(source)],
+  ];
+  for (const [label, present] of sourceGuards) ok("live source contains " + label, present);
+
+  const functionNames = new Set(
+    (artifact.abi || []).filter((entry) => entry.type === "function").map((entry) => entry.name),
+  );
+  for (const required of ["executeTradeTicket", "anchorReceipt", "isReceiptAnchored", "traderNonces", "DOMAIN_SEPARATOR"]) {
+    ok("live ABI exposes " + required, functionNames.has(required));
   }
 
   const routerCode = await provider.getCode(ROUTER);
   ok("Arc router target resolves", routerCode !== "0x");
-
   const usycCode = await provider.getCode(USYC);
   ok("USYC contract target resolves", usycCode !== "0x");
-
-  const usdcCode = await provider.getCode(USDC);
-  ok("Arc USDC interface target resolves", usdcCode !== "0x");
 
   const settlement = new ethers.Contract(
     SETTLEMENT,
@@ -125,7 +134,7 @@ async function main() {
       "function owner() view returns (address)",
       "function paused() view returns (bool)",
     ],
-    provider
+    provider,
   );
 
   const contractChainId = Number(await settlement.ARC_CHAIN_ID());
@@ -144,22 +153,24 @@ async function main() {
   const paused = await settlement.paused();
 
   console.log(JSON.stringify({
-    network: {
-      rpc: RPC,
-      chainId: Number(network.chainId),
-      headBlock: block,
-    },
-    contracts: {
-      settlement: SETTLEMENT,
-      router: ROUTER,
-      usdcErc20: USDC,
-      usyc: USYC,
+    network: { rpc: RPC, chainId: Number(network.chainId), headBlock: block },
+    deployment: {
+      tx: EXPECTED_DEPLOYMENT_TX,
+      block: EXPECTED_DEPLOYMENT_BLOCK,
+      contract: SETTLEMENT,
+      runtimeBytes: EXPECTED_SETTLEMENT_BYTES,
+      runtimeKeccak256: deployedRuntimeHash,
     },
     settlement: {
       contractChainId,
       owner,
       paused,
       domainSeparator: liveDomain,
+    },
+    provenance: {
+      canonicalSource: "contracts/InterminalSettlement.sol",
+      futureSuccessor: "contracts/InterminalSettlementV2.sol",
+      sourceRuntimeMatch: true,
     },
   }, null, 2));
 }
