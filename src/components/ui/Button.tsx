@@ -16,15 +16,15 @@ const variantStyles: Record<ButtonVariant, string> = {
   primary:
     "btn-primary",
   secondary:
-    "bg-card hover:bg-card-hover text-themed border border-border hover:border-lime-500/30 shadow-sm",
+    "card-themed hover:bg-themed-card text-themed border border-themed/40 hover:border-lime-500/30 shadow-sm",
   pos:
     "btn-positive",
   danger:
     "btn-danger",
   outline:
-    "bg-transparent hover:bg-lime-500/10 text-themed hover:text-lime-500 border border-border hover:border-lime-500/50",
+    "bg-transparent hover:bg-lime-500/10 text-themed hover:text-lime-500 border border-themed/40 hover:border-lime-500/50",
   ghost:
-    "bg-transparent hover:bg-card-hover text-muted hover:text-themed border border-transparent",
+    "bg-transparent hover:bg-themed-card text-muted hover:text-themed border border-transparent",
   lime:
     "btn-primary",
 };
