@@ -70,7 +70,7 @@ export const LandingView: React.FC = () => {
         </h1>
 
         <p className="mt-5 text-sm sm:text-base max-w-xl leading-relaxed text-sub">
-          Continuous cash optimization, automated 3.225% USYC T-Bill yield sweeps, and Just-In-Time liquidity
+          Policy-driven cash optimization, USYC treasury rebalancing, and Just-In-Time liquidity
           clearing—governed by signed EIP-712 execution controls.
         </p>
 
@@ -112,7 +112,7 @@ export const LandingView: React.FC = () => {
                   </span>
                 </div>
                 <div className="font-mono text-[11px] text-sub mt-0.5">
-                  1-Click walkthrough: 4.95% USYC Sweep, JIT Unwind & Arc Settlement
+                  1-Click walkthrough: Policy Sweep, JIT Unwind & Arc Settlement
                 </div>
               </div>
             </div>
@@ -201,7 +201,7 @@ export const LandingView: React.FC = () => {
                 +${usycAnnualReturn.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/yr
               </div>
               <div className="font-mono text-[10px] text-muted mt-0.5">
-                +${(usycAnnualReturn / 365).toFixed(2)}/day continuous compounding
+                +${(usycAnnualReturn / 365).toFixed(2)}/day modeled reference yield
               </div>
             </div>
 
@@ -238,7 +238,7 @@ export const LandingView: React.FC = () => {
         {/* Capital Flow Architecture Box */}
         <div className="mt-8 w-full card-themed border border-themed rounded-card p-5 text-left">
           <div className="font-mono text-[10px] uppercase tracking-widest text-muted mb-4">
-            Autonomous Treasury Capital Flow
+            Policy-Controlled Treasury Capital Flow
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {[
