@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
-import { ARC, USYC_APY } from "../../constants/arc";
+import { ARC, USYC_APY, USYC_YIELD_AS_OF } from "../../constants/arc";
 import { shortAddr } from "../../lib/arc/wallet";
 import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
