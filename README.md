@@ -281,7 +281,7 @@ The final hardening pass is intentionally proof-first:
 
 The UI now keeps demo, testnet rehearsal, and mainnet execution as separate environments so the reviewer can move from safe exploration to real execution without ambiguity.
 
-The Testnet Lab now performs a real, small Arc Testnet wallet transaction before the Mainnet promotion control unlocks. The current checkpoint is a 0.01 native-USDC self-transfer, selected because it proves wallet signing, network selection, transaction submission, and receipt confirmation without moving value to a third party. The testnet policy balances remain clearly labelled scenarios; they are not presented as wallet balances.
+The Testnet Lab now performs a real, small Arc Testnet wallet transaction before the Mainnet promotion control unlocks. The checkpoint is deliberately a 0.01 native-USDC self-transfer: it proves wallet signing, chain selection, transaction submission, and receipt confirmation, while avoiding a misleading claim that Interminal has a testnet settlement contract identical to the deployed Mainnet contract. The current checkpoint is a 0.01 native-USDC self-transfer, selected because it proves wallet signing, network selection, transaction submission, and receipt confirmation without moving value to a third party. The testnet policy balances remain clearly labelled scenarios; they are not presented as wallet balances.
 
 On mobile, Interminal first uses injected providers when opened inside a wallet's in-app browser. When a normal mobile browser has no injected provider, the wallet path hands the current dapp URL to MetaMask Mobile. Desktop multi-wallet discovery uses EIP-6963. See [MetaMask's current developer documentation](https://docs.metamask.io/wallet/how-to/connect/) and [Rabby's EIP-6963 integration guidance](https://rabby.io/docs/integrating-rabby-wallet).
 
@@ -295,3 +295,12 @@ On mobile, Interminal first uses injected providers when opened inside a wallet'
 - The judge walkthrough distinguishes simulation from real Arc execution and never presents a simulated JIT action as an on-chain transaction.
 
 For a reviewer, the strongest evidence path is: live app → Proof / Arc RPC → deployment transaction → verified source → real wallet execution → confirmed receipt → anchored certificate.
+
+
+## UX guarantees
+
+- **Demo never requires a wallet.** Trade simulation, treasury sweep simulation, JIT stress testing, DCA planning, agent-mandate simulation, gas-tank simulation, calculators, receipts, and the guided tour are available before wallet connection.
+- **Testnet is a real wallet stage.** The app uses Arc Testnet chain `5042002`, reads its live block head, and requires a confirmed on-chain execution check before Mainnet promotion is enabled. Arc Testnet uses USDC as the native gas currency. 
+- **Mainnet is explicit.** The `Perform Task on Mainnet` action appears only after the Testnet checkpoint and switches the application into a wallet-required Mainnet context. The app never silently turns a Mainnet-intent action into a simulation.
+- **Mobile wallets are first-class.** Injected mobile wallet browsers work through EIP-1193/EIP-6963 discovery. A normal mobile browser without an injected provider is handed off to MetaMask Mobile using its dapp deep link; desktop browser extensions remain supported through provider discovery.
+- **Motion is restrained.** View changes use native View Transition API where available, with a fallback fade, smooth scroll-to-top on navigation, calmer 220ms control transitions, and reduced-motion support.
