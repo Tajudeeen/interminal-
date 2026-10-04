@@ -5,7 +5,7 @@ This page records the immutable identity of the Interminal settlement contract c
 - Network: Arc Mainnet
 - Chain ID: 5042
 - Settlement: 0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36
-- Deployment transaction: 0x1d96a8c548268f851a22c23107fbac1a606bbd2b951856d5f9f9f0f4d3ecbae404
+- Deployment transaction: 0x1d96a8c548268f851a22c23107fbac1a606bbd2b951856d5f9f0f4d3ecbae404
 - Observed live runtime size: 8,802 bytes
 - Live runtime keccak256: 0x0f8491da3d30f0441520308dfb21175d9272f81b5f3bb6bca60347ebbd2fcac8
 
