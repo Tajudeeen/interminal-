@@ -13,6 +13,19 @@
 
 ---
 
+## Live market data
+
+Interminal does not generate production chart candles.
+
+- **Arc markets:** OHLCV comes from GeckoTerminal's free public API using real Arc DEX pools for WETH/USDC, cirBTC/USDC, and EURC/USDC.
+- **USYC:** the chart uses Hashnote's official NAV price reports. USYC is priced once per business day, so it is rendered as a daily NAV series rather than fake intraday candles.
+- **Other reference markets:** Binance public klines are labelled as global reference data, not Arc liquidity.
+- **Unavailable markets:** the UI shows no-data instead of silently inventing candles.
+
+GeckoTerminal attribution: https://www.geckoterminal.com/arc
+
+---
+
 ## Builder
 
 | | |
