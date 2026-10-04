@@ -30,7 +30,7 @@ Interminal is presented as a live Arc mainnet proof-of-concept. The important di
 
 The browser demo includes seeded treasury balances, DCA scheduling, gas-tank demonstration controls, and the interactive walkthrough. These are labeled as simulation and never claim to be historical Arc transactions.
 
-The browser does not run an unattended background agent. A signed AgentMandate is an authorization artifact for a configured agent address. The current deployed contract enforces signer, nonce, expiry, cumulative spend, per-transaction spend, selected pair bitmask, and minimum output. The UI does not describe the browser as a background autonomous executor.
+The browser does not run an unattended background agent. Agent mandates are authorization artifacts, not a background service. The maintained Solidity source now hardens agent execution with USDC-only spend, concrete pair mapping, spend caps, expiry, nonce protection, and an on-chain slippage ceiling. Those latest source hardenings require a new deployment before they become live on Arc. The Microgrant live path uses signed TradeTickets for confirmed user-triggered settlement.
 
 ## Reproducible checks
 
