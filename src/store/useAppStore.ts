@@ -14,7 +14,7 @@ import {
 } from "../lib/crypto/eip712";
 import { calculateJitUnwind } from "../lib/math/treasury";
 import { computeIndicators, generateCandles, analyzeMarket, getCandles } from "../lib/math/indicators";
-import { formatUnits, quoteTrade } from "../lib/math/quotes";
+import { formatUnits, parseUnits, quoteTrade } from "../lib/math/quotes";
 import {
   getInjected,
   isAddress,
@@ -27,10 +27,14 @@ import {
   loadOnchainPortfolio,
   publicRpc,
   readChainId,
+  readTraderNonce,
+  routerAmountOut,
   verifyArcLive,
   erc20Allowance,
   sendApproval,
+  waitForTransactionReceipt,
 } from "../lib/arc/rpcClient";
+import { anchorReceiptOnchain, checkReceiptAnchoredOnchain } from "../lib/arc/receiptAnchor";
 
 export interface ToastItem {
   id: string;
@@ -620,6 +624,18 @@ export const useAppStore = create<AppState>((set, get) => {
         get().addToast("Invalid Amount", "Enter a positive trade size.", "err");
         return;
       }
+      if (get().livePortfolio && get().wrongNetwork) {
+        get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) first.", "err");
+        return;
+      }
+      if (get().livePortfolio && !PAIRS[assertPair(pairKey)].address) {
+        get().addToast(
+          "Live Market Unavailable",
+          pairKey + " has no verified Arc token contract in the registry. This market is simulation-only.",
+          "err",
+        );
+        return;
+      }
       if (side === "buy") {
         const jit = calculateJitUnwind({
           tradeAmountUsd: amount,
@@ -659,11 +675,16 @@ export const useAppStore = create<AppState>((set, get) => {
         ticketNonce,
         auditReceipts,
         activity,
+        wrongNetwork,
       } = get();
-      const p = PAIRS[pairKey];
+
       if (!pendingQuote) return;
       if (!address || !isAddress(address)) {
-        get().addToast("Wallet Required", "Connect an Arc Mainnet wallet to sign.", "err");
+        get().addToast("Wallet Required", "Connect an Arc Mainnet wallet to execute a live trade.", "err");
+        return;
+      }
+      if (livePortfolio && wrongNetwork) {
+        get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) before executing.", "err");
         return;
       }
       if (Date.now() > pendingQuote.expiresAt) {
@@ -671,91 +692,225 @@ export const useAppStore = create<AppState>((set, get) => {
         set({ reviewOpen: false });
         return;
       }
+
+      const p = PAIRS[assertPair(pairKey)];
+      if (livePortfolio && !p.address) {
+        get().addToast(
+          "Live Market Unavailable",
+          pairKey + " has no verified Arc token contract in the registry. This market is simulation-only.",
+          "err",
+        );
+        return;
+      }
+
       set({ executing: true });
+
       try {
         const trader = normalizeAddress(address);
-        const ticket = buildTradeTicket(trader, pairKey, side, amount, pendingQuote, ticketNonce);
-        const eip712Payload = {
+
+        if (!livePortfolio) {
+          const receipt = generateTradeReceipt({
+            quote: pendingQuote,
+            pairKey,
+            trader,
+            side,
+            amount,
+            mode: "simulation",
+            status: "simulated",
+            blockNumber: 0,
+          });
+
+          const nextBalances = { ...balances };
+          if (side === "buy") {
+            nextBalances.USDC = Math.max(0, (nextBalances.USDC || 0) - amount);
+            nextBalances[p.base] = (nextBalances[p.base] || 0) + pendingQuote.received;
+          } else {
+            nextBalances[p.base] = Math.max(0, (nextBalances[p.base] || 0) - amount / p.price);
+            nextBalances.USDC = (nextBalances.USDC || 0) + pendingQuote.received;
+          }
+
+          const label =
+            side === "buy"
+              ? "Simulated buy " + pendingQuote.received.toFixed(4) + " " + p.base + " for $" + amount.toFixed(2) + " USDC"
+              : "Simulated sell " + (amount / p.price).toFixed(4) + " " + p.base + " for $" + pendingQuote.received.toFixed(2) + " USDC";
+
+          set({
+            balances: nextBalances,
+            ticketNonce: ticketNonce + 1,
+            auditReceipts: [receipt, ...auditReceipts].slice(0, 50),
+            activity: [
+              {
+                ts: Date.now(),
+                type: "trade",
+                label,
+                detail: "Simulation only · no Arc transaction was broadcast.",
+                hash: receipt.signature,
+                receiptId: receipt.receiptId,
+                receipt,
+              },
+              ...activity,
+            ],
+            lastTx: { show: true, hash: receipt.signature, price: pendingQuote.effective, label, receipt },
+            reviewOpen: false,
+            pendingQuote: null,
+            executing: false,
+          });
+
+          get().addToast("Simulation Complete", "No wallet transaction was sent. The receipt is marked simulated.", "info");
+          return;
+        }
+
+        const tokenIn = side === "buy" ? ARC.usdcErc20 : p.address!;
+        const tokenOut = side === "buy" ? p.address! : ARC.usdcErc20;
+        const inputDecimals = side === "buy" ? 6 : (p.decimals ?? 18);
+        const outputDecimals = side === "buy" ? (p.decimals ?? 18) : 6;
+        const inputAmount = side === "buy" ? amount : amount / p.price;
+        const amountInRaw = parseUnits(inputAmount, inputDecimals);
+        if (amountInRaw <= 0n) throw new Error("Trade amount rounds to zero at token precision");
+
+        get().addToast("Live Quote", "Reading the verified Arc AMM quote before signing the trade ticket.", "info");
+        const quotedOutRaw = await routerAmountOut(tokenIn, tokenOut, amountInRaw);
+        if (quotedOutRaw <= 0n) throw new Error("Arc AMM returned zero output for this route");
+
+        const slippageBps = Math.round(get().slippage * 100);
+        const minOutRaw = quotedOutRaw * BigInt(10_000 - slippageBps) / 10_000n;
+        const received = formatUnits("0x" + quotedOutRaw.toString(16), outputDecimals);
+        const minReceived = formatUnits("0x" + minOutRaw.toString(16), outputDecimals);
+        const effective =
+          side === "buy"
+            ? amount / Math.max(received, Number.EPSILON)
+            : received / Math.max(inputAmount, Number.EPSILON);
+
+        const liveQuote: TradeQuote = {
+          ...pendingQuote,
+          price: p.price,
+          received,
+          minReceived,
+          effective,
+          rate: effective,
+          impact: 0,
+          slippageBps,
+          expiresAt: Date.now() + 20_000,
+        };
+
+        const onchainNonce = await readTraderNonce(trader);
+        const ticket = buildTradeTicket(trader, pairKey, side, amount, liveQuote, onchainNonce);
+
+        const currentAllowance = await erc20Allowance(tokenIn, trader, ARC.settlement);
+        if (currentAllowance < amountInRaw) {
+          get().addToast("Approval Required", "Approve the exact input amount for this Arc settlement.", "info");
+          const approveTx = await sendApproval(trader, tokenIn, ARC.settlement, amountInRaw);
+          await waitForTransactionReceipt(approveTx);
+        }
+
+        const payload = {
           types: ticket.types,
           primaryType: ticket.primaryType,
           domain: ticket.domain,
           message: ticket.message,
         };
-        const serializedPayload = JSON.stringify(eip712Payload, (_, v) =>
-          typeof v === "bigint" ? v.toString() : v
-        );
 
-        let sig: string;
-        if (!livePortfolio) {
-          sig = "0x" + sha256Hex(serializedPayload + Date.now()).slice(2) + "d".repeat(66);
-        } else {
-          try {
-            sig = await walletRpc("eth_signTypedData_v4", [trader, serializedPayload]);
-          } catch (signErr: any) {
-            // Some wallet providers expect parsed object instead of serialized JSON string
-            if (signErr?.message?.includes("JSON") || signErr?.message?.includes("parse")) {
-              sig = await walletRpc("eth_signTypedData_v4", [trader, eip712Payload]);
-            } else {
-              throw signErr;
-            }
-          }
-          if (typeof sig !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(sig)) {
-            throw new Error("Wallet returned malformed signature");
-          }
+        get().addToast("Signature Required", "Sign the EIP-712 trade ticket in your wallet.", "info");
+        const sig = await walletRpc("eth_signTypedData_v4", [trader, JSON.stringify(payload)]);
+
+        if (typeof sig !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(sig)) {
+          throw new Error("Wallet returned malformed EIP-712 signature");
         }
 
+        const cleanSig = sig.replace(/^0x/i, "");
+        const pad32 = (v: bigint | number | string) =>
+          typeof v === "bigint" || typeof v === "number"
+            ? BigInt(v).toString(16).padStart(64, "0")
+            : String(v).replace(/^0x/i, "").toLowerCase().padStart(64, "0");
+        const sigLen = (cleanSig.length / 2).toString(16).padStart(64, "0");
+        const sigPadded = cleanSig.padEnd(Math.ceil(cleanSig.length / 64) * 64, "0");
+        const calldata =
+          "0x254f432b" +
+          pad32(ticket.message.trader) +
+          pad32(ticket.message.tokenIn) +
+          pad32(ticket.message.tokenOut) +
+          pad32(BigInt(ticket.message.amountIn)) +
+          pad32(BigInt(ticket.message.minAmountOut)) +
+          pad32(ticket.message.nonce) +
+          pad32(ticket.message.deadline) +
+          (256).toString(16).padStart(64, "0") +
+          sigLen +
+          sigPadded;
+
+        get().addToast("Broadcasting", "Sending executeTradeTicket to the deployed Arc settlement contract.", "info");
+        const txHash = await walletRpc("eth_sendTransaction", [
+          { from: trader, to: ARC.settlement, data: calldata, gas: "0x55730" },
+        ]);
+
+        get().addToast("Pending", "Arc accepted the transaction. Waiting for confirmation.", "info");
+        const confirmed = await waitForTransactionReceipt(txHash);
+
         const receipt = generateTradeReceipt({
-          quote: pendingQuote,
+          quote: liveQuote,
           pairKey,
           trader,
           sig,
+          transactionHash: txHash,
           side,
           amount,
-          blockNumber: get().block,
+          mode: "mainnet",
+          status: "confirmed",
+          blockNumber: confirmed.blockNumber,
         });
 
-        const nextBalances = { ...balances };
-        if (side === "buy") {
-          nextBalances.USDC = Math.max(0, (nextBalances.USDC || 0) - amount);
-          nextBalances[p.base] = (nextBalances[p.base] || 0) + pendingQuote.received;
-        } else {
-          nextBalances[p.base] = Math.max(0, (nextBalances[p.base] || 0) - amount / p.price);
-          nextBalances.USDC = (nextBalances.USDC || 0) + pendingQuote.received;
+        get().addToast("Anchoring Audit Proof", "Writing the certificate digest to the Arc settlement contract.", "info");
+        await anchorReceiptOnchain(receipt, trader);
+        if (!(await checkReceiptAnchoredOnchain(receipt))) {
+          throw new Error("Arc confirmed the anchor transaction, but the certificate digest could not be verified");
         }
+
+        const freshBalances = await loadOnchainPortfolio(trader);
+        let nativeGasBalance = get().nativeGasBalance;
+        try {
+          const nativeHex = await publicRpc("eth_getBalance", [trader, "latest"]);
+          nativeGasBalance = formatUnits(nativeHex, ARC.nativeDecimals);
+        } catch {}
 
         const label =
           side === "buy"
-            ? `Signed buy ${pendingQuote.received.toFixed(4)} ${p.base} for $${amount.toFixed(2)} USDC`
-            : `Signed sell ${(amount / p.price).toFixed(4)} ${p.base} for $${pendingQuote.received.toFixed(2)} USDC`;
-
-        const newActivity = [
-          {
-            ts: Date.now(),
-            type: "trade",
-            label,
-            detail: `${pairKey} @ $${pendingQuote.effective.toFixed(2)} · EIP-712 ${sig.slice(0, 10)}…`,
-            hash: sig,
-            receiptId: receipt.receiptId,
-            receipt,
-          },
-          ...activity,
-        ];
+            ? "Confirmed buy " + received.toFixed(4) + " " + p.base + " for $" + amount.toFixed(2) + " USDC"
+            : "Confirmed sell " + inputAmount.toFixed(4) + " " + p.base + " for $" + received.toFixed(2) + " USDC";
 
         set({
-          balances: nextBalances,
-          ticketNonce: ticketNonce + 1,
+          balances: freshBalances,
+          nativeGasBalance,
+          ticketNonce: onchainNonce + 1,
           auditReceipts: [receipt, ...auditReceipts].slice(0, 50),
-          activity: newActivity,
-          lastTx: { show: true, hash: sig, price: pendingQuote.effective, label, receipt },
+          activity: [
+            {
+              ts: Date.now(),
+              type: "trade",
+              label,
+              detail: "Arc Mainnet · confirmed block #" + confirmed.blockNumber.toLocaleString() + " · certificate anchored and verified",
+              hash: txHash,
+              receiptId: receipt.receiptId,
+              receipt,
+            },
+            ...activity,
+          ],
+          lastTx: { show: true, hash: txHash, price: liveQuote.effective, label, receipt },
           reviewOpen: false,
           pendingQuote: null,
           executing: false,
         });
 
-        get().addToast("Signed & Certified", "EIP-712 permit approved. Audit certificate issued.", "ok");
+        get().addToast(
+          "Trade Confirmed",
+          "Arc block #" + confirmed.blockNumber.toLocaleString() + " confirmed. Audit digest is anchored and verified.",
+          "ok",
+        );
       } catch (err: any) {
         set({ executing: false });
-        get().addToast("Sign Failed", err?.code === 4001 ? "Signature rejected." : (err.message || String(err)), "err");
+        get().addToast(
+          "Trade Failed",
+          err?.code === 4001 ? "Wallet action rejected." : (err?.message || String(err)),
+          "err",
+        );
       }
     },
 
