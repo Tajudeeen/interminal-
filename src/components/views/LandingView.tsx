@@ -21,6 +21,9 @@ export const LandingView: React.FC = () => {
 
   const handleLaunchWithCustomTreasury = () => {
     useAppStore.setState((s) => ({
+      environmentMode: "demo",
+      testnetTaskComplete: false,
+      testnetTxHash: null,
       balances: {
         ...s.balances,
         USDC: simBuffer,
