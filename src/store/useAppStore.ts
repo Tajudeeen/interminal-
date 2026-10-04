@@ -264,12 +264,12 @@ export const useAppStore = create<AppState>((set, get) => {
   return {
     theme: getInitialTheme(),
     view: "landing",
-    connected: true,
+    connected: false,
     connecting: false,
-    address: "0x71C5689E281249b6b6C1864A496E25bCc4965042",
-    chainId: 5042,
+    address: null,
+    chainId: null,
     wrongNetwork: false,
-    providerLabel: "Arc Demo Desk (Chain 5042)",
+    providerLabel: null,
     livePortfolio: false,
     walletError: "",
     balances: {
@@ -280,7 +280,7 @@ export const useAppStore = create<AppState>((set, get) => {
       cirBTC: 0.35,
       WETH: 2.0,
     },
-    nativeGasBalance: 0.185,
+    nativeGasBalance: 0,
     gasRefueling: false,
     pair: initialPair,
     timeframe: "4h",
@@ -332,6 +332,7 @@ export const useAppStore = create<AppState>((set, get) => {
     setJudgeTourOpen: (open) => set({ judgeTourOpen: open }),
     setJudgeTourStep: (step) => set({ judgeTourStep: step }),
     startJudgeTour: () => {
+      get().launchDemo();
       set({ judgeTourOpen: true, judgeTourStep: 1, view: "portfolio" });
     },
 
