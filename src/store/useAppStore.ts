@@ -1902,7 +1902,7 @@ export const useAppStore = create<AppState>((set, get) => {
         pair: pairKey,
         view: "terminal",
       }));
-      get().addToast("Token Imported", \`\${sym} · \${metadata.name} registered from Arc contract metadata.\`, "ok");
+      get().addToast("Token Imported", `${sym} · ${metadata.name} registered from Arc contract metadata.`, "ok");
       } catch (err: any) {
         set({ importingToken: false, importTokenError: err.message || String(err) });
       }
