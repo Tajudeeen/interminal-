@@ -365,6 +365,7 @@ export const useAppStore = create<AppState>((set, get) => {
         set({ pair, timeframe: tf, candles: [], indicators: null, candleSource: "unavailable", marketFeedStatus: { source: "Loading live market data", live: false, lastUpdate: null, error: null } });
 
         getCandles(pair, tf).then((result) => {
+          if (get().pair !== pair) return;
           const indicators = result.candles.length ? computeIndicators(result.candles) : null;
           const current = PAIRS[pair];
           if (current && result.stats) {
@@ -397,6 +398,7 @@ export const useAppStore = create<AppState>((set, get) => {
       const pair = get().pair;
       const nextTf = pair === "USYC/USDC" ? "1D" : tf;
       getCandles(pair, nextTf).then((result) => {
+        if (get().pair !== pair || get().timeframe !== nextTf) return;
         const indicators = result.candles.length ? computeIndicators(result.candles) : null;
         const current = PAIRS[pair];
         if (current && result.stats) {
@@ -556,6 +558,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
       try {
         const result = await getCandles(activePair, activeTf);
+        if (get().pair !== activePair || get().timeframe !== activeTf) return;
         const indicators = result.candles.length ? computeIndicators(result.candles) : null;
         const current = PAIRS[activePair];
 
