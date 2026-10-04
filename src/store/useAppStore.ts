@@ -799,6 +799,9 @@ export const useAppStore = create<AppState>((set, get) => {
         const minOutRaw = quotedOutRaw * BigInt(10_000 - slippageBps) / 10_000n;
         const received = formatUnits("0x" + quotedOutRaw.toString(16), outputDecimals);
         const minReceived = formatUnits("0x" + minOutRaw.toString(16), outputDecimals);
+        if (side === "buy") {
+          livePriceUsd = amount / Math.max(received, Number.EPSILON);
+        }
         const effective =
           side === "buy"
             ? amount / Math.max(received, Number.EPSILON)
