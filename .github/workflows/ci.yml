@@ -24,5 +24,8 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Protocol and legacy regression suite
+        run: npm run test:legacy
+
       - name: Arc mainnet verification
         run: npm run verify:arc
