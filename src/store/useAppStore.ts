@@ -471,7 +471,7 @@ export const useAppStore = create<AppState>((set, get) => {
       const indicators = computeIndicators(candles);
       set({
         connected: true,
-        address: "0x89205A3A3b2A69De6Dbf7f01ED13B2108B2c43e7",
+        address: null,
         chainId: 5042,
         wrongNetwork: false,
         providerLabel: "Demo Simulation",
@@ -486,7 +486,7 @@ export const useAppStore = create<AppState>((set, get) => {
       });
       get().addToast(
         "Treasury Cockpit Active",
-        "Simulation initialized with $14,250 operating cash and $10,000 USYC T-Bills on Arc.",
+        "Simulation initialized with $14,250 operating cash and $10,000 USYC. No Arc transaction was broadcast.",
         "ok"
       );
     },
@@ -624,7 +624,7 @@ export const useAppStore = create<AppState>((set, get) => {
         get().addToast("Invalid Amount", "Enter a positive trade size.", "err");
         return;
       }
-      if (get().livePortfolio && get().wrongNetwork) {
+      if (get().wrongNetwork) {
         get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) first.", "err");
         return;
       }
@@ -683,7 +683,7 @@ export const useAppStore = create<AppState>((set, get) => {
         get().addToast("Wallet Required", "Connect an Arc Mainnet wallet to execute a live trade.", "err");
         return;
       }
-      if (livePortfolio && wrongNetwork) {
+      if (wrongNetwork) {
         get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) before executing.", "err");
         return;
       }
@@ -1027,6 +1027,11 @@ export const useAppStore = create<AppState>((set, get) => {
         return;
       }
 
+      if (get().wrongNetwork) {
+        get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) first.", "err");
+        return;
+      }
+
       if (!livePortfolio || !address) {
         if (direction === "sweep") {
           const receipt = generateTradeReceipt({
@@ -1111,11 +1116,6 @@ export const useAppStore = create<AppState>((set, get) => {
           }));
           get().addToast("Simulation Unwind Complete", "No Arc transaction was broadcast.", "info");
         }
-        return;
-      }
-
-      if (get().wrongNetwork) {
-        get().addToast("Wrong Network", "Switch the wallet to Arc Mainnet (Chain 5042) first.", "err");
         return;
       }
 
