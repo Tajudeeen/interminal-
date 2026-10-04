@@ -41,7 +41,7 @@ The terminal chart is rendered with **TradingView Lightweight Charts 5.2.1**. Th
 | BTC/USDC (cirBTC) | `0xd945caee4635bcd7fb8a9fa74dc1d0c4c1472782` | Aero · Arc |
 | EURC/USDC | `0xbe080ac37ad1305dfcc9521f5e6f68cfdc41b7fa` | Aero · Arc |
 
-The public GeckoTerminal API is cached for roughly one minute and is limited to about 10 requests/minute, so Interminal caches chart responses locally for 45 seconds and refreshes market state no more than necessary.
+The public GeckoTerminal API is cached for roughly one minute and is limited to 30 requests/minute, so Interminal caches chart responses locally for 45 seconds and refreshes market state no more than necessary.
 
 ---
 
