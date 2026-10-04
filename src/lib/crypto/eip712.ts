@@ -427,8 +427,13 @@ export function generateTradeReceipt({
     transactionHash: transactionHash || null,
   };
 
-  const canonicalString = JSON.stringify(receipt);
-  receipt.integrityDigest = sha256Hex(canonicalString);
+  const canonicalPayload = { ...receipt };
+  delete canonicalPayload.integrityDigest;
+  delete canonicalPayload.status;
+  delete canonicalPayload.onchainAnchored;
+  delete canonicalPayload.anchorTx;
+  delete canonicalPayload.anchoredAt;
+  receipt.integrityDigest = sha256Hex(JSON.stringify(canonicalPayload));
   return receipt as TradeReceipt;
 }
 
