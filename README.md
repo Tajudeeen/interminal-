@@ -134,25 +134,22 @@ Interminal is designed so a reviewer can independently verify its important clai
 
 ---
 
-## What to Try (3-Step Reviewer Guide)
+## What to Try (Reviewer Guide)
 
-### Option A: 3-Minute Simulation Tour (No Wallet or Gas Required)
-1. Open the live deployment: [https://useinterminal.vercel.app/](https://useinterminal.vercel.app/)
-2. Click **"Take a Tour"** on the landing page or in the navigation bar.
-3. Walk through the 3 core pillars using the pre-seeded simulation state:
-   - **Step 1:** Simulate the USDC → USYC yield sweep above the operating buffer.
-   - **Step 2:** Open the $25,000 JIT scenario and inspect the calculated USYC shortfall. No transaction is broadcast.
-   - **Step 3:** Inspect the cryptographic JSON certificate and SHA-256 integrity proof.
+### Option A: Live Arc Mainnet First (With MetaMask / Rabby)
+1. Open the live deployment: [https://useinterminal.vercel.app/](https://useinterminal.vercel.app/) and click **Review Live Mainnet**.
+2. Connect to **Arc Mainnet (Chain ID: 5042)**. Interminal loads real ERC-20 operating USDC, supported Arc token balances, native USDC gas, fresh market pricing, and wallet-scaled controls.
+3. Use the Treasury Cockpit to inspect the operating buffer and JIT bridge. The live terminal can build a quoted TradeTicket, request the wallet signature, submit it to the deployed settlement contract, wait for a confirmed receipt, decode the `TradeSettled` event, and then anchor the certificate digest on Arc.
 
-### Option B: Live Arc Mainnet Execution (With MetaMask / Rabby)
-1. Connect your wallet to **Arc Mainnet (Chain ID: 5042)**.
-2. The Treasury Cockpit will instantly switch to **"LIVE ARC MAINNET CONNECTED"** mode, querying your real on-chain native USDC and token balances via Arc's public RPC.
-3. Open the **Corporate Ledger** or any trade certificate, and click **"Anchor to Arc Settlement"**. Your wallet will prompt an `anchorReceipt(bytes32)` transaction to contract `0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36`. Once confirmed, click the link to view the live block and transaction on the [Arc Explorer](https://explorer.arc.io).
+### Option B: Simulation Tour (No Wallet or Gas Required)
+1. Click **Take a Tour**.
+2. Walk through policy sweep, JIT liquidity and the cryptographic receipt flow using seeded simulation state.
+3. Every simulated action remains clearly marked as simulation and has no fabricated blockchain transaction hash.
+
+### Option C: Optional Arc Testnet Rehearsal
+Open **Testnet Rehearsal**, connect a funded Arc Testnet wallet, and run the 0.01 native-USDC self-transfer. Use the returned testnet explorer link to verify the receipt. This is a wallet/network rehearsal only and is not required before Mainnet.
 
 *Note on Gas:* Arc uses native USDC for gas. The app's ~$0.0012 figure is an estimate, not a fixed network fee. Simulation mode requires no wallet or gas.
-
----
-
 ## Architecture
 
 ```text
@@ -231,7 +228,7 @@ Interminal settles on-chain via [`contracts/InterminalSettlement.sol`](contracts
 
 ## Automated Verification & Testing
 
-Interminal includes **44 automated tests** across dual test suites:
+Interminal includes **45 automated tests** across dual test suites:
 
 ### 1. Vitest Unit & TypeScript Test Suite (17 Tests)
 ```bash
