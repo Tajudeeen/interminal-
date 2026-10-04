@@ -7,6 +7,7 @@ import {
   ColorType,
   LineStyle,
 } from "lightweight-charts";
+import type { UTCTimestamp } from "lightweight-charts";
 import type { Candle, ChartMode, Indicators } from "../../types/market";
 
 interface MarketChartProps {
@@ -97,35 +98,43 @@ export const MarketChart: React.FC<MarketChartProps> = ({
       },
     });
 
-    const mainSeries =
-      pair === "USYC/USDC" || chartMode === "line"
-        ? chart.addSeries(LineSeries, {
-            color: "#10B981",
-            lineWidth: 2,
-            lastValueVisible: true,
-            priceLineVisible: true,
-            crosshairMarkerVisible: true,
-          })
-        : chart.addSeries(CandlestickSeries, {
-            upColor: "#10B981",
-            downColor: "#EF4444",
-            borderUpColor: "#10B981",
-            borderDownColor: "#EF4444",
-            wickUpColor: "#10B981",
-            wickDownColor: "#EF4444",
-          });
+    const isLine = pair === "USYC/USDC" || chartMode === "line";
+    const toUtcTime = (ms: number) => Math.floor(ms / 1000) as UTCTimestamp;
 
-    if (pair === "USYC/USDC" || chartMode === "line") {
-      mainSeries.setData(
+    const lineSeries = isLine
+      ? chart.addSeries(LineSeries, {
+          color: "#10B981",
+          lineWidth: 2,
+          lastValueVisible: true,
+          priceLineVisible: true,
+          crosshairMarkerVisible: true,
+        })
+      : null;
+
+    const candleSeries = !isLine
+      ? chart.addSeries(CandlestickSeries, {
+          upColor: "#10B981",
+          downColor: "#EF4444",
+          borderUpColor: "#10B981",
+          borderDownColor: "#EF4444",
+          wickUpColor: "#10B981",
+          wickDownColor: "#EF4444",
+        })
+      : null;
+
+    if (lineSeries) {
+      lineSeries.setData(
         candles.map((c) => ({
-          time: Math.floor(c.time / 1000),
+          time: toUtcTime(c.time),
           value: c.close,
         })),
       );
-    } else {
-      mainSeries.setData(
+    }
+
+    if (candleSeries) {
+      candleSeries.setData(
         candles.map((c) => ({
-          time: Math.floor(c.time / 1000),
+          time: toUtcTime(c.time),
           open: c.open,
           high: c.high,
           low: c.low,
@@ -133,6 +142,7 @@ export const MarketChart: React.FC<MarketChartProps> = ({
         })),
       );
     }
+
 
     if (indicators?.series) {
       const ema20 = chart.addSeries(LineSeries, {
@@ -148,7 +158,7 @@ export const MarketChart: React.FC<MarketChartProps> = ({
         lastValueVisible: false,
       });
 
-      const times = candles.map((c) => Math.floor(c.time / 1000));
+      const times = candles.map((c) => toUtcTime(c.time));
       ema20.setData(
         indicators.series.e20
           .map((value, i) => ({ time: times[i], value }))
@@ -176,14 +186,15 @@ export const MarketChart: React.FC<MarketChartProps> = ({
 
     volume.setData(
       candles.map((c) => ({
-        time: Math.floor(c.time / 1000),
+        time: toUtcTime(c.time),
         value: Math.max(0, c.volume || 0),
         color: c.close >= c.open ? "rgba(16,185,129,0.28)" : "rgba(239,68,68,0.22)",
       })),
     );
 
-    if (showLevels && analysis) {
-      mainSeries.createPriceLine({
+    const priceSeries = lineSeries ?? candleSeries;
+    if (showLevels && analysis && priceSeries) {
+      priceSeries.createPriceLine({
         price: analysis.resistance,
         color: "#EF4444",
         lineWidth: 1,
@@ -191,7 +202,7 @@ export const MarketChart: React.FC<MarketChartProps> = ({
         axisLabelVisible: true,
         title: "RESIST",
       });
-      mainSeries.createPriceLine({
+      priceSeries.createPriceLine({
         price: analysis.support,
         color: "#10B981",
         lineWidth: 1,
