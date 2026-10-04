@@ -178,8 +178,7 @@ function getInitialAuditReceipts(): TradeReceipt[] {
       side: "buy",
       amountUsd: 10000,
       amount: 10000,
-      blockNumber: 4892010,
-      txHash: "0x8fa4093910c2847291a0b3e58193821039bc2710398402941029481029381023",
+      blockNumber: 0,
     });
     const r2 = generateTradeReceipt({
       quote: {
@@ -197,8 +196,7 @@ function getInitialAuditReceipts(): TradeReceipt[] {
       side: "sell",
       amountUsd: 25000,
       amount: 25000,
-      blockNumber: 4892065,
-      txHash: "0x12a9381039821039481029381023840291a0b3e58193821039bc271039840294",
+      blockNumber: 0,
     });
     const r3 = generateTradeReceipt({
       quote: {
@@ -319,7 +317,7 @@ export const useAppStore = create<AppState>((set, get) => {
     toasts: [],
     showLevels: false,
     executing: false,
-    ticketNonce: 1,
+    ticketNonce: 0,
     settlementContractAddress: ARC.settlement,
     judgeTourOpen: false,
     judgeTourStep: 1,
@@ -457,6 +455,7 @@ export const useAppStore = create<AppState>((set, get) => {
           livePortfolio: true,
           balances,
           nativeGasBalance,
+          ticketNonce,
           view: "portfolio",
         });
         get().addToast("Wallet Connected", `Authorized: ${shortAddr(address)} on Arc Mainnet`, "ok");
@@ -592,6 +591,10 @@ export const useAppStore = create<AppState>((set, get) => {
 
     startDcaPlan: () => {
       const { pair, dcaSpendTotal, dcaSliceSize, dcaFreqSec } = get();
+      if (!Number.isFinite(dcaSpendTotal) || dcaSpendTotal <= 0 || !Number.isFinite(dcaSliceSize) || dcaSliceSize <= 0 || !Number.isFinite(dcaFreqSec) || dcaFreqSec <= 0) {
+        get().addToast("Invalid DCA Parameters", "Budget, slice size, and interval must be positive.", "err");
+        return;
+      }
       const totalSlices = Math.max(1, Math.floor(dcaSpendTotal / dcaSliceSize));
       const order: DcaPlan = {
         id: "dca-" + Date.now(),
@@ -608,9 +611,9 @@ export const useAppStore = create<AppState>((set, get) => {
       };
       set((s) => ({ dcaOrders: [order, ...s.dcaOrders] }));
       get().addToast(
-        "DCA Mandate Authorized",
-        `Autonomous execution scheduled for ${totalSlices} slices of ${pair} under EIP-712 permit.`,
-        "ok"
+        "DCA Simulation Scheduled",
+        "Scheduled " + totalSlices + " simulated slices of " + pair + ". The browser does not run a background autonomous executor.",
+        "info"
       );
     },
 
