@@ -21,6 +21,8 @@ export const Sidebar: React.FC = () => {
     setSearchOpen,
     launchDemo,
     startJudgeTour,
+    launchTestnet,
+    environmentMode,
   } = useAppStore();
 
   const navItems = [
@@ -30,6 +32,7 @@ export const Sidebar: React.FC = () => {
     { id: "ai", label: "AI Quant Analyst", icon: "psychology" },
     { id: "ledger", label: "Corporate Ledger", icon: "receipt_long" },
     { id: "proof", label: "Proof & Verifier", icon: "verified_user", badge: "14/14" },
+    { id: "testnet", label: "Testnet Lab", icon: "science", badge: "5042002" },
   ] as const;
 
   return (
@@ -73,6 +76,13 @@ export const Sidebar: React.FC = () => {
         <div className="px-3 pb-2 text-[10px] font-mono uppercase tracking-widest text-muted">
           Institutional Desk
         </div>
+        <button
+          onClick={launchTestnet}
+          className="w-full mb-2 flex items-center justify-between px-3 py-2 rounded-card bg-cyan/5 border border-cyan/20 text-cyan text-[10px] font-mono hover:bg-cyan/10 transition-all"
+        >
+          <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-cyan" /> Testnet rehearsal</span>
+          <span>5042002</span>
+        </button>
         {navItems.map((item) => {
           const isActive = view === item.id;
           return (
@@ -171,7 +181,7 @@ export const Sidebar: React.FC = () => {
                   {shortAddr(address)}
                 </div>
                 <div className="font-mono text-[9px] text-muted">
-                  {livePortfolio ? "Arc Live" : "Demo Session"}
+                  {livePortfolio ? "Arc Mainnet" : environmentMode === "testnet" ? "Arc Testnet" : "Demo Simulation"}
                 </div>
               </div>
             </div>
@@ -222,8 +232,8 @@ export const Sidebar: React.FC = () => {
         {/* Footer info & Theme toggle */}
         <div className="flex items-center justify-between px-1 pt-1">
           <div className="font-mono text-[10px] text-muted">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-pos mr-1" />
-            5042 Synced
+            <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${environmentMode === "testnet" ? "bg-cyan" : "bg-pos"}`} />
+            {environmentMode === "testnet" ? "5042002 Testnet" : "5042 Mainnet"}
           </div>
           <button
             onClick={toggleTheme}
