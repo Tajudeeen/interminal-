@@ -91,7 +91,7 @@ export async function publicRpc(method: string, params: any[] = [], retries = 2)
 export async function waitForTransactionReceipt(
   txHash: string,
   options: { timeoutMs?: number; pollMs?: number } = {},
-): Promise<{ transactionHash: string; blockNumber: number; status: string }> {
+): Promise<{ transactionHash: string; blockNumber: number; status: string; logs: any[] }> {
   if (!/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
     throw new Error("Invalid transaction hash");
   }
@@ -111,6 +111,7 @@ export async function waitForTransactionReceipt(
         transactionHash: txHash,
         blockNumber: parseInt(String(receipt.blockNumber || "0x0"), 16),
         status,
+        logs: Array.isArray(receipt.logs) ? receipt.logs : [],
       };
     }
     await new Promise((resolve) => setTimeout(resolve, pollMs));
