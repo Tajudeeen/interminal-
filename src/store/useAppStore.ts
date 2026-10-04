@@ -31,6 +31,7 @@ import {
 } from "../lib/arc/wallet";
 import {
   loadOnchainPortfolio,
+  refreshLivePairValuation,
   publicRpc,
   readTraderNonce,
   readMandateNonce,
@@ -119,6 +120,7 @@ export interface AppState {
   toggleTheme: () => void;
   setView: (view: AppState["view"]) => void;
   setEnvironmentMode: (mode: EnvironmentMode) => void;
+  openMainnetReview: () => void;
   launchTestnet: () => void;
   performMainnetFromTestnet: () => void;
   setPair: (pair: string) => void;
@@ -368,14 +370,51 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     setEnvironmentMode: (mode) => {
-      if (mode === "mainnet" && (!get().testnetTaskComplete || !get().testnetTxHash)) {
-        get().addToast("Testnet Proof Required", "Mainnet mode is locked until the Arc Testnet execution check is confirmed.", "warn");
+      if (mode === "mainnet") {
+        if (get().livePortfolio) {
+          set({ environmentMode: "mainnet" });
+          return;
+        }
+        get().openMainnetReview();
         return;
       }
       set({
         environmentMode: mode,
         testnetTaskComplete: mode === "testnet" ? get().testnetTaskComplete : false,
       });
+    },
+
+    openMainnetReview: () => {
+      set({
+        environmentMode: "mainnet",
+        testnetTaskComplete: false,
+        testnetTxHash: null,
+        connected: false,
+        connecting: false,
+        address: null,
+        chainId: null,
+        wrongNetwork: false,
+        providerLabel: "Mainnet Review · Wallet Required",
+        livePortfolio: false,
+        walletError: "",
+        balances: {},
+        nativeGasBalance: 0,
+        targetBufferUsd: 0,
+        stressTestAmount: 0,
+        amount: 0,
+        dcaSpendTotal: 0,
+        dcaSliceSize: 0,
+        mandateSpend: 0,
+        pendingQuote: null,
+        reviewOpen: false,
+        lastTx: null,
+        view: "portfolio",
+      });
+      get().addToast(
+        "Arc Mainnet Review",
+        "Connect your wallet to load real holdings, live market prices, and executable controls. Testnet is optional.",
+        "info",
+      );
     },
 
     launchTestnet: () => {
@@ -397,22 +436,7 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     performMainnetFromTestnet: () => {
-      if (!get().testnetTaskComplete || !get().testnetTxHash) {
-        get().addToast("Testnet Proof Required", "Complete the confirmed Arc Testnet execution check before opening Mainnet execution.", "warn");
-        return;
-      }
-      set({
-        environmentMode: "mainnet",
-        testnetTaskComplete: false,
-        connected: false,
-        address: null,
-        chainId: null,
-        wrongNetwork: false,
-        livePortfolio: false,
-        providerLabel: null,
-        view: "terminal",
-      });
-      get().addToast("Mainnet Execution Ready", "Connect an Arc Mainnet wallet to perform the verified task for real.", "ok");
+      get().openMainnetReview();
     },
 
 
@@ -435,7 +459,7 @@ export const useAppStore = create<AppState>((set, get) => {
       try {
         const trader = normalizeAddress(address);
         const testValue = parseUnits("0.01", 18);
-        get().addToast("Testnet Execution", "Sending a 0.01 native USDC self-transfer to prove wallet signing and Arc Testnet settlement.", "info");
+        get().addToast("Testnet Execution", "Sending 0.01 native USDC to ourselves to prove wallet signing, network selection, submission, and receipt confirmation.", "info");
 
         const txHash = await walletRpc("eth_sendTransaction", [{
           from: trader,
@@ -478,8 +502,8 @@ export const useAppStore = create<AppState>((set, get) => {
         }));
 
         get().addToast(
-          "Testnet Task Confirmed",
-          "Arc Testnet confirmed the transaction. Mainnet execution is now unlocked.",
+          "Testnet Check Confirmed",
+          "Arc Testnet confirmed the transaction. Mainnet review is already available directly; this rehearsal remains optional.",
           "ok",
         );
       } catch (err: any) {
@@ -714,6 +738,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
         if (requested === "mainnet" && !wrongNetwork) {
           const balances = await loadOnchainPortfolio(address);
+          await refreshLivePairValuation();
           const liveSizing = deriveLiveControlSizing(balances);
           let ticketNonce = 0;
           try { ticketNonce = await readTraderNonce(address); } catch {}
@@ -1259,6 +1284,7 @@ export const useAppStore = create<AppState>((set, get) => {
         }
 
         const freshBalances = await loadOnchainPortfolio(trader);
+        await refreshLivePairValuation();
         const liveSizing = deriveLiveControlSizing(freshBalances);
         let nativeGasBalance = get().nativeGasBalance;
         try {
@@ -1651,6 +1677,7 @@ export const useAppStore = create<AppState>((set, get) => {
         }
 
         const freshBalances = await loadOnchainPortfolio(trader);
+        await refreshLivePairValuation();
         let nativeGasBalance = get().nativeGasBalance;
         try {
           nativeGasBalance = formatUnits(await publicRpc("eth_getBalance", [trader, "latest"]), ARC.nativeDecimals);
