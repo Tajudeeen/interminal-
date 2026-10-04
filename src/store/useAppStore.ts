@@ -145,7 +145,6 @@ export interface AppState {
   removeToast: (id: string) => void;
   connectWallet: (target?: "testnet" | "mainnet") => Promise<void>;
   switchToCurrentNetwork: () => Promise<void>;
-  completeTestnetTask: () => void;
   runTestnetProof: () => Promise<void>;
   launchDemo: () => void;
   disconnectWallet: () => void;
@@ -368,6 +367,10 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     setEnvironmentMode: (mode) => {
+      if (mode === "mainnet" && (!get().testnetTaskComplete || !get().testnetTxHash)) {
+        get().addToast("Testnet Proof Required", "Mainnet mode is locked until the Arc Testnet execution check is confirmed.", "warn");
+        return;
+      }
       set({
         environmentMode: mode,
         testnetTaskComplete: mode === "testnet" ? get().testnetTaskComplete : false,
@@ -411,10 +414,6 @@ export const useAppStore = create<AppState>((set, get) => {
       get().addToast("Mainnet Execution Ready", "Connect an Arc Mainnet wallet to perform the verified task for real.", "ok");
     },
 
-    completeTestnetTask: () => {
-      set({ testnetTaskComplete: true });
-      get().addToast("Testnet Task Complete", "The testnet drill is complete. Mainnet execution is now unlocked.", "ok");
-    },
 
     runTestnetProof: async () => {
       const { environmentMode, address, connected, wrongNetwork } = get();
