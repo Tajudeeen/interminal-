@@ -240,13 +240,13 @@ export const MarketChart: React.FC<MarketChartProps> = ({
         </div>
       )}
       <div className="absolute left-2 top-2 z-10 pointer-events-none">
-        <div className="rounded px-2 py-1 bg-black/70 border border-white/10 backdrop-blur-sm font-mono text-[10px]">
-          <div className="text-white font-bold">{marketFeedStatus.live ? "LIVE" : "OFFLINE"}</div>
-          <div className="text-neutral-400">{marketFeedStatus.source}</div>
+        <div className="rounded px-2 py-1 bg-themed-card/90 border border-themed/40 backdrop-blur-sm font-mono text-[10px]">
+          <div className="text-themed font-bold">{marketFeedStatus.live ? "LIVE" : "OFFLINE"}</div>
+          <div className="text-muted">{marketFeedStatus.source}</div>
         </div>
       </div>
       <div className="absolute right-2 top-2 z-10 pointer-events-none">
-        <div className="rounded px-2 py-1 bg-black/70 border border-white/10 backdrop-blur-sm font-mono text-[10px] text-neutral-400">
+        <div className="rounded px-2 py-1 bg-themed-card/90 border border-themed/40 backdrop-blur-sm font-mono text-[10px] text-muted">
           {pair === "USYC/USDC" ? "NAV · DAILY" : `OHLCV · ${timeframe.toUpperCase()}`}
         </div>
       </div>
