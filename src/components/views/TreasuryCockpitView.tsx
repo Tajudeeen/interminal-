@@ -240,7 +240,7 @@ export const TreasuryCockpitView: React.FC = () => {
             </span>
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-themed tnum">
-            ${snapshot.total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {mainnetReview ? "—" : "$" + snapshot.total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="mt-1 font-mono text-[10px] text-muted">
             Stables allocation: {snapshot.stables.toFixed(1)}%
@@ -254,10 +254,10 @@ export const TreasuryCockpitView: React.FC = () => {
             <span className="material-symbols-outlined text-[16px]">payments</span>
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-themed tnum">
-            ${liquidUsdc.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {mainnetReview ? "—" : "$" + liquidUsdc.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="mt-1 font-mono text-[10px] text-pos">
-            Buffer: ${targetBufferUsd.toLocaleString()}
+            {mainnetReview ? "Wallet balance loads after connect" : "Buffer: $" + targetBufferUsd.toLocaleString()}
           </div>
         </div>
 
@@ -268,10 +268,10 @@ export const TreasuryCockpitView: React.FC = () => {
             <span className="material-symbols-outlined text-[16px] text-pos">trending_up</span>
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-pos tnum">
-            ${usycNavUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {mainnetReview ? "—" : "$" + usycNavUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="mt-1 font-mono text-[10px] text-pos font-semibold">
-            +3.225% reference yield (${(usycNavUsd * USYC_APY).toFixed(2)}/yr)
+            {mainnetReview ? "Live USYC NAV loads after connect" : "+3.225% reference yield ($" + (usycNavUsd * USYC_APY).toFixed(2) + "/yr)"}
           </div>
         </div>
 
@@ -285,7 +285,7 @@ export const TreasuryCockpitView: React.FC = () => {
             ${cost.annualYieldUsd.toFixed(2)}/yr
           </div>
           <div className="mt-1 font-mono text-[10px] text-muted">
-            Forfeiting ${cost.dailyYieldUsd.toFixed(3)}/day
+            {mainnetReview ? "Live cost requires a wallet valuation" : "Forfeiting $" + cost.dailyYieldUsd.toFixed(3) + "/day"}
           </div>
         </div>
       </div>
