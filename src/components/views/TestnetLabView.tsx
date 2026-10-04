@@ -140,14 +140,14 @@ export const TestnetLabView: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-widest text-muted">Testnet checkpoint</div>
-            <div className="font-display font-black text-xl text-themed mt-1">{testnetTaskComplete ? "Ready for mainnet" : "Run the policy drill before promotion"}</div>
+            <div className="font-display font-black text-xl text-themed mt-1">{testnetTaskComplete ? "Ready for mainnet" : "Complete the rehearsal before promotion"}</div>
             <div className="font-mono text-xs text-sub mt-1">
               {address ? `Wallet ${shortAddr(address)} is connected for the test environment.` : "Connect a funded testnet wallet for the full network rehearsal."}
             </div>
           </div>
           {!testnetTaskComplete ? (
             <Button size="md" variant="pos" onClick={() => { completeTestnetTask(); }} disabled={!ready}>
-              Mark Testnet Task Complete
+              Complete Testnet Rehearsal
             </Button>
           ) : (
             <Button size="md" variant="primary" onClick={performMainnetFromTestnet} rightIcon={<span className="material-symbols-outlined text-[17px]">arrow_forward</span>}>
