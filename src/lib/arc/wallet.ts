@@ -1,3 +1,85 @@
+import type { EnvironmentMode } from "../../constants/networks";
+import { NETWORKS } from "../../constants/networks";
+
+type Eip6963Detail = {
+  info: {
+    uuid: string;
+    name: string;
+    rdns?: string;
+    icon?: string;
+  };
+  provider: any;
+};
+
+const discovered = new Map<string, Eip6963Detail>();
+let discoveryStarted = false;
+
+function startWalletDiscovery() {
+  if (typeof window === "undefined" || discoveryStarted) return;
+  discoveryStarted = true;
+
+  window.addEventListener("eip6963:announceProvider", ((event: CustomEvent<Eip6963Detail>) => {
+    if (event.detail?.info?.uuid && event.detail.provider) {
+      discovered.set(event.detail.info.uuid, event.detail);
+    }
+  }) as EventListener);
+
+  window.dispatchEvent(new Event("eip6963:requestProvider"));
+}
+
+export function getInjectedProviders(): Eip6963Detail[] {
+  if (typeof window === "undefined") return [];
+  startWalletDiscovery();
+
+  const providers: Eip6963Detail[] = [...discovered.values()];
+  const eth = (window as any).ethereum;
+  if (eth) {
+    if (Array.isArray(eth.providers)) {
+      for (const provider of eth.providers) {
+        if (!providers.some((item) => item.provider === provider)) {
+          providers.push({
+            info: {
+              uuid: "legacy-" + providers.length,
+              name: provider.isRabby ? "Rabby" : provider.isMetaMask ? "MetaMask" : "Injected wallet",
+            },
+            provider,
+          });
+        }
+      }
+    } else if (!providers.some((item) => item.provider === eth)) {
+      providers.push({
+        info: {
+          uuid: "legacy-window-ethereum",
+          name: eth.isRabby ? "Rabby" : eth.isMetaMask ? "MetaMask" : "Injected wallet",
+        },
+        provider: eth,
+      });
+    }
+  }
+
+  return providers;
+}
+
+export function isMobileBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+}
+
+export function getMobileWalletDappUrl(wallet: "metamask" = "metamask"): string {
+  if (typeof window === "undefined") return "";
+  const dappUrl = window.location.host + window.location.pathname + window.location.search;
+  if (wallet === "metamask") {
+    return "https://metamask.app.link/dapp/" + dappUrl;
+  }
+  return window.location.href;
+}
+
+export function openMobileWallet(wallet: "metamask" = "metamask"): void {
+  const url = getMobileWalletDappUrl(wallet);
+  if (!url) return;
+  window.location.href = url;
+}
+
 export function isAddress(val: any): boolean {
   return typeof val === "string" && /^0x[0-9a-fA-F]{40}$/.test(val);
 }
@@ -25,13 +107,14 @@ export function pad32(val: bigint | number | string): string {
 }
 
 export function getInjected(): any {
-  if (typeof window === "undefined") return null;
-  const eth = (window as any).ethereum;
-  if (!eth) return null;
-  if (Array.isArray(eth.providers) && eth.providers.length) {
-    return eth.providers.find((p: any) => p.isMetaMask && !p.isBraveWallet) || eth.providers[0];
-  }
-  return eth;
+  const providers = getInjectedProviders();
+  if (!providers.length) return null;
+
+  const preferred = providers.find(({ provider }) => provider?.isRabby)
+    || providers.find(({ provider }) => provider?.isMetaMask && !provider?.isBraveWallet)
+    || providers[0];
+
+  return preferred.provider;
 }
 
 export function providerName(eth: any): string {
@@ -44,8 +127,47 @@ export function providerName(eth: any): string {
   return "Injected wallet";
 }
 
+export async function switchOrAddNetwork(
+  provider: any,
+  mode: Exclude<EnvironmentMode, "demo">,
+): Promise<number> {
+  const network = NETWORKS[mode];
+  const targetHex = network.chainIdHex;
+
+  try {
+    await provider.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: targetHex }],
+    });
+  } catch (error: any) {
+    const code = error?.code;
+    if (code !== 4902 && code !== -32603 && code !== "4902") throw error;
+    await provider.request({
+      method: "wallet_addEthereumChain",
+      params: [{
+        chainId: targetHex,
+        chainName: network.name,
+        nativeCurrency: network.nativeCurrency,
+        rpcUrls: [network.rpc],
+        blockExplorerUrls: [network.explorer],
+      }],
+    });
+  }
+
+  const actual = await provider.request({ method: "eth_chainId" });
+  const actualId = Number.parseInt(String(actual), 16);
+  if (actualId !== network.chainId) {
+    throw new Error(
+      "Wallet did not switch to " + network.name + " (" + network.chainId + "). Open the wallet app and select the network manually.",
+    );
+  }
+  return actualId;
+}
+
 export async function walletRpc(method: string, params: any[] = []): Promise<any> {
   const eth = getInjected();
   if (!eth) throw new Error("No EVM wallet found");
   return eth.request({ method, params });
 }
+
+startWalletDiscovery();
