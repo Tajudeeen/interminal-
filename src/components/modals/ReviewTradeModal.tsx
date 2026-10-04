@@ -151,7 +151,7 @@ export const ReviewTradeModal: React.FC = () => {
           isLoading={executing}
           leftIcon={<span className="material-symbols-outlined text-[18px]">draw</span>}
         >
-          {livePortfolio ? "Sign EIP-712 Permit in Wallet" : "Sign & Generate Audit Certificate"}
+          {livePortfolio ? "Sign & Execute on Arc" : "Simulate & Generate Certificate"}
         </Button>
       </div>
     </GlassModalWrapper>
