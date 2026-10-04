@@ -14,7 +14,6 @@ export const TestnetLabView: React.FC = () => {
     environmentMode,
     nativeGasBalance,
     targetBufferUsd,
-    balances,
     connectWallet,
     switchToCurrentNetwork,
     completeTestnetTask,
@@ -27,11 +26,13 @@ export const TestnetLabView: React.FC = () => {
   const [loadingBlock, setLoadingBlock] = useState(true);
 
   const network = NETWORKS.testnet;
+  const scenarioUsdc = 15000;
+  const scenarioUsyc = 185000;
   const sweep = useMemo(() => calculateYieldSweep(25000, targetBufferUsd), [targetBufferUsd]);
   const jit = useMemo(() => calculateJitUnwind({
     tradeAmountUsd: stressTestAmount,
-    liquidUsdc: balances.USDC || 0,
-    usycBalance: balances.USYC || 0,
+    liquidUsdc: scenarioUsdc,
+    usycBalance: scenarioUsyc,
     usycPriceUsd: 1.135836,
     slippageBps: 30,
   }), [stressTestAmount, balances.USDC, balances.USYC]);
@@ -110,8 +111,8 @@ export const TestnetLabView: React.FC = () => {
           <div className="font-display font-bold text-xl text-themed mt-2">Move excess cash into the yield lane</div>
           <p className="font-mono text-xs text-sub mt-2">Test the exact same treasury calculation used in the demo. Nothing touches mainnet from this screen.</p>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-2xl bg-themed-card/60 border border-themed/30"><span className="font-mono text-[10px] text-muted block">Modeled cash</span><span className="font-display font-black text-lg text-themed">$25,000</span></div>
-            <div className="p-3 rounded-2xl bg-themed-card/60 border border-themed/30"><span className="font-mono text-[10px] text-muted block">Sweep amount</span><span className="font-display font-black text-lg text-pos">${sweep.sweepAmount.toLocaleString()}</span></div>
+            <div className="p-3 rounded-2xl bg-themed-card/60 border border-themed/30"><span className="font-mono text-[10px] text-muted block">Scenario cash</span><span className="font-display font-black text-lg text-themed">$25,000</span></div>
+            <div className="p-3 rounded-2xl bg-themed-card/60 border border-themed/30"><span className="font-mono text-[10px] text-muted block">Model sweep</span><span className="font-display font-black text-lg text-pos">${sweep.sweepAmount.toLocaleString()}</span></div>
           </div>
         </div>
 
@@ -141,7 +142,7 @@ export const TestnetLabView: React.FC = () => {
             <div className="font-mono text-[10px] uppercase tracking-widest text-muted">Testnet checkpoint</div>
             <div className="font-display font-black text-xl text-themed mt-1">{testnetTaskComplete ? "Ready for mainnet" : "Complete the rehearsal before promotion"}</div>
             <div className="font-mono text-xs text-sub mt-1">
-              {address ? `Wallet ${shortAddr(address)} is connected for the test environment.` : "Connect a funded testnet wallet for the full network rehearsal."}
+              {address ? `Wallet ${shortAddr(address)} is connected for the test environment.` : "Connect a funded testnet wallet for network rehearsal. Policy balances shown above are scenarios."}
             </div>
           </div>
           {!testnetTaskComplete ? (
