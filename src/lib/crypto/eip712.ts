@@ -207,7 +207,7 @@ export function createAgentMandateDescriptor({
     remainingSpend: spend,
     maxSlippageBps: slip,
     allowedPairs: [...allowedPairs],
-    nonce: Number(nonce) || 1,
+    nonce: Number.isFinite(Number(nonce)) && Number(nonce) >= 0 ? Number(nonce) : 0,
     createdAt: Date.now(),
     expiresAt: Date.now() + ttl * 1000,
     deadline: Math.floor(Date.now() / 1000) + ttl,
@@ -286,17 +286,16 @@ export function buildAgentMandateTicket(
     "EURC/USDC": 1,
     "USYC/USDC": 2,
     "BTC/USDC": 3,
-    "ARC/USDC": 4,
   };
 
   let mask = 0n;
   const pairs = Array.isArray(mandate.allowedPairs) ? mandate.allowedPairs : ["ETH/USDC"];
   for (const pair of pairs) {
-    if (pairIndexMap[pair] !== undefined) {
-      mask |= 1n << BigInt(pairIndexMap[pair]);
+    if (pairIndexMap[pair] === undefined) {
+      throw new Error("Pair " + pair + " is not supported by the bounded agent executor");
     }
+    mask |= 1n << BigInt(pairIndexMap[pair]);
   }
-  if (mask === 0n) mask = 1n;
 
   const maxCumulativeSpend = parseUnits(mandate.maxSpendUsd ?? mandate.maxSpendUsdc ?? 1000, 6);
   const maxSpendPerTx = parseUnits(
