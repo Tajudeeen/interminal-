@@ -49,6 +49,10 @@ The public GeckoTerminal API is cached for roughly one minute and is limited to 
 
 Timeframe changes are request-scoped: the UI clears the previous series while loading, validates that the API returned the requested timeframe, and ignores stale responses from earlier selections so an older request cannot overwrite the active chart.
 
+### Dark and light mode
+
+The application theme switch applies to the full product surface, including every modal. Modal overlays, glass panels, headers, inputs, internal cards, borders, and secondary actions use the same theme tokens, so switching between dark and light does not leave a hard-coded dark modal behind.
+
 ---
 
 ## Builder
