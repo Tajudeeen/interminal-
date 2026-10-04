@@ -6,8 +6,8 @@
 [![Live App](https://img.shields.io/badge/Live%20App-useinterminal.vercel.app-blueviolet?style=flat-square)](https://useinterminal.vercel.app/)
 [![Arc Mainnet](https://img.shields.io/badge/Arc%20Mainnet-Chain%205042-00F0FF?style=flat-square)](https://explorer.arc.io)
 [![Smart Contract](https://img.shields.io/badge/Settlement%20Contract-0x2b38...ab36-10B981?style=flat-square)](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36)
-[![React 18 + TS](https://img.shields.io/badge/Stack-React%2018%20%7C%20TypeScript%20%7C%20Vite%20%7C%20Zustand-blue?style=flat-square)](https://react.dev)
-[![Tests Passing](https://img.shields.io/badge/Tests-41%2F41%20Passing-brightgreen?style=flat-square)](test.mjs)
+[![React 19 + TS](https://img.shields.io/badge/Stack-React%2018%20%7C%20TypeScript%20%7C%20Vite%20%7C%20Zustand-blue?style=flat-square)](https://react.dev)
+[![Tests Passing](https://img.shields.io/badge/Tests-43%2F43%20Passing-brightgreen?style=flat-square)](test.mjs)
 [![X / Twitter](https://img.shields.io/badge/Builder-%40Deeen__Codes-000000?style=flat-square&logo=x)](https://x.com/Deeen_Codes)
 [![GitHub](https://img.shields.io/badge/GitHub-Tajudeeen-181717?style=flat-square&logo=github)](https://github.com/Tajudeeen)
 
@@ -164,9 +164,9 @@ Interminal settles on-chain via [`contracts/InterminalSettlement.sol`](contracts
 
 ## Automated Verification & Testing
 
-Interminal includes **41 automated tests** across dual test suites:
+Interminal includes **43 automated tests** across dual test suites:
 
-### 1. Vitest Unit & TypeScript Test Suite (13 Tests)
+### 1. Vitest Unit & TypeScript Test Suite (15 Tests)
 ```bash
 npm test
 ```
@@ -196,7 +196,7 @@ Open `http://localhost:5173` to launch the workspace.
 npm run build
 npm run verify:arc
 ```
-Typechecks the entire repository with `tsc --noEmit` and bundles optimized production assets into `dist/`.
+Typechecks the repository with `tsc` and bundles optimized production assets into `dist/`.
 
 ---
 
