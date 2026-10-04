@@ -39,7 +39,9 @@ export function buildOnchainTradeTicket(
 ): TradeTicket {
   const p = PAIRS[assertPair(pairKey)];
   const traderAddr = normalizeAddress(address);
-  const baseToken = ARC.tokens[p.base];
+  const baseToken = p.address
+    ? { address: p.address, decimals: p.decimals ?? 18 }
+    : ARC.tokens[p.base];
   const quoteToken = { address: ARC.usdcErc20, decimals: 6 };
   if (!baseToken?.address) {
     throw new Error("Pair " + pairKey + " has no verified Arc token address and cannot be executed on-chain");
