@@ -67,7 +67,7 @@ export const TestnetLabView: React.FC = () => {
               <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan">Testnet execution lab</div>
               <h1 className="font-display text-3xl sm:text-4xl font-black text-themed mt-2">Rehearse it before mainnet.</h1>
               <p className="font-mono text-sm text-sub mt-2 max-w-2xl leading-relaxed">
-                Use Arc Testnet to verify wallet access, network switching, treasury policy math and the reviewer flow. Mainnet execution stays behind a separate gate.
+                Use Arc Testnet only when you want a wallet rehearsal. Mainnet review and execution are available directly.
               </p>
             </div>
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-pill bg-cyan/10 border border-cyan/30 text-cyan font-mono text-[10px] uppercase">
@@ -110,34 +110,23 @@ export const TestnetLabView: React.FC = () => {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="card-themed border border-themed rounded-3xl p-5">
-          <div className="font-mono text-[10px] uppercase tracking-widest text-muted">Task 01 · policy sweep</div>
-          <div className="font-display font-bold text-xl text-themed mt-2">Move excess cash into the yield lane</div>
-          <p className="font-mono text-xs text-sub mt-2">Test the exact same treasury calculation used in the demo. Nothing touches mainnet from this screen.</p>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-2xl bg-themed-card/60 border border-themed/30"><span className="font-mono text-[10px] text-muted block">Scenario cash</span><span className="font-display font-black text-lg text-themed">$25,000</span></div>
-            <div className="p-3 rounded-2xl bg-themed-card/60 border border-themed/30"><span className="font-mono text-[10px] text-muted block">Model sweep</span><span className="font-display font-black text-lg text-pos">${sweep.sweepAmount.toLocaleString()}</span></div>
+      <section className="card-themed border border-cyan/30 bg-cyan/5 rounded-3xl p-5 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="font-mono text-[10px] uppercase tracking-widest text-cyan">Why this exists</div>
+            <div className="font-display font-black text-xl text-themed mt-1">One tiny real transaction. Nothing more.</div>
+            <p className="font-mono text-xs text-sub mt-1 max-w-2xl leading-relaxed">
+              The checkpoint proves wallet signing, Arc Testnet network selection, transaction submission, and receipt confirmation. It does not represent an Interminal settlement-contract execution.
+            </p>
           </div>
-        </div>
-
-        <div className="card-themed border border-themed rounded-3xl p-5">
-          <div className="font-mono text-[10px] uppercase tracking-widest text-muted">Task 02 · JIT liquidity</div>
-          <div className="font-display font-bold text-xl text-themed mt-2">Stress an outgoing payment</div>
-          <p className="font-mono text-xs text-sub mt-2">Tune the outgoing amount and inspect whether idle USYC can cover the shortfall.</p>
-          <input
-            type="range"
-            min={500}
-            max={50000}
-            step={500}
-            value={stressTestAmount}
-            onChange={(e) => setStressTestAmount(Number(e.target.value))}
-            className="w-full mt-5 accent-lime-500"
-          />
-          <div className="flex justify-between mt-2 font-mono text-xs"><span className="text-muted">Outgoing need</span><span className="text-themed font-bold">${stressTestAmount.toLocaleString()}</span></div>
-          <div className="mt-3 p-3 rounded-2xl border border-themed/30 bg-themed-card/60 font-mono text-xs">
-            {jit.canCover ? <span className="text-pos">Policy pass · USYC coverage available.</span> : <span className="text-neg">Policy stop · liquidity is insufficient.</span>}
-          </div>
+          <a
+            href="https://explorer.arc.io"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-themed text-sub hover:text-themed hover:border-cyan/40 font-mono text-xs transition-all shrink-0"
+          >
+            Arc Explorer <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+          </a>
         </div>
       </section>
 
@@ -145,7 +134,7 @@ export const TestnetLabView: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-widest text-muted">Testnet checkpoint</div>
-            <div className="font-display font-black text-xl text-themed mt-1">{testnetTaskComplete ? "Ready for mainnet" : "Complete the rehearsal before promotion"}</div>
+            <div className="font-display font-black text-xl text-themed mt-1">{testnetTaskComplete ? "Rehearsal complete" : "Optional wallet checkpoint"}</div>
             <div className="font-mono text-xs text-sub mt-1">
               {address ? `Wallet ${shortAddr(address)} is connected for the test environment.` : "Connect a funded testnet wallet for network rehearsal. Policy balances shown above are scenarios."}
             </div>
@@ -162,11 +151,11 @@ export const TestnetLabView: React.FC = () => {
           </div>
           {!testnetTaskComplete ? (
             <Button size="md" variant="outline" onClick={runTestnetProof} disabled={!ready || executing} leftIcon={<span className="material-symbols-outlined text-[15px]">verified</span>}>
-              {executing ? "Waiting for confirmation..." : "Run Testnet Check"}
+              {executing ? "Waiting for confirmation..." : "Run 0.01 USDC Check"}
             </Button>
           ) : (
             <Button size="md" variant="primary" onClick={performMainnetFromTestnet} rightIcon={<span className="material-symbols-outlined text-[17px]">arrow_forward</span>}>
-              Perform Task on Mainnet
+              Review Live Mainnet
             </Button>
           )}
         </div>
