@@ -42,6 +42,7 @@ import {
   erc20Allowance,
   sendApproval,
   waitForTransactionReceipt,
+  readErc20Metadata,
 } from "../lib/arc/rpcClient";
 import { anchorReceiptOnchain, checkReceiptAnchoredOnchain } from "../lib/arc/receiptAnchor";
 
@@ -1878,31 +1879,50 @@ export const useAppStore = create<AppState>((set, get) => {
       set({ importingToken: true, importTokenError: "" });
       try {
         const addr = address.toLowerCase();
-        TOKEN_ALLOW.add(addr);
-        const sym = addr.slice(0, 6).toUpperCase();
-        const pairKey = sym + "/USDC";
-        if (!PAIRS[pairKey]) {
-          PAIRS[pairKey] = {
-            base: sym,
-            quote: "USDC",
-            price: 1.0,
-            change: 0,
-            high: 1.0,
-            low: 1.0,
-            vol: 1000,
-            tvl: 5000,
-            seed: 99,
-            cat: "imported",
-          };
-        }
-        set((s) => ({
-          importingToken: false,
-          importTokenOpen: false,
-          customTokens: [...s.customTokens, { address, symbol: sym, pairKey }],
-          pair: pairKey,
-          view: "terminal",
-        }));
-        get().addToast("Token Imported", `${sym} registered on Arc markets.`, "ok");
+      // Permit only after validating that the address is an actual contract with ERC-20 metadata.
+      TOKEN_ALLOW.add(addr);
+      let metadata;
+      try {
+        metadata = await readErc20Metadata(addr);
+      } catch (metaError: any) {
+        TOKEN_ALLOW.delete(addr);
+        throw metaError;
+      }
+
+      const sym = metadata.symbol;
+      const pairKey = sym + "/USDC";
+      if (!PAIRS[pairKey]) {
+        PAIRS[pairKey] = {
+          base: sym,
+          quote: "USDC",
+          price: 1.0,
+          change: 0,
+          high: 1.0,
+          low: 1.0,
+          vol: 0,
+          tvl: 0,
+          seed: 99,
+          cat: "imported",
+          address: metadata.address,
+          decimals: metadata.decimals,
+          oracle: "Imported ERC-20 · live quote required for execution",
+        };
+      } else {
+        PAIRS[pairKey].address = metadata.address;
+        PAIRS[pairKey].decimals = metadata.decimals;
+      }
+
+      set((s) => ({
+        importingToken: false,
+        importTokenOpen: false,
+        customTokens: [
+          ...s.customTokens,
+          { address: metadata.address, name: metadata.name, symbol: sym, decimals: metadata.decimals, pairKey },
+        ],
+        pair: pairKey,
+        view: "terminal",
+      }));
+      get().addToast("Token Imported", \`\${sym} · \${metadata.name} registered from Arc contract metadata.\`, "ok");
       } catch (err: any) {
         set({ importingToken: false, importTokenError: err.message || String(err) });
       }
