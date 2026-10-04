@@ -728,12 +728,12 @@ export const useAppStore = create<AppState>((set, get) => {
             balances,
             nativeGasBalance,
             ticketNonce,
-            targetBufferUsd: liveSizing.targetBufferUsd || get().targetBufferUsd,
-            stressTestAmount: liveSizing.stressTestAmount || get().stressTestAmount,
-            amount: liveSizing.tradeDefaultUsd || get().amount,
-            dcaSpendTotal: liveSizing.dcaSpendTotal || get().dcaSpendTotal,
-            dcaSliceSize: liveSizing.dcaSliceSize || get().dcaSliceSize,
-            mandateSpend: liveSizing.mandateSpendUsd || get().mandateSpend,
+            targetBufferUsd: liveSizing.targetBufferUsd,
+            stressTestAmount: liveSizing.stressTestAmount,
+            amount: liveSizing.tradeDefaultUsd,
+            dcaSpendTotal: liveSizing.dcaSpendTotal,
+            dcaSliceSize: liveSizing.dcaSliceSize,
+            mandateSpend: liveSizing.mandateSpendUsd,
             environmentMode: "mainnet",
             view: "portfolio",
           });
@@ -1277,8 +1277,8 @@ export const useAppStore = create<AppState>((set, get) => {
           ticketNonce: onchainNonce + 1,
           // Keep explicit user edits, but nudge defaults only when their values
           // were still using the old demo defaults at the time of execution.
-          targetBufferUsd: get().targetBufferUsd === 5000 ? (liveSizing.targetBufferUsd || get().targetBufferUsd) : get().targetBufferUsd,
-          stressTestAmount: get().stressTestAmount === 25000 ? (liveSizing.stressTestAmount || get().stressTestAmount) : get().stressTestAmount,
+          targetBufferUsd: get().targetBufferUsd === 5000 ? liveSizing.targetBufferUsd : get().targetBufferUsd,
+          stressTestAmount: get().stressTestAmount === 25000 ? liveSizing.stressTestAmount : get().stressTestAmount,
           auditReceipts: [receipt, ...auditReceipts].slice(0, 50),
           activity: [
             {
