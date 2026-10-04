@@ -161,6 +161,55 @@ export async function routerAmountOut(
   return BigInt("0x" + encoded.slice(194, 258));
 }
 
+export interface TradeSettledExecution {
+  receiptHash: string;
+  trader: string;
+  tokenIn: string;
+  tokenOut: string;
+  amountIn: bigint;
+  amountOut: bigint;
+}
+
+export function decodeTradeSettledExecution(
+  receipt: { logs?: any[] } | null | undefined,
+  settlementAddress: string,
+  expectedTrader: string,
+  expectedTokenIn: string,
+  expectedTokenOut: string,
+): TradeSettledExecution | null {
+  if (!receipt || !Array.isArray(receipt.logs) || !isAddress(settlementAddress)) return null;
+
+  const settlement = settlementAddress.toLowerCase();
+  const trader = expectedTrader.toLowerCase();
+  const tokenIn = expectedTokenIn.toLowerCase();
+  const tokenOut = expectedTokenOut.toLowerCase();
+
+  for (const log of receipt.logs) {
+    if (String(log?.address || "").toLowerCase() !== settlement) continue;
+    if (!Array.isArray(log?.topics) || log.topics.length < 3) continue;
+    if (typeof log?.data !== "string" || log.data.length !== 322) continue;
+
+    const loggedTrader = "0x" + String(log.topics[2]).slice(-40);
+    if (loggedTrader.toLowerCase() !== trader) continue;
+
+    const data = log.data.slice(2);
+    const loggedTokenIn = "0x" + data.slice(0, 64).slice(-40);
+    const loggedTokenOut = "0x" + data.slice(64, 128).slice(-40);
+    if (loggedTokenIn.toLowerCase() !== tokenIn || loggedTokenOut.toLowerCase() !== tokenOut) continue;
+
+    return {
+      receiptHash: String(log.topics[1]),
+      trader: loggedTrader,
+      tokenIn: loggedTokenIn,
+      tokenOut: loggedTokenOut,
+      amountIn: BigInt("0x" + data.slice(128, 192)),
+      amountOut: BigInt("0x" + data.slice(192, 256)),
+    };
+  }
+
+  return null;
+}
+
 export async function readChainId(): Promise<{ hex: string; id: number }> {
   const hex = await walletRpc("eth_chainId");
   return { hex: hex.toLowerCase(), id: parseInt(hex, 16) };
