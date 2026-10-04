@@ -22,6 +22,7 @@ export const TestnetLabView: React.FC = () => {
     setTargetBufferUsd,
     setStressTestAmount,
     stressTestAmount,
+    testnetTaskComplete,
   } = useAppStore();
   const [headBlock, setHeadBlock] = useState<number | null>(null);
   const [loadingBlock, setLoadingBlock] = useState(true);
@@ -139,12 +140,12 @@ export const TestnetLabView: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-widest text-muted">Testnet checkpoint</div>
-            <div className="font-display font-black text-xl text-themed mt-1">{useAppStore.getState().testnetTaskComplete ? "Ready for mainnet" : "Run the policy drill before promotion"}</div>
+            <div className="font-display font-black text-xl text-themed mt-1">{testnetTaskComplete ? "Ready for mainnet" : "Run the policy drill before promotion"}</div>
             <div className="font-mono text-xs text-sub mt-1">
               {address ? `Wallet ${shortAddr(address)} is connected for the test environment.` : "Connect a funded testnet wallet for the full network rehearsal."}
             </div>
           </div>
-          {!useAppStore.getState().testnetTaskComplete ? (
+          {!testnetTaskComplete ? (
             <Button size="md" variant="pos" onClick={() => { completeTestnetTask(); }} disabled={!ready}>
               Mark Testnet Task Complete
             </Button>
