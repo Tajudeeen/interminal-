@@ -5,7 +5,6 @@ import { Candle, ChartMode, Indicators, MarketAnalysis, Timeframe } from "../typ
 import { DcaPlan, OrderType, TradeQuote, TradeSide } from "../types/trade";
 import { AgentMandateDescriptor } from "../types/mandate";
 import { TradeReceipt } from "../types/receipt";
-import { sha256Hex } from "../lib/crypto/sha256";
 import {
   buildTradeTicket,
   buildAgentMandateTicket,
@@ -1030,7 +1029,7 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     executeSweepOnchain: async (sweepAmountUsdc: number, direction: "sweep" | "unwind") => {
-      const { address, livePortfolio, balances, activity } = get();
+      const { address, livePortfolio } = get();
 
       if (!Number.isFinite(sweepAmountUsdc) || sweepAmountUsdc <= 0) {
         get().addToast("Invalid Treasury Amount", "Amount must be greater than zero.", "warn");
