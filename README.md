@@ -1,319 +1,103 @@
-# INTERMINAL — Policy-Controlled Treasury Infrastructure for USDC on Arc
+# Interminal
 
-> **Live Deployment:** [https://useinterminal.vercel.app/](https://useinterminal.vercel.app/)  
-> **Arc Mainnet (Chain ID: 5042)** · Policy-controlled USDC reserves, USYC treasury rebalancing, quoted JIT liquidity execution, and cryptographic receipt anchoring.
+A wallet-controlled treasury desk for teams holding USDC on Arc. Operators can set an operating cash buffer, model USYC allocations, review a router quote, sign a bounded trade ticket, and inspect execution receipts.
 
-[![Live App](https://img.shields.io/badge/Live%20App-useinterminal.vercel.app-blueviolet?style=flat-square)](https://useinterminal.vercel.app/)
-[![Arc Mainnet](https://img.shields.io/badge/Arc%20Mainnet-Chain%205042-00F0FF?style=flat-square)](https://explorer.arc.io)
-[![Smart Contract](https://img.shields.io/badge/Settlement%20Contract-0x2b38...ab36-10B981?style=flat-square)](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36)
-[![React 19 + TS](https://img.shields.io/badge/Stack-React%2019%20%7C%20TypeScript%20%7C%20Vite%20%7C%20Zustand-blue?style=flat-square)](https://react.dev)
-[![Tests Passing](https://img.shields.io/badge/Tests-45%2F45%20Passing-brightgreen?style=flat-square)](test.mjs)
-[![X / Twitter](https://img.shields.io/badge/Builder-%40Deeen__Codes-000000?style=flat-square&logo=x)](https://x.com/Deeen_Codes)
-[![GitHub](https://img.shields.io/badge/GitHub-Tajudeeen-181717?style=flat-square&logo=github)](https://github.com/Tajudeeen)
+[Open the app](https://useinterminal.vercel.app/) · [Settlement contract](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36) · [Security notes](SECURITY.md)
 
----
+## Choose a workspace
 
-## Live market data
+| Workspace | Holdings | Execution |
+| --- | --- | --- |
+| Demo | Explicit simulated balances | Local simulation and simulated receipts. No wallet transaction. |
+| Mainnet | Holdings read from an Arc wallet | Exact approval when needed, EIP-712 signature, settlement transaction, and a separate receipt-anchor transaction. |
+| Testnet lab | Arc Testnet wallet | Optional 0.01 native-USDC self-transfer to check wallet, network, submission, and confirmation. It doesn't test the mainnet settlement contract. |
 
-Interminal does not generate production chart candles.
+Opening mainnet review doesn't connect a wallet or submit a transaction. Testnet is optional. A generic wallet connection targets mainnet unless the user explicitly opens the testnet lab.
 
-- **Arc markets:** OHLCV comes from GeckoTerminal's free public API using real Arc DEX pools for WETH/USDC, cirBTC/USDC, and EURC/USDC.
-- **USYC:** the chart uses Hashnote's official NAV price reports. USYC is priced once per business day, so it is rendered as a daily NAV series rather than fake intraday candles.
-- **Other reference markets:** Binance public klines are labelled as global reference data, not Arc liquidity.
-- **Unavailable markets:** the UI shows no-data instead of silently inventing candles.
+## Operator workflow
 
-GeckoTerminal attribution: https://www.geckoterminal.com/arc
+1. Open **Treasury** to inspect holdings, liquid USDC, and the USYC position. Set the operating cash buffer and model a disbursement.
+2. Review a sweep, unwind, or trade. Mainnet treasury buttons use the same router-backed review as the trade desk.
+3. Inspect the input, estimated output, minimum output, slippage, and quote expiry. The wallet may request an exact input-token approval before signing.
+4. Sign the EIP-712 trade ticket and submit settlement. The signed raw input and minimum match the reviewed router quote. Expired or changed reviews are blocked.
+5. Open **Activity & receipts** to inspect the confirmed transaction and certificate. A separate anchor failure doesn't undo settlement or erase the confirmed receipt. Don't repeat a settled trade to retry its anchor.
 
-The CI pipeline runs a live GeckoTerminal smoke test against the three configured Arc pools on every push. This verifies that the upstream OHLCV endpoints still return usable market data before the Arc verification stage.
+The deployed trade path spends liquid USDC. It doesn't automatically unwind a USYC position to fund a buy. Unwind separately and review the next trade after wallet balances refresh.
 
-### Chart rendering
+## Screens
 
-The terminal chart is rendered with **TradingView Lightweight Charts 5.2.1**. Desktop chart space uses a wider terminal-style proportion rather than a square 1:1 panel. The chart library does not provide market data itself; Interminal feeds it verified OHLCV returned by GeckoTerminal. A same-origin `/api/market-data` Vercel function proxies the GeckoTerminal request so the browser is not calling the public data endpoint directly. Lightweight Charts' built-in attribution logo remains enabled.
+- **Home:** product explanation, interactive capital/buffer scenario, and demo/mainnet entry points.
+- **Treasury:** cash policy, modeled yield, USYC position, sweep and unwind review.
+- **Trade desk:** chart, sizing controls, quote review, and bounded execution.
+- **Markets:** registered Arc routes, clearly labeled reference values, filters, and read-only imported-token metadata.
+- **Analysis:** deterministic EMA, RSI, MACD, and support/resistance signals. No remote AI service or autonomous trading agent.
+- **Activity & receipts:** session executions, integrity checks, explorer links, and inspectable JSON certificates.
+- **Verification:** public RPC, contract fingerprint, and local negative authorization checks.
+- **Testnet lab:** optional wallet/network rehearsal.
 
-### Timeframe switching
+Desktop uses a persistent sidebar. Mobile includes quick navigation and a full workspace menu, including verification and testnet. Modals trap keyboard focus, restore focus on close, support Escape, and scroll inside the viewport. SVG icons are bundled, so a failed font request can't replace icons with raw text. Views load separately to reduce the initial JavaScript bundle.
 
-The terminal timeframe controls are wired to the live market-data loader. Selecting `1m`, `5m`, `15m`, `1h`, `4h`, or `1D` updates the active timeframe immediately, requests the matching GeckoTerminal aggregation, recomputes indicators from the returned candles, and ignores stale responses when a user switches again before a request completes. USYC remains `1D` because its source is daily NAV reporting rather than intraday OHLCV.
+## Market data and valuation
 
-> TradingView Lightweight Charts™  
-> Copyright (с) 2025 TradingView, Inc. https://www.tradingview.com/
+Charts never fall back to generated candles in the production data path.
 
-### Arc chart pools
+- WETH/USDC, cirBTC/USDC, and EURC/USDC candles use GeckoTerminal Arc pools through the same-origin `/api/market-data` Vercel function.
+- USYC uses Hashnote NAV reports and a daily line chart. A NAV reference isn't an executable redemption quote.
+- Other supported chart references use Binance public klines and are labeled global references. They aren't Arc liquidity.
+- A failed feed shows an unavailable state. A selected feed doesn't make every row in the market directory live.
+- Directory reference prices and modeled trade previews aren't executable quotes. Mainnet review fetches a separate Arc router quote.
+- Registered token addresses don't guarantee issuer eligibility, a usable pool, or liquidity. Imported tokens remain view-only for live execution.
+- The USYC yield reference is 3.225%, dated 2026-10-04. Return estimates exclude fees, price changes, access restrictions, and execution costs. This isn't a guaranteed return.
 
-| Market | GeckoTerminal pool | Venue |
-|---|---|---|
-| ETH/USDC | `0x6f302decb49fb30b2d2c609bdd16e04e7dd096fc` | Aero · Arc |
-| BTC/USDC (cirBTC) | `0xd945caee4635bcd7fb8a9fa74dc1d0c4c1472782` | Aero · Arc |
-| EURC/USDC | `0xbe080ac37ad1305dfcc9521f5e6f68cfdc41b7fa` | Aero · Arc |
+TradingView Lightweight Charts provides rendering, not market data. Attribution remains enabled. The CSP permits the specific read-only feed hosts used by the app, including Hashnote and Binance.
 
-The public GeckoTerminal API is cached for roughly one minute and is limited to 30 requests/minute, so Interminal caches chart responses locally for 45 seconds and refreshes market state no more than necessary.
+## Contract and execution
 
-Timeframe changes are request-scoped: the UI clears the previous series while loading, validates that the API returned the requested timeframe, and ignores stale responses from earlier selections so an older request cannot overwrite the active chart.
+| Setting | Value |
+| --- | --- |
+| Arc mainnet chain | `5042` |
+| Settlement | `0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36` |
+| Router | `0x52FE40c00530db2e43d01652f903870571A14AFD` |
+| USDC ERC-20 interface | `0x3600000000000000000000000000000000000000` |
+| Native gas decimals | `18` |
+| USDC token-interface decimals | `6` |
 
-### Dark and light mode
+The registry is in `src/constants/arc.ts`. Exact approvals are restricted to the verified settlement spender and registered token addresses. Mainnet execution requires a loaded wallet on the expected chain. Switching modes clears financial session state and detaches prior wallet subscriptions.
 
-The application theme switch applies to the full product surface, including every modal. Modal overlays, glass panels, headers, inputs, internal cards, borders, and secondary actions use the same theme tokens, so switching between dark and light does not leave a hard-coded dark modal behind.
+**Live agent mandates remain disabled on the deployed v1 contract.** The hardened successor source isn't a deployed upgrade. DCA/TWAP records are browser-side plans and don't run a background executor. The current product requires explicit user review and wallet signatures.
 
-### TypeScript UI wiring
+See [the live contract fingerprint](docs/LIVE_CONTRACT_FINGERPRINT.md), [Arc submission evidence](docs/ARC_MICROGRANT_PROOF.md), and [the rework review](docs/REWORK_REVIEW.md).
 
-The application was migrated from the original JavaScript implementation to React + TypeScript. The current UI is the source of interaction, while the Zustand store owns shared state and execution actions. Automated tests now scan the store action surface and component tree to catch actions that become orphaned during future refactors. The audit also keeps DCA/TWAP plans and signed agent mandates visible in the Corporate Ledger, wires chart mode and price-level controls into the terminal, validates imported ERC-20 metadata before registration, and keeps imported live markets bound to their contract address.
+## Run locally
 
----
+Use Node.js 22 or newer.
 
-## Builder
-
-| | |
-|---|---|
-| **X / Twitter** | [@Deeen_Codes](https://x.com/Deeen_Codes) |
-| **GitHub** | [github.com/Tajudeeen](https://github.com/Tajudeeen) |
-| **Repo** | [github.com/Tajudeeen/interminal-](https://github.com/Tajudeeen/interminal-) |
-
----
-
-## What is Interminal?
-
-**Interminal** is policy-controlled treasury infrastructure for USDC-denominated operations on Arc.
-
-In corporate finance, **idle cash drag destroys enterprise value**. Traditional corporate bank accounts forfeit yields to institutional fees, while standard Web3 treasuries leave liquid operating cash sitting idle in non-yielding wallet balances to avoid high gas costs.
-
-Interminal uses Arc for USDC-denominated settlement, low-cost repeated execution, and a verifiable on-chain audit trail:
-1. **Operating Cash Reserve:** Maintains a user-configured liquid buffer for immediate expenses and gas.
-2. **Policy Sweep Engine:** Detects excess cash above the configured operating buffer and models a USDC → USYC treasury sweep using the current reference rate and live Arc quote path.
-3. **Just-In-Time (JIT) Liquidity Bridge:** When an outgoing operation exceeds liquid cash, Interminal calculates the USYC shortfall and can execute a quoted USYC → USDC route on Arc with a bounded minimum output.
-4. **Cryptographic Proofs & Arc Settlement:** Executed actions can produce a canonical SHA-256 JSON audit certificate whose digest can be anchored into Arc state through the deployed settlement contract.
-
----
-
-
-## Environment flow
-
-Interminal keeps three environments, but Mainnet is now the primary product path:
-
-1. **Review Live Mainnet** opens the real Arc Mainnet treasury context immediately. The reviewer connects a wallet, and Interminal reads real ERC-20 operating USDC, supported Arc token balances, native USDC gas, and fresh market prices before sizing the policy controls. No testnet transaction is required.
-2. **Launch Treasury Demo** opens the full browser sandbox. Demo trades, sweeps, JIT scenarios, DCA, mandates, receipts, calculators and the guided tour remain wallet-free, clearly labelled as simulation, and never claim blockchain execution.
-3. **Arc Testnet Lab** is an optional wallet rehearsal. It reads the live testnet head and native USDC balance, then can send a 0.01 native-USDC self-transfer to prove wallet signing, network selection, submission and receipt confirmation. It does **not** represent an Interminal settlement-contract execution and it does not gate Mainnet.
-
-Mobile browsers without an injected provider are handed off to the MetaMask mobile app, while desktop injected wallets are discovered through EIP-6963. This is the correct mobile-wallet model because ordinary iOS/Android browsers do not expose desktop browser extensions. 
-
-## What Actually Works on Arc Mainnet?
-
-For a reproducible live-chain identity check, see [`docs/LIVE_CONTRACT_FINGERPRINT.md`](docs/LIVE_CONTRACT_FINGERPRINT.md).
-
-## Live versus simulation
-
-Interminal deliberately separates browser simulation from confirmed Arc execution.
-
-| Capability | Mode | Proof |
-|---|---|---|
-| Wallet and Arc network detection | Live | EIP-1193 wallet + chain ID 5042 |
-| Native USDC and ERC-20 balance reads | Live | Arc public RPC |
-| AMM route quotes | Live | Verified Arc router |
-| Trade ticket signing | Live | EIP-712 domain bound to chain 5042 and settlement contract |
-| Trade settlement | Live | executeTradeTicket + confirmation receipt |
-| Audit digest anchoring | Live | anchorReceipt(bytes32) + isReceiptAnchored(bytes32) |
-| Seeded treasury, DCA scheduling, walkthrough | Simulation | Explicitly labeled in the UI |
-
-A live action is only marked confirmed after the Arc transaction receipt succeeds. The browser never presents a simulated balance update as a historical blockchain transaction.
-
-## Verification evidence
-
-Interminal is designed so a reviewer can independently verify its important claims without trusting the UI alone.
-
-| Claim | Evidence |
-|---|---|
-| Live Arc Mainnet deployment | Settlement address + deployment transaction in this README and the Arc Explorer |
-| Live runtime fingerprint and deployment provenance | `npm run verify:arc` compiles `contracts/InterminalSettlement.sol` and fails if the maintained source or committed artifact is internally inconsistent; the live contract is checked separately by its on-chain fingerprint |
-| Deployment provenance | `verify:arc` checks the deployment receipt, contract address, and recorded block |
-| EIP-712 execution controls | Live source + ABI expose deadline, trader nonce, signer recovery, pause and reentrancy guards |
-| Real settlement | Confirmed `TradeSettled` receipt is decoded before the UI marks the trade successful |
-| Audit proof | Receipt SHA-256 digest is anchored and then queried through `isReceiptAnchored(bytes32)` |
-| Real market data | `npm run verify:market` checks the configured Arc GeckoTerminal OHLCV feeds |
-| Simulation boundary | Simulation transactions have no blockchain hash and are labelled as simulation throughout the UI |
-| Security boundaries | [SECURITY.md](SECURITY.md) documents trust assumptions, risks, and non-goals |
-| Agent security | Live agent-mandate signing is disabled against deployed v1. V2 is hardened but not deployed |
-
-### Security hardening note
-
-A security review identified a concrete authorization-boundary issue in the deployed v1 agent executor: the signed pair bitmask was not sufficient to bind the execution token addresses to the selected pair. Interminal now blocks new live agent-mandate signing against that deployment. The hardened successor in `contracts/InterminalSettlementV2.sol` binds the input to Arc USDC, maps each pair index to a concrete output token, and enforces the slippage ceiling against a fresh router quote. V2 requires a fresh deployment and independent verification before it can be enabled on Mainnet.
-
-Imported ERC-20 contracts are also isolated from the verified market registry. Their symbols cannot overwrite verified markets, arbitrary import addresses are not retained in the RPC target allowlist, and imported markets are view-only until independently verified.
-
-
-| Component | Status on Arc Mainnet | Verification Details |
-|---|---|---|
-| **Settlement Contract** | **Live on Chain 5042** | [`0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36`](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36) |
-| **Deployment Transaction** | **Confirmed Block #23,367,508** | [`0x1d96a8c548268f851a22c23107fbac1a606bbd2b951856d5f9f0f4d3ecbae404`](https://explorer.arc.io/tx/0x1d96a8c548268f851a22c23107fbac1a606bbd2b951856d5f9f0f4d3ecbae404) |
-| **Receipt Anchoring** | **Live & Callable** | `anchorReceipt(bytes32)` anchors trade & reasoning certificates on-chain |
-| **Wallet Connection** | **Live EIP-1193** | Detects Arc Mainnet (`5042`), queries live native USDC and ERC-20 balances |
-| **EIP-712 TradeTicket Verification** | **Active Protocol** | On-chain signature verification with fail-closed replay nonces and deadlines |
-| **Dual-USDC accounting** | **Active application model** | Separates native 18-decimal Arc gas USDC from 6-decimal operational ERC-20 USDC |
-
----
-
-## What to Try (Reviewer Guide)
-
-### Option A: Live Arc Mainnet First (With MetaMask / Rabby)
-1. Open the live deployment: [https://useinterminal.vercel.app/](https://useinterminal.vercel.app/) and click **Review Live Mainnet**.
-2. Connect to **Arc Mainnet (Chain ID: 5042)**. Interminal loads real ERC-20 operating USDC, supported Arc token balances, native USDC gas, fresh market pricing, and wallet-scaled controls.
-3. Use the Treasury Cockpit to inspect the operating buffer and JIT bridge. The live terminal can build a quoted TradeTicket, request the wallet signature, submit it to the deployed settlement contract, wait for a confirmed receipt, decode the `TradeSettled` event, and then anchor the certificate digest on Arc.
-
-### Option B: Simulation Tour (No Wallet or Gas Required)
-1. Click **Take a Tour**.
-2. Walk through policy sweep, JIT liquidity and the cryptographic receipt flow using seeded simulation state.
-3. Every simulated action remains clearly marked as simulation and has no fabricated blockchain transaction hash.
-
-### Option C: Optional Arc Testnet Rehearsal
-Open **Testnet Rehearsal**, connect a funded Arc Testnet wallet, and run the 0.01 native-USDC self-transfer. Use the returned testnet explorer link to verify the receipt. This is a wallet/network rehearsal only and is not required before Mainnet.
-
-*Note on Gas:* Arc uses native USDC for gas. The app's ~$0.0012 figure is an estimate, not a fixed network fee. Simulation mode requires no wallet or gas.
-## Architecture
-
-```text
-                           INTERMINAL
-                                │
-          ┌─────────────────────┴─────────────────────┐
-          │                                           │
-    Treasury Cockpit                             AI Analyst
-  (Reserves · NAV · Sweeps)                 (Deterministic Oracles)
-          │                                           │
-          └─────────────────────┬─────────────────────┘
-                                │
-                         Policy Engine
-                 (Spend Caps · Slippage · Whitelist)
-                                │
-                         Execution Layer
-                   (Zero-Custody EIP-712 TradeTickets)
-                                │
-                           Arc Mainnet
-                     (Chain ID: 5042 · USDC)
-                                │
-          ┌─────────────────────┴─────────────────────┐
-          ▼                                           ▼
- Interminal Settlement                       Immutable Receipt Anchor
- (0x2b38...ab36 · AMM Router)                (anchorReceipt(bytes32))
-```
-
----
-
-## Why Arc? (Arc Network Superpowers)
-
-Interminal is purpose-built to exploit Arc's unique L1 architectural capabilities:
-
-* **Low-cost USDC gas:** The UI uses ~$0.0012 USDC as an application-level gas estimate. Actual transaction cost depends on gas used and network conditions.
-* **USDC as Native Gas Token:** Gas is priced directly in USDC (18 decimals), eliminating foreign token friction for corporate accounting departments.
-* **Dual-Scale USDC Accounting:** Separates native 18-decimal Arc gas USDC from 6-decimal operational ERC-20 USDC.
-* **Fast deterministic settlement:** Supports rapid treasury rebalancing and repeated USDC-denominated execution on Arc. Exact execution remains subject to the selected route and transaction confirmation.
-
----
-
-## Arc Mainnet Smart Contract Protocol
-
-Interminal settles on-chain via [`contracts/InterminalSettlement.sol`](contracts/InterminalSettlement.sol):
-
-| Parameter | Value |
-|---|---|
-| **Settlement Contract** | [`0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36`](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36) |
-| **Deployment Tx** | [`0x1d96a8c548268f851a22c23107fbac1a606bbd2b951856d5f9f0f4d3ecbae404`](https://explorer.arc.io/tx/0x1d96a8c548268f851a22c23107fbac1a606bbd2b951856d5f9f0f4d3ecbae404) |
-| **Network** | Arc Mainnet (`chainId: 5042` / `0x13b2`) |
-| **Public RPC** | `https://rpc.mainnet.arc.io` |
-| **Compiler** | Solidity `v0.8.28` (200 optimizer runs, 8,802 bytes bytecode) |
-| **Arc AMM Router** | `0x52FE40c00530db2e43d01652f903870571A14AFD` (Uniswap V2 Router on Arc) |
-| **Deployer** | `0x541291139b59570d1cd5d0e64df217b3f6efd7c8` |
-| **Deployment Block** | `23,367,508` |
-
-### Core Functions:
-* `executeTradeTicket(...)`: Validates EIP-712 `TradeTicket` signatures and routes token swaps with strict slippage limits.
-* `executeAgentTrade(...)`: Present in the deployed v1 contract with signed-agent authorization, nonce, expiry, cumulative-spend, per-transaction, pair-mask, and minimum-output checks. This is **not the primary live browser execution path** and is not presented as a fully unattended production agent. The hardened successor is preserved separately as `contracts/InterminalSettlementV2.sol` and is not deployed.
-* `anchorReceipt(bytes32 receiptHash)`: Stores receipt hashes permanently on-chain.
-* `isReceiptAnchored(bytes32)`: Read-only verification query for external auditors and compliance officers.
-
----
-
-## Verified Arc Token Registry
-
-| Asset | Address | Decimals | Role |
-|---|---|---|---|
-| **USDC (Native)** | Native gas | 18 | Arc L1 gas token |
-| **USDC (ERC-20)** | `0x3600000000000000000000000000000000000000` | 6 | Operational liquidity & settlement |
-| **USYC** | `0x8a5D989Bbb96929F689B0200f435f53dA42bF490` | 6 | Hashnote Tokenized US Treasuries (3.225% net-yield reference as of 2026-10-04) |
-| **EURC** | `0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1` | 6 | Circle Euro Stablecoin |
-| **WETH** | `0x128cC466B61f542da60c70e3aA11c10e19B84EDB` | 18 | Wrapped Ether on Arc |
-| **cirBTC** | `0x171A4217b86A807A64eB94757Db6849fb4bDbAA0` | 8 | Arc Bridged Bitcoin |
-
----
-
-## Automated Verification & Testing
-
-Interminal includes **45 automated tests** across dual test suites:
-
-### 1. Vitest Unit & TypeScript Test Suite (17 Tests)
-```bash
-npm test
-```
-*Verifies TypeScript module exports, quote calculators, JIT liquidity formulas, SHA-256 canonical hashing, and EIP-712 typed data hashing.*
-
-### 2. Protocol & Fail-Closed Gate Test Suite (28 Tests)
-```bash
-npm run test:legacy
-```
-*Verifies live Arc Mainnet RPC connectivity (`eth_chainId: 5042`), on-chain settlement contract bytecode, opportunity cost derivations, carry trade spread calculations, and all 14 fail-closed security gates.*
-
----
-
-## Quickstart (Local Development)
-
-```bash
-git clone https://github.com/Tajudeeen/interminal-.git
-cd interminal-
-npm install
+```sh
+npm ci
 npm run dev
 ```
 
-Open `http://localhost:5173` to launch the workspace.
+Vite serves the UI on port 5173. Vite alone doesn't run `api/market-data.ts`, so Arc candle requests will show unavailable locally unless the same-origin API is also hosted. The UI handles that state. Deploy the repository on Vercel to run the UI and market-data function together.
 
-### Production Build
-```bash
+No private key is needed to build, browse, or run the demo. Wallet keys stay in the user's wallet. Contract deployment uses `PRIVATE_KEY` from the process environment through `scripts/deploy.mjs`. Never pass a private key in command arguments or commit it.
+
+```sh
+npm test
 npm run build
+npm run test:legacy
+npm run verify:market
 npm run verify:arc
 ```
-Typechecks the repository with `tsc` and bundles optimized production assets into `dist/`.
 
----
+`npm test` runs deterministic TypeScript, UI wiring, security, and financial-execution regressions. The legacy suite and verification scripts also query live services, so RPC/provider availability can fail those checks independently of local code.
 
-## Program Eligibility
+## Current limits
 
-* **Built independently for Arc Mainnet.**
-* **No prior funding:** This project has received zero funding from any Circle or Arc grant program.
-* **Open Source:** MIT License.
+- This rework doesn't replace or redeploy the v1 settlement contract.
+- USYC treasury moves use a router route, not a promise of instant par redemption. Eligibility and liquidity can prevent execution.
+- Gas is estimated by the wallet. A fixed sub-cent fee isn't guaranteed.
+- Receipts and plans are session state. Export receipts before resetting a workspace or reloading. This isn't a durable accounting system.
+- Market valuation can use reference prices and shouldn't be treated as a guaranteed liquidation value.
+- No new mainnet transaction was sent to validate this rework. Wallet write paths were checked with mocked regression tests; read-only chain checks and browser flows are reported separately in the review.
 
-## Final submission readiness
-
-The final hardening pass is intentionally proof-first:
-
-The UI keeps demo, optional testnet rehearsal, and Mainnet execution as separate environments. Reviewers can enter the actual Arc Mainnet product path immediately, while the testnet path remains a deliberately tiny wallet/network rehearsal.
-
-The Testnet Lab can perform a real 0.01 native-USDC self-transfer. It proves wallet signing, network selection, transaction submission, and receipt confirmation, while avoiding the false claim that Interminal has a testnet settlement contract identical to the deployed Mainnet deployment. The testnet policy balances remain clearly labelled scenarios; they are not presented as wallet balances.
-
-On mobile, Interminal first uses injected providers when opened inside a wallet's in-app browser. When a normal mobile browser has no injected provider, the wallet path hands the current dapp URL to MetaMask Mobile. Desktop multi-wallet discovery uses EIP-6963. See [MetaMask's current developer documentation](https://docs.metamask.io/wallet/how-to/connect/) and [Rabby's EIP-6963 integration guidance](https://rabby.io/docs/integrating-rabby-wallet).
-
-- The canonical settlement source reproduces the live Arc Mainnet runtime byte-for-byte under the recorded compiler settings.
-- `npm run verify:arc` fails closed on chain, deployment receipt, contract address, bytecode, source/runtime, ABI, EIP-712 domain, and configured Arc infrastructure mismatches.
-- `npm run verify:market` checks the three configured Arc GeckoTerminal OHLCV feeds.
-- Timeframe selection is request-scoped and covered by regression tests for every supported GeckoTerminal resolution.
-- Policy regression coverage includes overspend, unauthorized market, excessive slippage, and expired mandate rejection.
-- `SECURITY.md` documents trust boundaries, known risks, and the limits of the current prototype.
-- `contracts/InterminalSettlementV2.sol` is a future hardened successor and is explicitly **not deployed**.
-- The judge walkthrough distinguishes simulation from real Arc execution and never presents a simulated JIT action as an on-chain transaction.
-
-For a reviewer, the strongest evidence path is: live app → Proof / Arc RPC → deployment transaction → verified source → real wallet execution → confirmed receipt → anchored certificate.
-
-
-## UX guarantees
-
-- **Demo never requires a wallet.** Trade simulation, treasury sweep simulation, JIT stress testing, DCA planning, agent-mandate simulation, gas-tank simulation, calculators, receipts, and the guided tour are available before wallet connection.
-- **Testnet is explicit and opt-in.** Wallet connection defaults to Arc Mainnet. The app never silently connects a generic wallet action to Testnet; Testnet becomes the wallet target only after the reviewer explicitly opens **Testnet Rehearsal**. The app then uses Arc Testnet chain `5042002` and can run a 0.01 native-USDC self-transfer as a wallet/network rehearsal. It does not gate Mainnet. 
-- **Mainnet is the primary live path.** `Review Live Mainnet` opens a wallet-required Arc Mainnet context directly. Live execution cannot silently fall back to simulation, and on-chain success is only shown after a confirmed Arc receipt.
-- **Mobile wallets are first-class.** Injected mobile wallet browsers work through EIP-1193/EIP-6963 discovery. A normal mobile browser without an injected provider is handed off to MetaMask Mobile using its dapp deep link; desktop browser extensions remain supported through provider discovery. Mobile wallet apps such as Rabby also support EIP-6963/in-app dapp flows.
-- **Motion is restrained.** View changes use native View Transition API where available, with a fallback fade, smooth scroll-to-top on navigation, calmer 220ms control transitions, and reduced-motion support.
-- **Mainnet controls are wallet-scaled.** On a successful Arc Mainnet connection, Interminal reads the connected wallet's current balances and sizes the starting operating buffer, JIT stress case, trade size, DCA budget, and mandate budget from those holdings. The sizing is a starting point, not a hard policy limit, and users can still override it.
-- **Live sizing stays truthful.** Trade allocation pills use the wallet's actual available USD value. Mainnet connection refreshes ETH/BTC/EURC/USYC valuation from live public feeds before deriving wallet-scaled controls, while native USDC remains separate from ERC-20 operating liquidity and gas.
-- **The judge tour is mobile-safe.** Its floating action panel avoids the mobile navigation rail, constrains its height, and stacks the action buttons on narrow screens so Next / Finish remain reachable.
+Built by [@Deeen_Codes](https://x.com/Deeen_Codes).

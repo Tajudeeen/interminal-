@@ -1,3 +1,4 @@
+import { Icon } from "../ui/Icon";
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
 
@@ -30,7 +31,7 @@ export const ToastStack: React.FC = () => {
                 onClick={() => removeToast(t.id)}
                 className="text-muted hover:text-themed ml-2"
               >
-                <span className="material-symbols-outlined text-[14px]">close</span>
+                <Icon name="close" className="material-symbols-outlined text-[14px]" />
               </button>
             </div>
           </div>

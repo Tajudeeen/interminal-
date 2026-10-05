@@ -1,3 +1,4 @@
+import { Icon } from "../ui/Icon";
 import React, { useState } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
@@ -109,9 +110,7 @@ export const AuditReceiptModal: React.FC = () => {
           }`}
         >
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">
-              {isValid ? "verified" : "gpp_bad"}
-            </span>
+            <Icon name={isValid ? "verified" : "gpp_bad"} className="material-symbols-outlined text-[18px]" />
             <span className="font-bold tracking-wide uppercase">
               {isValid ? "SHA-256 Digest Verified Intact" : "Tamper Detected - Hash Mismatch"}
             </span>
@@ -179,11 +178,11 @@ export const AuditReceiptModal: React.FC = () => {
             className="flex items-center justify-between p-3 rounded-card bg-pos/10 border border-pos/30 text-pos text-xs font-mono hover:bg-pos/20 transition-colors"
           >
             <div className="flex items-center gap-2 truncate">
-              <span className="material-symbols-outlined text-[16px]">verified</span>
+              <Icon name="verified" className="material-symbols-outlined text-[16px]" />
               <span className="truncate">Anchored on Arc: {shortAddr(activeReceiptModal.anchorTx)}</span>
             </div>
             <span className="flex items-center gap-1 font-bold text-[11px] shrink-0">
-              View on Arc Explorer <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+              View on Arc Explorer <Icon name="open_in_new" className="material-symbols-outlined text-[12px]" />
             </span>
           </a>
         )}
@@ -210,7 +209,7 @@ export const AuditReceiptModal: React.FC = () => {
         {/* Live Arc State Query Result */}
         {onchainStatusText && (
           <div className="p-2.5 rounded-card bg-themed-card/60 border border-themed/30 font-mono text-xs text-themed flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px] text-cyan">travel_explore</span>
+            <Icon name="travel_explore" className="material-symbols-outlined text-[16px] text-cyan" />
             <span>{onchainStatusText}</span>
           </div>
         )}
@@ -224,7 +223,7 @@ export const AuditReceiptModal: React.FC = () => {
             className="flex items-center justify-between p-3 rounded-card bg-cyan/10 border border-cyan/30 text-cyan text-xs font-mono hover:bg-cyan/15 transition-colors"
           >
             <span>Execution Tx: {shortAddr(activeReceiptModal.transactionHash)}</span>
-            <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+            <Icon name="open_in_new" className="material-symbols-outlined text-[12px]" />
           </a>
         )}
 
@@ -235,7 +234,7 @@ export const AuditReceiptModal: React.FC = () => {
             size="sm"
             onClick={handleVerifyOnchain}
             isLoading={verifyingOnchain}
-            leftIcon={<span className="material-symbols-outlined text-[15px]">travel_explore</span>}
+            leftIcon={<Icon name="travel_explore" className="material-symbols-outlined text-[15px]" />}
           >
             Verify On-Chain RPC
           </Button>
@@ -244,7 +243,7 @@ export const AuditReceiptModal: React.FC = () => {
             size="sm"
             onClick={handleCopy}
             className="flex-1"
-            leftIcon={<span className="material-symbols-outlined text-[15px]">content_copy</span>}
+            leftIcon={<Icon name="content_copy" className="material-symbols-outlined text-[15px]" />}
           >
             Copy JSON
           </Button>
@@ -253,7 +252,7 @@ export const AuditReceiptModal: React.FC = () => {
             size="sm"
             onClick={handleDownload}
             className="flex-1"
-            leftIcon={<span className="material-symbols-outlined text-[15px]">download</span>}
+            leftIcon={<Icon name="download" className="material-symbols-outlined text-[15px]" />}
           >
             Download .JSON
           </Button>
@@ -264,7 +263,7 @@ export const AuditReceiptModal: React.FC = () => {
               onClick={handleAnchor}
               isLoading={anchoring}
               className="w-full sm:w-auto"
-              leftIcon={<span className="material-symbols-outlined text-[15px]">anchor</span>}
+              leftIcon={<Icon name="anchor" className="material-symbols-outlined text-[15px]" />}
             >
               Anchor to Arc Settlement
             </Button>

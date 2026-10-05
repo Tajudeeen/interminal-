@@ -1,3 +1,4 @@
+import { Icon } from "../ui/Icon";
 import React, { useEffect } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
@@ -79,7 +80,7 @@ export const AiAnalystView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display font-black text-2xl sm:text-3xl text-themed tracking-tight">
-            AI Quant Market Analyst
+            Market signal analysis
           </h1>
           <p className="font-mono text-xs text-muted mt-1">
             Deterministic Technical Oracles · EMA Ribbon · RSI · MACD · S/R Topography
@@ -139,7 +140,7 @@ export const AiAnalystView: React.FC = () => {
                   size="xs"
                   variant="outline"
                   onClick={runAiAnalysis}
-                  leftIcon={<span className="material-symbols-outlined text-[14px]">refresh</span>}
+                  leftIcon={<Icon name="refresh" className="material-symbols-outlined text-[14px]" />}
                   title="Re-run quantitative models"
                 >
                   Refresh
@@ -165,9 +166,7 @@ export const AiAnalystView: React.FC = () => {
 
             {/* Key Actionable Strategy */}
             <div className="p-4 rounded-card border border-pos/30 bg-pos/5 flex items-start gap-3">
-              <span className="material-symbols-outlined text-[20px] text-pos shrink-0 mt-0.5">
-                tips_and_updates
-              </span>
+              <Icon name="tips_and_updates" className="material-symbols-outlined text-[20px] text-pos shrink-0 mt-0.5" />
               <div>
                 <div className="font-display font-bold text-sm text-pos">Tactical Recommendation</div>
                 <div className="font-mono text-xs text-themed mt-0.5">{analysis.action}</div>
@@ -246,7 +245,7 @@ export const AiAnalystView: React.FC = () => {
                   <div className="text-[10px] opacity-75">Target Allowlist</div>
                   <div className="font-bold">Arc Settlement</div>
                 </div>
-                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                <Icon name="check_circle" className="material-symbols-outlined text-[16px]" />
               </div>
 
               <div className="p-2.5 rounded-card bg-pos/10 border border-pos/30 text-pos flex items-center justify-between">
@@ -254,7 +253,7 @@ export const AiAnalystView: React.FC = () => {
                   <div className="text-[10px] opacity-75">Daily Spend Cap</div>
                   <div className="font-bold">&lt; $5,000 Limit</div>
                 </div>
-                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                <Icon name="check_circle" className="material-symbols-outlined text-[16px]" />
               </div>
 
               <div className="p-2.5 rounded-card bg-pos/10 border border-pos/30 text-pos flex items-center justify-between">
@@ -262,7 +261,7 @@ export const AiAnalystView: React.FC = () => {
                   <div className="text-[10px] opacity-75">Slippage Bound</div>
                   <div className="font-bold">&lt;= 30 bps</div>
                 </div>
-                <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                <Icon name="check_circle" className="material-symbols-outlined text-[16px]" />
               </div>
 
               <div className="p-2.5 rounded-card bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-between">
@@ -270,7 +269,7 @@ export const AiAnalystView: React.FC = () => {
                   <div className="text-[10px] opacity-75">Officer Permit</div>
                   <div className="font-bold">EIP-712 Required</div>
                 </div>
-                <span className="material-symbols-outlined text-[16px]">fingerprint</span>
+                <Icon name="fingerprint" className="material-symbols-outlined text-[16px]" />
               </div>
             </div>
 
@@ -279,7 +278,7 @@ export const AiAnalystView: React.FC = () => {
                 variant="primary"
                 size="md"
                 onClick={handleExecuteRecommendedPolicy}
-                leftIcon={<span className="material-symbols-outlined text-[16px]">verified</span>}
+                leftIcon={<Icon name="verified" className="material-symbols-outlined text-[16px]" />}
               >
                 Approve & Execute via EIP-712 Permit
               </Button>
@@ -287,7 +286,7 @@ export const AiAnalystView: React.FC = () => {
                 variant="secondary"
                 size="md"
                 onClick={handleTradeOnTerminal}
-                leftIcon={<span className="material-symbols-outlined text-[16px]">tune</span>}
+                leftIcon={<Icon name="tune" className="material-symbols-outlined text-[16px]" />}
               >
                 Customize on Trade Desk
               </Button>
@@ -298,7 +297,7 @@ export const AiAnalystView: React.FC = () => {
           <div className="card-themed border border-themed rounded-card p-5 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-themed/20">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px] text-pos">functions</span>
+                <Icon name="functions" className="material-symbols-outlined text-[18px] text-pos" />
                 <div>
                   <div className="font-mono text-[11px] text-themed uppercase tracking-wider font-bold">
                     Deterministic Mathematical Grounding & Formula Verifier
@@ -351,7 +350,7 @@ export const AiAnalystView: React.FC = () => {
                 variant="primary"
                 size="md"
                 onClick={handleTradeOnTerminal}
-                leftIcon={<span className="material-symbols-outlined text-[16px]">candlestick_chart</span>}
+                leftIcon={<Icon name="candlestick_chart" className="material-symbols-outlined text-[16px]" />}
               >
                 Trade Setup on Terminal
               </Button>
@@ -359,7 +358,7 @@ export const AiAnalystView: React.FC = () => {
                 variant="secondary"
                 size="md"
                 onClick={() => setMandateModalOpen(true)}
-                leftIcon={<span className="material-symbols-outlined text-[16px]">verified_user</span>}
+                leftIcon={<Icon name="verified_user" className="material-symbols-outlined text-[16px]" />}
               >
                 Sign Scoped Agent Mandate
               </Button>
@@ -368,13 +367,13 @@ export const AiAnalystView: React.FC = () => {
         </div>
       ) : (
         <div className="card-themed border border-themed rounded-card p-12 text-center space-y-4">
-          <span className="material-symbols-outlined text-[36px] text-lime-500 animate-pulse">psychology</span>
+          <Icon name="psychology" className="material-symbols-outlined text-[36px] text-lime-500 animate-pulse" />
           <p className="font-mono text-xs text-sub">Running technical indicators for {activePair}...</p>
           <Button
             variant="primary"
             size="md"
             onClick={runAiAnalysis}
-            leftIcon={<span className="material-symbols-outlined text-[16px]">play_arrow</span>}
+            leftIcon={<Icon name="play_arrow" className="material-symbols-outlined text-[16px]" />}
           >
             Compute Analysis
           </Button>

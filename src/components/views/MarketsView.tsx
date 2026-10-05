@@ -2,174 +2,166 @@ import React, { useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
 import { ARC } from "../../constants/arc";
-import { shortAddr } from "../../lib/arc/wallet";
 import { Button } from "../ui/Button";
 
 export const MarketsView: React.FC = () => {
-  const { setPair, setView, syncMarketData, marketFeedStatus, setImportTokenOpen } = useAppStore();
-  const [selectedCat, setSelectedCat] = useState<string>("all");
+  const {
+    setPair,
+    setView,
+    syncMarketData,
+    marketFeedStatus,
+    pair,
+    environmentMode,
+    setImportTokenOpen,
+  } = useAppStore();
+  const [filter, setFilter] = useState("arc");
+  const [query, setQuery] = useState("");
   const [syncing, setSyncing] = useState(false);
-
-  const categories = [
-    { id: "all", label: "All Markets" },
-    { id: "bluechip", label: "Bluechips" },
-    { id: "fx", label: "Institutional FX & Stables" },
-    { id: "defi", label: "DeFi Protocols" },
-  ];
-
-  const handleSync = async () => {
-    setSyncing(true);
-    await syncMarketData();
-    setSyncing(false);
-  };
-
-  const handleTrade = (pairKey: string) => {
-    setPair(pairKey);
-    setView("terminal");
-  };
-
-  const pairsList = Object.entries(PAIRS).filter(([_, data]) => {
-    if (selectedCat === "all") return true;
-    if (selectedCat === "fx") return data.cat === "fx" || data.cat === "rwa";
-    return data.cat === selectedCat;
+  const entries = Object.entries(PAIRS).filter(([key, data]) => {
+    const matches = (key + " " + data.base)
+      .toLowerCase()
+      .includes(query.toLowerCase());
+    return (
+      matches &&
+      (filter === "all" ||
+        (filter === "arc" && !!data.address && data.cat !== "imported") ||
+        (filter === "fx" && data.cat === "rwa_fx") ||
+        (filter === "imported" && data.cat === "imported"))
+    );
   });
-
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="font-display font-black text-2xl sm:text-3xl text-themed tracking-tight">
-            Markets & Liquidity References
+          <p className="eyebrow mb-2">Route directory</p>
+          <h1 className="font-display text-3xl font-bold tracking-tight">
+            Markets
           </h1>
-          <p className="font-mono text-xs text-muted mt-1">
-            Arc DEX feeds + explicit global references · GeckoTerminal OHLCV · Chain 5042
+          <p className="text-sm text-sub mt-2">
+            Find an Arc route and inspect its price source before trading.
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2">
           <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleSync}
             isLoading={syncing}
-            leftIcon={<span className="material-symbols-outlined text-[16px]">refresh</span>}
+            onClick={async () => {
+              setSyncing(true);
+              try {
+                await syncMarketData();
+              } finally {
+                setSyncing(false);
+              }
+            }}
           >
-            {syncing ? "Refreshing feed..." : "Refresh Active Feed"}
+            Refresh active feed
           </Button>
-
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setImportTokenOpen(true)}
-            leftIcon={<span className="material-symbols-outlined text-[16px]">add</span>}
-          >
-            Import Token
-          </Button>
+          <Button onClick={() => setImportTokenOpen(true)}>Import token</Button>
         </div>
+      </header>
+      <div className="card-themed border border-themed rounded-xl p-4 text-sm text-sub leading-relaxed">
+        Only the selected market's feed refreshes. Other listed prices are
+        reference values, and imported tokens have no price feed. A registered
+        token address doesn't guarantee liquidity or issuer access. Mainnet
+        trade review fetches a separate router quote.
       </div>
-
-      {/* Category Pills & Feed Status */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1.5">
-          {categories.map((cat) => (
+      <div className="flex flex-col sm:flex-row justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: "arc", label: "Arc routes" },
+            { id: "fx", label: "FX & treasury" },
+            { id: "all", label: "All references" },
+            { id: "imported", label: "Imported" },
+          ].map((f) => (
             <button
-              key={cat.id}
-              onClick={() => setSelectedCat(cat.id)}
-              className={`px-3 py-1.5 rounded-pill text-xs font-mono transition-colors ${
-                selectedCat === cat.id
-                  ? "bg-text text-bg font-bold shadow-xs"
-                  : "card-themed border border-themed/40 text-sub hover:text-themed"
-              }`}
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              aria-pressed={filter === f.id}
+              className={`px-3 py-2 rounded-lg border text-xs ${filter === f.id ? "border-lime-500 text-themed" : "border-themed text-sub"}`}
             >
-              {cat.label}
+              {f.label}
             </button>
           ))}
         </div>
-
-        <div className="flex items-center gap-2 font-mono text-[11px] text-muted">
-          <span
-            className={`w-2 h-2 rounded-full ${
-              marketFeedStatus.live ? "bg-pos animate-pulse" : "bg-neutral-500"
-            }`}
-          />
-          <span>Oracle: {marketFeedStatus.source}</span>
-        </div>
+        <input
+          aria-label="Filter markets"
+          placeholder="Search by symbol…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="border border-themed rounded-lg px-3 py-2 text-sm sm:max-w-52"
+        />
       </div>
-
-      {/* Markets Table */}
-      <div className="card-themed border border-themed rounded-card overflow-hidden">
+      <div className="card-themed border border-themed rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left font-mono text-xs">
-            <thead>
-              <tr className="border-b border-themed bg-themed-card/50 text-muted uppercase text-[10px]">
-                <th className="py-3 px-4">Market Pair</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4 text-right">Price</th>
-                <th className="py-3 px-4 text-right">24h Change</th>
-                <th className="py-3 px-4 text-right hidden sm:table-cell">24h High</th>
-                <th className="py-3 px-4 text-right hidden sm:table-cell">24h Low</th>
-                <th className="py-3 px-4 text-right hidden md:table-cell">24h Volume</th>
-                <th className="py-3 px-4 text-right">Action</th>
+          <table className="w-full text-left text-sm">
+            <thead className="text-muted text-xs border-b border-themed">
+              <tr>
+                <th className="p-4">Market</th>
+                <th className="p-4">Route</th>
+                <th className="p-4 text-right">Price</th>
+                <th className="p-4">Price source</th>
+                <th className="p-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-themed/30">
-              {pairsList.map(([key, data]) => {
-                const isUp = data.change >= 0;
+            <tbody>
+              {entries.map(([key, data]) => {
+                const activeFeed = key === pair && marketFeedStatus.live;
+                const registered = !!data.address && data.cat !== "imported";
+                const price =
+                  data.cat === "imported"
+                    ? "—"
+                    : `$${data.price.toLocaleString("en-US", { maximumFractionDigits: 6 })}`;
                 return (
-                  <tr key={key} className="hover:bg-themed-card/40 transition-colors">
-                    <td className="py-3 px-4 font-bold text-themed">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded card-themed border border-themed/40 flex items-center justify-center font-display font-extrabold text-[10px]">
-                          {data.base.slice(0, 3)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span>{key}</span>
-                            {ARC.tokens[data.base] && (
-                              <a
-                                href={`${ARC.explorer}/address/${ARC.tokens[data.base].address}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                title={`Verified Arc Mainnet Contract: ${ARC.tokens[data.base].address}`}
-                                className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-cyan/10 hover:bg-cyan/20 text-cyan text-[9px] font-mono border border-cyan/30 transition-colors"
-                              >
-                                <span>ON-CHAIN</span>
-                                <span className="material-symbols-outlined text-[10px]">open_in_new</span>
-                              </a>
-                            )}
-                          </div>
-                          <div className="text-[10px] text-muted font-normal">
-                            {ARC.tokens[data.base] ? shortAddr(ARC.tokens[data.base].address) : "Arc AMM Pair"}
-                          </div>
-                        </div>
-                      </div>
+                  <tr
+                    key={key}
+                    className="border-b border-themed last:border-0 hover:bg-themed-card/40"
+                  >
+                    <td className="p-4 font-medium whitespace-nowrap">
+                      {key}
+                      <small className="block text-muted text-xs mt-1">
+                        {data.cat === "rwa_fx"
+                          ? "FX / treasury"
+                          : data.cat === "imported"
+                            ? "Imported ERC-20"
+                            : "Market reference"}
+                      </small>
                     </td>
-                    <td className="py-3 px-4 text-muted uppercase text-[10px]">{data.cat}</td>
-                    <td className="py-3 px-4 text-right font-semibold text-themed tnum">
-                      ${data.price < 10 ? data.price.toFixed(4) : data.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <td className="p-4 text-xs">
+                      {registered ? (
+                        <a
+                          href={`${ARC.explorer}/address/${data.address}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-cyan hover:underline"
+                        >
+                          Registered token ↗
+                        </a>
+                      ) : (
+                        <span className="text-muted">View only</span>
+                      )}
                     </td>
-                    <td className={`py-3 px-4 text-right font-medium tnum ${isUp ? "text-pos" : "text-neg"}`}>
-                      {isUp ? "+" : ""}
-                      {data.change.toFixed(2)}%
+                    <td className="p-4 text-right font-mono text-xs whitespace-nowrap">
+                      {price}
                     </td>
-                    <td className="py-3 px-4 text-right text-sub hidden sm:table-cell tnum">
-                      ${data.high.toFixed(2)}
+                    <td className="p-4 text-xs text-muted">
+                      <span className={activeFeed ? "text-pos" : ""}>
+                        {activeFeed
+                          ? marketFeedStatus.source
+                          : data.cat === "imported"
+                            ? "No valuation available"
+                            : "Reference · not a live quote"}
+                      </span>
                     </td>
-                    <td className="py-3 px-4 text-right text-sub hidden sm:table-cell tnum">
-                      ${data.low.toFixed(2)}
-                    </td>
-                    <td className="py-3 px-4 text-right text-muted hidden md:table-cell tnum">
-                      ${data.vol.toLocaleString()}
-                    </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="p-4 text-right">
                       <Button
-                        variant="secondary"
                         size="xs"
-                        onClick={() => handleTrade(key)}
+                        onClick={() => {
+                          setPair(key);
+                          setView("terminal");
+                        }}
                       >
-                        Trade
+                        {environmentMode === "mainnet" && registered
+                          ? "Review route"
+                          : "Inspect"}
                       </Button>
                     </td>
                   </tr>
@@ -178,7 +170,18 @@ export const MarketsView: React.FC = () => {
             </tbody>
           </table>
         </div>
+        {!entries.length && (
+          <p className="text-center text-sub py-12 text-sm">
+            No markets match this filter.
+          </p>
+        )}
       </div>
+      <p className="text-muted text-xs">
+        Active feed: {pair} · {marketFeedStatus.source}
+        {marketFeedStatus.lastUpdate
+          ? ` · checked ${new Date(marketFeedStatus.lastUpdate).toLocaleTimeString()}`
+          : ""}
+      </p>
     </div>
   );
 };

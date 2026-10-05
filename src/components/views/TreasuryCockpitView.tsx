@@ -1,3 +1,4 @@
+import { Icon } from "../ui/Icon";
 import React, { useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { USYC_APY, ARC } from "../../constants/arc";
@@ -30,6 +31,7 @@ export const TreasuryCockpitView: React.FC = () => {
     nativeGasBalance,
     executeSweepOnchain,
     environmentMode,
+    setPair, setSide, setAmount, prepareTradeReview,
   } = useAppStore();
 
   const [simHorizonDays, setSimHorizonDays] = useState<number>(365);
@@ -44,7 +46,7 @@ export const TreasuryCockpitView: React.FC = () => {
   // Mainnet review intentionally starts with empty balances and zero stress-test sizing
   // until the wallet is connected. Keep the render path safe instead of passing an
   // invalid zero trade amount into the strict JIT calculator.
-  const jit = mainnetReview
+  const jit = mainnetReview || stressTestAmount <= 0
     ? {
         needed: false,
         deficit: 0,
@@ -94,7 +96,10 @@ export const TreasuryCockpitView: React.FC = () => {
       addToast("Sweep Not Needed", "Liquid USDC is within the target operating cash buffer.", "info");
       return;
     }
-    executeSweepOnchain(sweep.sweepAmount, "sweep");
+    if (environmentMode === "mainnet") {
+      setPair("USYC/USDC"); setSide("buy"); setAmount(sweep.sweepAmount);
+      void prepareTradeReview();
+    } else { void executeSweepOnchain(sweep.sweepAmount, "sweep"); }
   };
 
   const handleJitUnwind = () => {
@@ -106,7 +111,10 @@ export const TreasuryCockpitView: React.FC = () => {
       addToast("Insufficient USYC", "Combined USDC + USYC cannot cover the disbursement.", "err");
       return;
     }
-    executeSweepOnchain(jit.usycToRedeem, "unwind");
+    if (environmentMode === "mainnet") {
+      setPair("USYC/USDC"); setSide("sell"); setAmount(jit.usycToRedeem * PAIRS["USYC/USDC"].price);
+      void prepareTradeReview();
+    } else { void executeSweepOnchain(jit.usycToRedeem, "unwind"); }
   };
 
   const handleSimulateInflow = (amt: number) => {
@@ -155,7 +163,7 @@ export const TreasuryCockpitView: React.FC = () => {
               variant="secondary"
               size="sm"
               onClick={() => handleSimulateInflow(5000)}
-              leftIcon={<span className="material-symbols-outlined text-[16px] text-pos">add_circle</span>}
+              leftIcon={<Icon name="add_circle" className="material-symbols-outlined text-[16px] text-pos" />}
             >
               Simulate +$5k Inflow
             </Button>
@@ -164,7 +172,7 @@ export const TreasuryCockpitView: React.FC = () => {
             variant="primary"
             size="sm"
             onClick={() => setView("terminal")}
-            leftIcon={<span className="material-symbols-outlined text-[16px]">candlestick_chart</span>}
+            leftIcon={<Icon name="candlestick_chart" className="material-symbols-outlined text-[16px]" />}
           >
             Open Trade Desk
           </Button>
@@ -183,10 +191,10 @@ export const TreasuryCockpitView: React.FC = () => {
           </div>
           <a href={ARC.explorer + "/address/" + address} target="_blank" rel="noopener noreferrer" className="font-mono text-[11px] text-pos hover:underline flex items-center gap-1 shrink-0">
             <span>View on Explorer</span>
-            <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+            <Icon name="open_in_new" className="material-symbols-outlined text-[13px]" />
           </a>
         </div>
-      ) : livePortfolio && wrongNetwork ? (
+      ) : wrongNetwork ? (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-card bg-neg/10 border border-neg/40 text-xs gap-3">
           <div>
             <div className="font-display font-black text-neg uppercase tracking-wider">WALLET CONNECTED · WRONG NETWORK</div>
@@ -211,7 +219,7 @@ export const TreasuryCockpitView: React.FC = () => {
             size="sm"
             variant="primary"
             onClick={() => connectWallet("mainnet")}
-            leftIcon={<span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>}
+            leftIcon={<Icon name="account_balance_wallet" className="material-symbols-outlined text-[14px]" />}
           >
             Connect Arc Mainnet
           </Button>
@@ -233,7 +241,7 @@ export const TreasuryCockpitView: React.FC = () => {
             size="xs"
             variant="primary"
             onClick={() => connectWallet("mainnet")}
-            leftIcon={<span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>}
+            leftIcon={<Icon name="account_balance_wallet" className="material-symbols-outlined text-[14px]" />}
           >
             Connect Live Arc Wallet
           </Button>
@@ -264,7 +272,7 @@ export const TreasuryCockpitView: React.FC = () => {
         <div className="card-themed border border-themed rounded-card p-4">
           <div className="flex justify-between items-center text-muted font-mono text-[10px] uppercase">
             <span>Liquid Cash (USDC)</span>
-            <span className="material-symbols-outlined text-[16px]">payments</span>
+            <Icon name="payments" className="material-symbols-outlined text-[16px]" />
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-themed tnum">
             {mainnetReview ? "—" : "$" + liquidUsdc.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -278,7 +286,7 @@ export const TreasuryCockpitView: React.FC = () => {
         <div className="card-themed border border-themed rounded-card p-4">
           <div className="flex justify-between items-center text-muted font-mono text-[10px] uppercase">
             <span>USYC Treasury Position</span>
-            <span className="material-symbols-outlined text-[16px] text-pos">trending_up</span>
+            <Icon name="trending_up" className="material-symbols-outlined text-[16px] text-pos" />
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-pos tnum">
             {mainnetReview ? "—" : "$" + usycNavUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -292,7 +300,7 @@ export const TreasuryCockpitView: React.FC = () => {
         <div className="card-themed border border-themed rounded-card p-4">
           <div className="flex justify-between items-center text-muted font-mono text-[10px] uppercase">
             <span>Idle Opportunity Drag</span>
-            <span className="material-symbols-outlined text-[16px] text-amber-500">warning</span>
+            <Icon name="warning" className="material-symbols-outlined text-[16px] text-amber-500" />
           </div>
           <div className="mt-2 font-display font-extrabold text-2xl text-amber-500 tnum">
             {mainnetReview ? "—" : "$" + cost.annualYieldUsd.toFixed(2) + "/yr"}
@@ -393,7 +401,7 @@ export const TreasuryCockpitView: React.FC = () => {
                 onClick={handleSweepNow}
                 disabled={mainnetReview || !sweep.recommended || executing}
                 isLoading={executing && sweep.recommended}
-                leftIcon={<span className="material-symbols-outlined text-[16px]">bolt</span>}
+                leftIcon={<Icon name="bolt" className="material-symbols-outlined text-[16px]" />}
               >
                 {sweep.recommended
                   ? `Sweep $${sweep.sweepAmount.toLocaleString()} USDC → USYC T-Bills${livePortfolio ? " (On-Chain)" : " (Sim)"}`
@@ -479,7 +487,7 @@ export const TreasuryCockpitView: React.FC = () => {
           </div>
 
           <div className="text-[11px] font-mono text-muted flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[15px] text-pos">verified</span>
+            <Icon name="verified" className="material-symbols-outlined text-[15px] text-pos" />
             Live execution uses a fresh Arc AMM quote and bounded output. This is an AMM rebalance, not a direct Hashnote Teller redemption. Simulation uses the configured reference price.
           </div>
 
@@ -492,7 +500,7 @@ export const TreasuryCockpitView: React.FC = () => {
               onClick={handleJitUnwind}
               disabled={executing}
               isLoading={executing}
-              leftIcon={<span className="material-symbols-outlined text-[16px]">swap_horiz</span>}
+              leftIcon={<Icon name="swap_horiz" className="material-symbols-outlined text-[16px]" />}
             >
               Execute JIT USYC/USDC Rebalance: ${jit.usycToRedeem.toLocaleString(undefined, { maximumFractionDigits: 6 })} USYC → USDC{livePortfolio ? " (On-Chain)" : " (Sim)"}
             </Button>
@@ -572,7 +580,7 @@ export const TreasuryCockpitView: React.FC = () => {
       <div className="card-themed border border-themed rounded-card p-5 space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-themed/20">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px] text-pos">calculate</span>
+            <Icon name="calculate" className="material-symbols-outlined text-[20px] text-pos" />
             <div>
               <h3 className="font-display font-bold text-sm text-themed">
                 Deterministic Mathematical Grounding & Formula Verifier
@@ -708,7 +716,7 @@ export const TreasuryCockpitView: React.FC = () => {
                 className="text-pos hover:underline flex items-center gap-0.5 text-[11px] shrink-0 ml-2"
               >
                 <span>Explorer</span>
-                <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                <Icon name="open_in_new" className="material-symbols-outlined text-[13px]" />
               </a>
             </div>
             <div className="text-[10px] text-muted">
@@ -727,7 +735,7 @@ export const TreasuryCockpitView: React.FC = () => {
                 className="text-pos hover:underline flex items-center gap-0.5 text-[11px] shrink-0 ml-2"
               >
                 <span>Explorer</span>
-                <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                <Icon name="open_in_new" className="material-symbols-outlined text-[13px]" />
               </a>
             </div>
             <div className="text-[10px] text-muted">

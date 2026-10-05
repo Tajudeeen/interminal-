@@ -25,19 +25,16 @@ export function formatUnits(hex: string | null | undefined, decimals: number): n
 }
 
 export function parseUnits(val: string | number | bigint | null | undefined, decimals = 18): bigint {
-  if (val == null) return 0n;
+  if (val == null || !Number.isInteger(decimals) || decimals < 0 || decimals > 36) return 0n;
   let str = typeof val === "string" ? val.trim() : String(val);
+  if (str.length > 128) return 0n;
   if (!str || str === "NaN" || str === "Infinity" || str === "-Infinity") return 0n;
   if (/[eE]/.test(str)) {
     const num = Number(str);
     if (!Number.isFinite(num) || num <= 0) return 0n;
     str = num.toFixed(decimals);
   }
-  if (!/^[0-9]+(\.[0-9]+)?$/.test(str)) {
-    const m = str.match(/^[0-9]+(\.[0-9]+)?/);
-    if (!m) return 0n;
-    str = m[0];
-  }
+  if (!/^[0-9]+(\.[0-9]+)?$/.test(str)) return 0n;
   const [whole, frac = ""] = str.split(".");
   const paddedFrac = frac.slice(0, decimals).padEnd(decimals, "0");
   const wholeBig = BigInt(whole || "0");

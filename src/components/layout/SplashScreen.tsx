@@ -12,7 +12,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 }) => {
   const [progress, setProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
-  const [statusText, setStatusText] = useState("Connecting to Arc Mainnet (Chain 5042)...");
+  const [statusText, setStatusText] = useState("Opening your treasury workspace…");
 
   useEffect(() => {
     const startTime = performance.now();
@@ -24,9 +24,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       setProgress(pct);
 
       if (pct > 70) {
-        setStatusText("14 Fail-closed gates active · Ready");
+        setStatusText("Workspace ready");
       } else if (pct > 35) {
-        setStatusText("Syncing automated 4.95% USYC T-Bill sweeps...");
+        setStatusText("Loading treasury controls…");
       }
 
       if (elapsed >= durationMs) {

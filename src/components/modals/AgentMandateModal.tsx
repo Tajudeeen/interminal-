@@ -1,3 +1,4 @@
+import { Icon } from "../ui/Icon";
 import React, { useEffect, useMemo, useState } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
@@ -191,7 +192,7 @@ export const AgentMandateModal: React.FC = () => {
           fullWidth
           onClick={handleAuthorize}
           disabled={environmentMode === "mainnet"}
-          leftIcon={<span className="material-symbols-outlined text-[18px]">verified_user</span>}
+          leftIcon={<Icon name="verified_user" className="material-symbols-outlined text-[18px]" />}
         >
           Authorize Scoped EIP-712 Mandate
         </Button>

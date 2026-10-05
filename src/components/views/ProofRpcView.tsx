@@ -1,3 +1,4 @@
+import { Icon } from "../ui/Icon";
 import React, { useEffect, useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { ARC } from "../../constants/arc";
@@ -57,7 +58,7 @@ export const ProofRpcView: React.FC = () => {
             size="sm"
             onClick={handleProbeSettlement}
             isLoading={probing}
-            leftIcon={<span className="material-symbols-outlined text-[16px]">sensors</span>}
+            leftIcon={<Icon name="sensors" className="material-symbols-outlined text-[16px]" />}
           >
             Probe Settlement RPC
           </Button>
@@ -66,7 +67,7 @@ export const ProofRpcView: React.FC = () => {
             size="sm"
             onClick={runProof}
             isLoading={proof.running}
-            leftIcon={<span className="material-symbols-outlined text-[16px]">refresh</span>}
+            leftIcon={<Icon name="refresh" className="material-symbols-outlined text-[16px]" />}
           >
             {proof.running ? "Running Verification..." : "Run All Proofs"}
           </Button>
@@ -104,7 +105,7 @@ export const ProofRpcView: React.FC = () => {
       <div className="card-themed border border-cyan/40 rounded-card p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-themed/20">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px] text-cyan">verified_user</span>
+            <Icon name="verified_user" className="material-symbols-outlined text-[20px] text-cyan" />
             <div>
               <h2 className="font-display font-bold text-base text-themed">
                 Arc Mainnet Settlement Engine Verifier
@@ -122,7 +123,7 @@ export const ProofRpcView: React.FC = () => {
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-cyan/10 hover:bg-cyan/20 border border-cyan/30 text-cyan font-mono text-[11px] transition-colors"
             >
               <span>View on Arc Explorer</span>
-              <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+              <Icon name="open_in_new" className="material-symbols-outlined text-[13px]" />
             </a>
           </div>
         </div>
@@ -195,9 +196,7 @@ export const ProofRpcView: React.FC = () => {
                 key={r.id}
                 className="p-2.5 rounded-card bg-themed-card/50 border border-themed/20 flex items-start gap-2.5 font-mono text-xs"
               >
-                <span className="material-symbols-outlined text-[16px] text-pos shrink-0 mt-0.5">
-                  check_circle
-                </span>
+                <Icon name="check_circle" className="material-symbols-outlined text-[16px] text-pos shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <div className="font-semibold text-themed">{r.id}</div>
                   <div className="text-[11px] text-muted mt-0.5">{r.detail}</div>
@@ -222,13 +221,11 @@ export const ProofRpcView: React.FC = () => {
                 key={r.id}
                 className="p-2.5 rounded-card bg-themed-card/50 border border-themed/20 flex items-start gap-2.5 font-mono text-xs"
               >
-                <span
+                <Icon name={r.ok ? "check_circle" : "cancel"}
                   className={`material-symbols-outlined text-[16px] shrink-0 mt-0.5 ${
                     r.ok ? "text-pos" : "text-neg"
                   }`}
-                >
-                  {r.ok ? "check_circle" : "cancel"}
-                </span>
+                 />
                 <div className="min-w-0">
                   <div className="font-semibold text-themed">{r.id}</div>
                   <div className="text-[11px] text-muted mt-0.5 truncate">{r.detail}</div>
@@ -271,7 +268,7 @@ export const ProofRpcView: React.FC = () => {
                     className="text-cyan hover:underline inline-flex items-center gap-1"
                   >
                     <span>Explorer</span>
-                    <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                    <Icon name="open_in_new" className="material-symbols-outlined text-[12px]" />
                   </a>
                 </td>
               </tr>
@@ -288,7 +285,7 @@ export const ProofRpcView: React.FC = () => {
                       className="text-cyan hover:underline inline-flex items-center gap-1"
                     >
                       <span>Explorer</span>
-                      <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                      <Icon name="open_in_new" className="material-symbols-outlined text-[12px]" />
                     </a>
                   </td>
                 </tr>
@@ -305,7 +302,7 @@ export const ProofRpcView: React.FC = () => {
                     className="text-pos font-semibold hover:underline inline-flex items-center gap-1"
                   >
                     <span>Verified</span>
-                    <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                    <Icon name="open_in_new" className="material-symbols-outlined text-[12px]" />
                   </a>
                 </td>
               </tr>

@@ -1,3 +1,4 @@
+import { Icon } from "../ui/Icon";
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { ARC } from "../../constants/arc";
@@ -24,7 +25,7 @@ export const CorporateLedgerView: React.FC = () => {
           variant="primary"
           size="sm"
           onClick={() => setView("terminal")}
-          leftIcon={<span className="material-symbols-outlined text-[16px]">draw</span>}
+          leftIcon={<Icon name="draw" className="material-symbols-outlined text-[16px]" />}
         >
           Sign New Trade Ticket
         </Button>
@@ -80,9 +81,7 @@ export const CorporateLedgerView: React.FC = () => {
                               : "bg-neg/10 border border-neg/30 text-neg"
                           }`}
                         >
-                          <span className="material-symbols-outlined text-[12px]">
-                            {isValid ? "verified" : "error"}
-                          </span>
+                          <Icon name={isValid ? "verified" : "error"} className="material-symbols-outlined text-[12px]" />
                           {isValid ? "VALID" : "MUTATED"}
                         </span>
                       </td>
@@ -100,7 +99,7 @@ export const CorporateLedgerView: React.FC = () => {
                             title="View confirmed transaction on Arc Explorer"
                           >
                             <span>ANCHORED</span>
-                            <span className="material-symbols-outlined text-[11px]">open_in_new</span>
+                            <Icon name="open_in_new" className="material-symbols-outlined text-[11px]" />
                           </a>
                         ) : (
                           <span className="px-2 py-0.5 rounded-pill text-[10px] font-bold bg-themed-card text-muted border border-themed/40">
@@ -113,7 +112,7 @@ export const CorporateLedgerView: React.FC = () => {
                           variant="secondary"
                           size="xs"
                           onClick={() => setActiveReceiptModal(rcpt)}
-                          leftIcon={<span className="material-symbols-outlined text-[13px]">visibility</span>}
+                          leftIcon={<Icon name="visibility" className="material-symbols-outlined text-[13px]" />}
                         >
                           Inspect
                         </Button>
@@ -126,7 +125,7 @@ export const CorporateLedgerView: React.FC = () => {
           </div>
         ) : (
           <div className="p-12 text-center space-y-3">
-            <span className="material-symbols-outlined text-[36px] text-muted">receipt_long</span>
+            <Icon name="receipt_long" className="material-symbols-outlined text-[36px] text-muted" />
             <div className="font-display font-bold text-sm text-themed">No Audit Receipts Yet</div>
             <p className="font-mono text-xs text-muted max-w-sm mx-auto">
               Every confirmed execution can generate a canonical JSON certificate with SHA-256 integrity proofs.

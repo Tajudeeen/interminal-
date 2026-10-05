@@ -1,10 +1,10 @@
-import React from "react";
+import { Icon } from "../ui/Icon";
+import React, { useEffect, useState } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
 import { ARC } from "../../constants/arc";
 import { shortAddr } from "../../lib/arc/wallet";
-import { calculateJitUnwind } from "../../lib/math/treasury";
 import { Button } from "../ui/Button";
 
 export const ReviewTradeModal: React.FC = () => {
@@ -15,29 +15,29 @@ export const ReviewTradeModal: React.FC = () => {
     pair: pairKey,
     side,
     amount,
-    balances,
-    slippage,
     executeTrade,
     executing,
-    livePortfolio,
+    environmentMode,
   } = useAppStore();
 
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!reviewOpen) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [reviewOpen]);
   if (!pendingQuote) return null;
   const p = PAIRS[pairKey];
-
-  const jit = calculateJitUnwind({
-    tradeAmountUsd: amount,
-    liquidUsdc: balances.USDC || 0,
-    usycBalance: balances.USYC || 0,
-    slippageBps: slippage * 100,
-  });
+  const expired = now >= pendingQuote.expiresAt;
+  const live = environmentMode === "mainnet";
 
   return (
     <GlassModalWrapper
       isOpen={reviewOpen}
-      onClose={() => setReviewOpen(false)}
-      title="Review EIP-712 Order"
-      subtitle={`Zero-Custody Execution · ${side.toUpperCase()} ${pairKey}`}
+      onClose={() => { if (!executing) setReviewOpen(false); }}
+      title={live ? "Review mainnet trade" : "Review simulated trade"}
+      subtitle={`Wallet-controlled execution · ${side.toUpperCase()} ${pairKey}`}
       maxWidth="max-w-md"
     >
       <div className="space-y-4">
@@ -46,7 +46,7 @@ export const ReviewTradeModal: React.FC = () => {
           <div className="flex justify-between items-baseline">
             <span className="font-mono text-xs text-sub">You Pay</span>
             <span className="font-display font-extrabold text-lg text-themed tnum">
-              {side === "buy" ? `$${amount.toLocaleString()} USDC` : `${(amount / p.price).toFixed(4)} ${p.base}`}
+              {side === "buy" ? `$${amount.toLocaleString()} USDC` : `${(amount / pendingQuote.price).toFixed(4)} ${p.base}`}
             </span>
           </div>
           <div className="flex justify-between items-baseline pt-2 border-t border-themed/20">
@@ -66,7 +66,7 @@ export const ReviewTradeModal: React.FC = () => {
             <span className="text-themed font-medium tnum">${pendingQuote.effective.toFixed(2)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted">Guaranteed Minimum:</span>
+            <span className="text-muted">Minimum output:</span>
             <span className="text-themed font-medium tnum">
               {side === "buy"
                 ? `${pendingQuote.minReceived.toFixed(5)} ${p.base}`
@@ -75,36 +75,23 @@ export const ReviewTradeModal: React.FC = () => {
           </div>
           <div className="flex justify-between">
             <span className="text-muted">Max Slippage Band:</span>
-            <span className="text-themed">{slippage}% ({pendingQuote.slippageBps} bps)</span>
+            <span className="text-themed">{pendingQuote.slippageBps / 100}% ({pendingQuote.slippageBps} bps)</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted">Price Impact:</span>
-            <span className="text-themed">{(pendingQuote.impact * 100).toFixed(2)}%</span>
+            <span className="text-muted">Price impact:</span>
+            <span className="text-themed">{live ? "Not measured" : (pendingQuote.impact * 100).toFixed(2) + "% modeled"}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted">Network Gas Fee:</span>
-            <span className="text-pos">${pendingQuote.gasUsd} USDC</span>
+            <span className="text-muted">Gas estimate:</span>
+            <span className="text-pos">Estimated by wallet at submission</span>
           </div>
         </div>
-
-        {/* JIT Unwind notice if buy and liquid is short */}
-        {side === "buy" && jit.needed && (
-          <div className="p-3 rounded-card bg-amber-500/10 border border-amber-500/30 font-mono text-xs text-amber-500 flex items-start gap-2">
-            <span className="material-symbols-outlined text-[16px] shrink-0 mt-0.5">swap_calls</span>
-            <div>
-              <div className="font-semibold uppercase tracking-wider">JIT USYC Liquidity Auto-Bridge</div>
-              <div className="text-[11px] text-amber-500/80 mt-0.5">
-                ${(jit.shortfall || 0).toFixed(2)} deficit covered by instant par redemption of USYC T-Bills.
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Cryptographic Verification Details Box */}
         <div className="p-3 rounded-card bg-themed-card/50 border border-themed/30 space-y-2 font-mono text-[11px]">
           <div className="flex items-center justify-between text-themed font-semibold border-b border-themed/20 pb-1.5">
             <span className="flex items-center gap-1.5 text-pos">
-              <span className="material-symbols-outlined text-[15px]">verified</span>
+              <Icon name="verified" className="material-symbols-outlined text-[15px]" />
               <span>Cryptographic Verification</span>
             </span>
             <span className="text-[10px] text-muted">EIP-712 Standard</span>
@@ -120,19 +107,12 @@ export const ReviewTradeModal: React.FC = () => {
                 className="text-cyan hover:underline inline-flex items-center gap-1 font-bold"
               >
                 <span>{shortAddr(ARC.settlement)}</span>
-                <span className="material-symbols-outlined text-[11px]">open_in_new</span>
+                <Icon name="open_in_new" className="material-symbols-outlined text-[11px]" />
               </a>
             </div>
             <div>
               <span className="block text-[10px] uppercase text-muted/70">Arc Chain ID</span>
               <span className="text-themed font-bold">5042 (Mainnet)</span>
-            </div>
-          </div>
-
-          <div>
-            <span className="block text-[10px] uppercase text-muted/70">Domain Separator</span>
-            <div className="text-[10px] text-muted truncate bg-themed/5 p-1 rounded font-mono select-all">
-              0x9d8bb4d79ceb4795b26f8c3265ae5aac5492046989e8b74bc2b04d2c1853b190
             </div>
           </div>
 
@@ -142,6 +122,10 @@ export const ReviewTradeModal: React.FC = () => {
           </div>
         </div>
 
+        <div role="status" className="text-xs text-sub leading-relaxed">
+          {expired ? "Quote expired. Close this dialog and review again." : `Quote expires in ${Math.max(0, Math.ceil((pendingQuote.expiresAt - now) / 1000))}s.`}
+          {live && <p className="mt-2">An exact token approval may be required. Your wallet signs the reviewed input and minimum output. Receipt anchoring is a separate transaction after settlement.</p>}
+        </div>
         {/* Sign Button */}
         <Button
           variant="primary"
@@ -149,9 +133,10 @@ export const ReviewTradeModal: React.FC = () => {
           fullWidth
           onClick={executeTrade}
           isLoading={executing}
-          leftIcon={<span className="material-symbols-outlined text-[18px]">draw</span>}
+          disabled={expired}
+          leftIcon={<Icon name="draw" className="material-symbols-outlined text-[18px]" />}
         >
-          {livePortfolio ? "Sign & Execute on Arc" : "Simulate & Generate Certificate"}
+          {live ? "Sign & Execute on Arc" : "Simulate & Generate Certificate"}
         </Button>
       </div>
     </GlassModalWrapper>

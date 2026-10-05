@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import { Icon } from "../ui/Icon";
+import React, { useEffect, useId, useRef } from "react";
 
 interface GlassModalWrapperProps {
   isOpen: boolean;
@@ -17,15 +18,35 @@ export const GlassModalWrapper: React.FC<GlassModalWrapperProps> = ({
   maxWidth = "max-w-lg",
   children,
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const dialog = dialogRef.current;
+    const focusable = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex="0"]') || []).filter(el => el.getClientRects().length > 0);
+    (focusable()[0] || dialog)?.focus();
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
+      if (e.key === "Escape") { e.preventDefault(); closeRef.current(); }
+      if (e.key === "Tab") {
+        const items = focusable();
+        const first = items[0]; const last = items[items.length - 1];
+        if (!first) { e.preventDefault(); dialog?.focus(); }
+        else if (e.shiftKey && (document.activeElement === first || !dialog?.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || !dialog?.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -39,15 +60,17 @@ export const GlassModalWrapper: React.FC<GlassModalWrapperProps> = ({
 
       {/* Glassmorphic Modal Dialog */}
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="interminal-modal-title"
+        aria-labelledby={titleId}
         className={`relative w-full ${maxWidth} glass-modal rounded-card overflow-hidden z-10 animate-in zoom-in-95 duration-200`}
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-themed/30 flex items-center justify-between">
           <div>
-            <h3 id="interminal-modal-title" className="font-display font-extrabold text-base text-themed tracking-tight">
+            <h3 id={titleId} className="font-display font-extrabold text-base text-themed tracking-tight">
               {title}
             </h3>
             {subtitle && (
@@ -58,9 +81,10 @@ export const GlassModalWrapper: React.FC<GlassModalWrapperProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close dialog"
             className="w-7 h-7 rounded-full card-themed border border-themed/50 text-sub hover:text-themed flex items-center justify-center transition-colors"
           >
-            <span className="material-symbols-outlined text-[16px]">close</span>
+            <Icon name="close" className="material-symbols-outlined text-[16px]" />
           </button>
         </div>
 

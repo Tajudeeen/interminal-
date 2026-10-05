@@ -134,8 +134,8 @@ export type WalletEventHandlers = {
 
 export function subscribeWalletEvents(provider: any, handlers: WalletEventHandlers): () => void {
   if (!provider?.on) return () => {};
-  const onAccountsChanged = (accounts: string[]) => { void handlers.accountsChanged?.(accounts); };
-  const onChainChanged = (chainId: string) => { void handlers.chainChanged?.(chainId); };
+  const onAccountsChanged = (accounts: string[]) => { Promise.resolve(handlers.accountsChanged?.(accounts)).catch(() => {}); };
+  const onChainChanged = (chainId: string) => { Promise.resolve(handlers.chainChanged?.(chainId)).catch(() => {}); };
   provider.on("accountsChanged", onAccountsChanged);
   provider.on("chainChanged", onChainChanged);
   return () => {
