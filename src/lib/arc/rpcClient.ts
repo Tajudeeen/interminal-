@@ -188,8 +188,10 @@ export function decodeTradeSettledExecution(
 
   for (const log of receipt.logs) {
     if (String(log?.address || "").toLowerCase() !== settlement) continue;
-    if (!Array.isArray(log?.topics) || log.topics.length < 3) continue;
-    if (typeof log?.data !== "string" || log.data.length !== 322) continue;
+    if (!Array.isArray(log?.topics) || log.topics.length !== 3 || log.removed) continue;
+    if (log.topics[0]?.toLowerCase() !== "0x6b3c2ce72b7b275a10cd77f8750ffdb92c7a6bd7e9c40b8b81652fd1448e0bc8") continue;
+    if (!log.topics.every((t: unknown) => typeof t === "string" && /^0x[\da-f]{64}$/i.test(t))) continue;
+    if (typeof log?.data !== "string" || !/^0x[\da-f]{320}$/i.test(log.data)) continue;
 
     const loggedTrader = "0x" + String(log.topics[2]).slice(-40);
     if (loggedTrader.toLowerCase() !== trader) continue;

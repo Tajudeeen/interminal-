@@ -1,23 +1,43 @@
+import { SettlementEvidencePanel } from "../treasury/SettlementEvidencePanel";
 import { Icon } from "../ui/Icon";
-import React from "react";
+import React, { useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { ARC } from "../../constants/arc";
 import { verifyReceiptIntegrity } from "../../lib/crypto/eip712";
 import { Button } from "../ui/Button";
 
 export const CorporateLedgerView: React.FC = () => {
-  const { auditReceipts, setActiveReceiptModal, setView, dcaOrders, mandates } = useAppStore();
+  const { auditReceipts, setActiveReceiptModal, setView, dcaOrders, mandates, archiveWarning, pendingTransactions, resolvePendingTransaction } = useAppStore();
+
+  const [pendingError, setPendingError] = useState("");
+  const [resolving, setResolving] = useState(false);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+      <p className="text-sm text-sub">Receipts are saved on this device. Mainnet records can be reopened from the mainnet workspace without connecting a wallet. Export JSON for a portable backup. Storage is local and is not an accounting database.</p>
+      {archiveWarning ? <p role="alert" className="text-neg text-sm">Device storage failed. Export your receipts before closing this page.</p> : null}
+      {pendingTransactions.length ? <section className="border border-amber-500/40 rounded-card p-4 space-y-3">
+        <h2 className="text-themed font-bold">Submitted transactions need a status check</h2>
+        <p className="text-sm text-sub">A timeout does not mean failure. New mainnet executions are blocked until these are resolved. Verify confirmed events below and download the evidence.</p>
+        {pendingTransactions.map(hash => <div key={hash} className="space-y-2">
+          <a className="text-cyan text-xs break-all" href={`${ARC.explorer}/tx/${hash}`} target="_blank" rel="noreferrer">{hash}</a>
+          <Button size="sm" disabled={resolving} onClick={async () => {
+            setResolving(true); setPendingError("");
+            try { await resolvePendingTransaction(hash); } catch (e) { setPendingError(e instanceof Error ? e.message : String(e)); }
+            finally { setResolving(false); }
+          }}>Check transaction status</Button>
+        </div>)}
+        {pendingError ? <p className="text-neg text-sm" role="alert">{pendingError}</p> : null}
+      </section> : null}
+      <SettlementEvidencePanel />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display font-black text-2xl sm:text-3xl text-themed tracking-tight">
-            Corporate Ledger & Audit Certificates
+            Activity & saved receipts
           </h1>
           <p className="font-mono text-xs text-muted mt-1">
-            Canonical JSON Receipts · SHA-256 Tamper Proofs · Arc Mainnet Anchor
+            Device-saved certificates · Exportable evidence · Independent Arc verification
           </p>
         </div>
 

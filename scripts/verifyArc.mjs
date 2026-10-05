@@ -1,3 +1,4 @@
+import { ArcReadProvider } from "./arcRpc.mjs";
 import fs from "fs";
 import solc from "solc";
 import { ethers } from "ethers";
@@ -49,7 +50,7 @@ function compileSource(source) {
 }
 
 async function main() {
-  const provider = new ethers.JsonRpcProvider(RPC, {
+  const provider = new ArcReadProvider(RPC, {
     chainId: EXPECTED_CHAIN_ID,
     name: "arc-mainnet",
   });
@@ -99,6 +100,12 @@ async function main() {
   const deployedRuntimeHash = ethers.keccak256(settlementCode);
   const deployedExecutableHash = executableRuntimeHash(settlementCode);
   console.log("INFO live executable runtime keccak256: " + deployedExecutableHash);
+  const sourceRuntimeMatches = executableRuntimeHash(freshRuntime).toLowerCase() === deployedExecutableHash.toLowerCase();
+  if (process.argv.includes("--require-source-match")) {
+    ok("freshly compiled source matches live executable runtime", sourceRuntimeMatches);
+  } else if (!sourceRuntimeMatches) {
+    console.warn("SOURCE PROVENANCE UNRESOLVED: maintained source does not reproduce the live executable runtime with recorded settings. Fingerprint and infrastructure checks are not source verification. Run npm run verify:source for the strict gate.");
+  }
   ok(
     "live settlement runtime fingerprint matches recorded Arc deployment",
     deployedRuntimeHash.toLowerCase() === EXPECTED_SETTLEMENT_RUNTIME_HASH,
@@ -173,7 +180,9 @@ async function main() {
     },
     provenance: {
       maintainedSource: "contracts/InterminalSettlement.sol",
-      deployedContractSourceVerification: "not available on Arc mainnet through Sourcify/Arcscan",
+      deployedContractSourceVerification: sourceRuntimeMatches ? "executable runtime reproduced" : "UNRESOLVED: compiled source differs from live executable runtime",
+      sourceRuntimeMatches,
+      compiledExecutableRuntimeHash: executableRuntimeHash(freshRuntime),
       futureSuccessor: "contracts/InterminalSettlementV2.sol",
       liveRuntimeFingerprintVerified: true,
       executableRuntimeHash: deployedExecutableHash,

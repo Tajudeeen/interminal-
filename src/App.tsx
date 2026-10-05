@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, lazy, Suspense } from "react";
+import React, { useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { useAppStore } from "./store/useAppStore";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
@@ -30,6 +30,7 @@ import { ImportTokenModal } from "./components/modals/ImportTokenModal";
 export const App: React.FC = () => {
   const { view, theme, setTheme, setSearchOpen, syncMarketData, environmentMode } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
+  const verificationOpened = useRef(false);
   const finishSplash = useCallback(() => setShowSplash(false), []);
 
   useEffect(() => {
@@ -60,6 +61,13 @@ export const App: React.FC = () => {
   }, [setSearchOpen, syncMarketData, environmentMode]);
 
   useEffect(() => { setTheme(theme); }, [theme, setTheme]);
+  useEffect(() => {
+    if (!verificationOpened.current && new URLSearchParams(window.location.search).has("verify")) {
+      verificationOpened.current = true;
+      useAppStore.getState().openMainnetReview();
+      useAppStore.getState().setView("proof");
+    }
+  }, []);
 
   const renderCurrentView = () => {
     switch (view) {

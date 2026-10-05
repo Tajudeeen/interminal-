@@ -20,7 +20,7 @@ vi.mock("../lib/arc/rpcClient", () => ({
     amountOut: 2n * 10n ** 18n,
     receiptHash: "0x" + "1".repeat(64),
   })),
-  publicRpc: vi.fn(async () => "0x0"),
+  publicRpc: vi.fn(async () => "0x" + (1000_000_000n).toString(16)),
   readMandateNonce: vi.fn(),
   verifyArcLive: vi.fn(),
   readErc20Metadata: vi.fn(),
@@ -52,7 +52,7 @@ vi.mock("../lib/arc/wallet", async (importOriginal) => ({
   ),
 }));
 import { useAppStore } from "../store/useAppStore";
-import { routerAmountOut, readErc20Metadata } from "../lib/arc/rpcClient";
+import { routerAmountOut, readErc20Metadata, publicRpc } from "../lib/arc/rpcClient";
 import { walletRpc } from "../lib/arc/wallet";
 const trader = "0x" + "a".repeat(40);
 
@@ -69,8 +69,10 @@ beforeEach(() => {
     pair: "ETH/USDC",
     side: "buy",
     amount: 100,
+    targetBufferUsd: 0,
     slippage: 0.5,
     balances: { USDC: 1000, USYC: 100 },
+    pendingTransactions: [],
     pendingQuote: null,
     reviewOpen: false,
     auditReceipts: [],
@@ -217,5 +219,84 @@ describe("import isolation", () => {
     vi.mocked(readErc20Metadata).mockRejectedValue(new Error("Metadata unavailable"));
     await useAppStore.getState().importCustomToken(address);
     expect(TOKEN_ALLOW.has(address)).toBe(false);
+  });
+});
+
+
+describe("treasury readiness regressions", () => {
+  it("blocks reserve-breaking buys before a review opens", async () => {
+    useAppStore.setState({ targetBufferUsd: 950 });
+    await useAppStore.getState().prepareTradeReview();
+    expect(useAppStore.getState().reviewOpen).toBe(false);
+    expect(walletRpc).not.toHaveBeenCalled();
+  });
+  it("invalidates a reviewed quote when the reserve changes", async () => {
+    await useAppStore.getState().prepareTradeReview();
+    useAppStore.getState().setTargetBufferUsd(950);
+    await useAppStore.getState().executeTrade();
+    expect(useAppStore.getState().pendingQuote).toBeNull();
+    expect(walletRpc).not.toHaveBeenCalled();
+  });
+  it("rechecks fresh USDC before signing instead of trusting displayed balances", async () => {
+    useAppStore.setState({ environmentMode: "mainnet", livePortfolio: true, address: trader, targetBufferUsd: 20 });
+    await useAppStore.getState().prepareTradeReview();
+    vi.mocked(publicRpc).mockResolvedValueOnce("0x" + (119_000_000n).toString(16));
+    await useAppStore.getState().executeTrade();
+    expect(walletRpc).not.toHaveBeenCalled();
+    expect(useAppStore.getState().auditReceipts).toHaveLength(0);
+  });
+  it("uses NAV conversion and creates an inspectable receipt for the tour sweep", async () => {
+    const before = useAppStore.getState().balances;
+    const nav = PAIRS["USYC/USDC"].price;
+    await useAppStore.getState().executeSweepOnchain(100, "sweep");
+    const state = useAppStore.getState();
+    expect(state.balances.USYC).toBeCloseTo(before.USYC + 100 / nav, 8);
+    expect(state.balances.USDC + state.balances.USYC * nav).toBeCloseTo(before.USDC + before.USYC * nav, 8);
+    expect(state.auditReceipts[0].mode).toBe("simulation");
+  });
+  it("live treasury sweep only opens shared review and never signs directly", async () => {
+    useAppStore.setState({ environmentMode: "mainnet", livePortfolio: true, address: trader });
+    vi.mocked(routerAmountOut).mockResolvedValueOnce(88_000_000n);
+    await useAppStore.getState().executeSweepOnchain(100, "sweep");
+    expect(useAppStore.getState().reviewOpen).toBe(true);
+    expect(walletRpc).not.toHaveBeenCalled();
+  });
+  it("USYC unwind review uses exact requested token units", async () => {
+    useAppStore.setState({ environmentMode: "mainnet", livePortfolio: true, address: trader });
+    vi.mocked(routerAmountOut).mockResolvedValueOnce(1_130_000n).mockResolvedValueOnce(56_000_000n);
+    await useAppStore.getState().executeSweepOnchain(50, "unwind");
+    expect(useAppStore.getState().pendingQuote?.raw?.amountIn).toBe("50000000");
+    expect(walletRpc).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("submitted transaction ambiguity", () => {
+  it("blocks new wallet writes while an earlier submission is unresolved", async () => {
+    useAppStore.setState({ environmentMode: "mainnet", livePortfolio: true, address: trader });
+    await useAppStore.getState().prepareTradeReview();
+    useAppStore.setState({ pendingTransactions: ["0x" + "f".repeat(64)] });
+    await useAppStore.getState().executeTrade();
+    expect(walletRpc).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("final balance guard", () => {
+  it("blocks broadcast if the reserve breaks while the wallet is signing", async () => {
+    useAppStore.setState({ environmentMode: "mainnet", livePortfolio: true, address: trader, targetBufferUsd: 20 });
+    await useAppStore.getState().prepareTradeReview();
+    vi.mocked(publicRpc).mockResolvedValueOnce("0x" + (1000_000_000n).toString(16)).mockResolvedValueOnce("0x" + (119_000_000n).toString(16));
+    await useAppStore.getState().executeTrade();
+    expect(vi.mocked(walletRpc).mock.calls.some(([method]) => method === "eth_signTypedData_v4")).toBe(true);
+    expect(vi.mocked(walletRpc).mock.calls.some(([method]) => method === "eth_sendTransaction")).toBe(false);
+  });
+  it("resolves a reverted submitted hash without claiming settlement", async () => {
+    const hash = "0x" + "f".repeat(64);
+    useAppStore.setState({ pendingTransactions: [hash] });
+    vi.mocked(publicRpc).mockResolvedValueOnce({ status: "0x0" });
+    await useAppStore.getState().resolvePendingTransaction(hash);
+    expect(useAppStore.getState().pendingTransactions).toEqual([]);
+    expect(useAppStore.getState().auditReceipts).toEqual([]);
   });
 });

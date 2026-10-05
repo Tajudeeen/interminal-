@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
+import { formatUnits } from "../../lib/math/quotes";
 import { ARC } from "../../constants/arc";
 import { shortAddr } from "../../lib/arc/wallet";
 import { Button } from "../ui/Button";
@@ -46,7 +47,7 @@ export const ReviewTradeModal: React.FC = () => {
           <div className="flex justify-between items-baseline">
             <span className="font-mono text-xs text-sub">You Pay</span>
             <span className="font-display font-extrabold text-lg text-themed tnum">
-              {side === "buy" ? `$${amount.toLocaleString()} USDC` : `${(amount / pendingQuote.price).toFixed(4)} ${p.base}`}
+              {side === "buy" ? `$${amount.toLocaleString()} USDC` : `${(pendingQuote.raw ? formatUnits("0x" + BigInt(pendingQuote.raw.amountIn).toString(16), p.decimals ?? 18) : amount / pendingQuote.price).toLocaleString(undefined, { maximumFractionDigits: 8 })} ${p.base}`}
             </span>
           </div>
           <div className="flex justify-between items-baseline pt-2 border-t border-themed/20">

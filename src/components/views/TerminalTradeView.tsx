@@ -32,6 +32,7 @@ export const TerminalTradeView: React.FC = () => {
     indicators,
     marketFeedStatus,
     balances,
+    targetBufferUsd,
     dcaSpendTotal,
     setDcaSpendTotal,
     dcaSliceSize,
@@ -65,7 +66,7 @@ export const TerminalTradeView: React.FC = () => {
   const userUsdcBal = balances.USDC || 0;
 
   const jit = amount > 0 ? calculateJitUnwind({
-    tradeAmountUsd: amount,
+    tradeAmountUsd: amount + targetBufferUsd,
     liquidUsdc: userUsdcBal,
     usycBalance: balances.USYC || 0,
     usycPriceUsd: PAIRS["USYC/USDC"].price,
@@ -75,7 +76,7 @@ export const TerminalTradeView: React.FC = () => {
   // Calculate percentage sizing
   const handlePercentageSize = (pct: number) => {
     if (isBuy) {
-      const maxUsdc = Math.max(0, userUsdcBal);
+      const maxUsdc = Math.max(0, userUsdcBal - targetBufferUsd);
       const targetAmt = livePortfolio
         ? Math.floor((maxUsdc * pct) / 100)
         : Math.max(10, Math.floor((maxUsdc * pct) / 100));
@@ -100,13 +101,14 @@ export const TerminalTradeView: React.FC = () => {
   const tfOptions: Timeframe[] = pairKey === "USYC/USDC"
     ? ["1D"]
     : ["1m", "5m", "15m", "1h", "4h", "1D"];
-  const availableTradeUsd = isBuy ? userUsdcBal : userBaseBal * p.price;
+  const availableTradeUsd = isBuy ? Math.max(0, userUsdcBal - targetBufferUsd) : userBaseBal * p.price;
   const quickSizes = livePortfolio
     ? liveSizePresets(availableTradeUsd)
     : [100, 500, 1000, 2500];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-7xl mx-auto">
+      <p className="text-sm text-sub">Protected cash reserve: ${targetBufferUsd.toLocaleString()} USDC. Buy sizing uses spendable cash after this reserve. To fund a larger trade, review a USYC unwind in Treasury first.</p>
       {mainnetReview && (
         <section className="card-themed border border-cyan/30 bg-cyan/5 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="min-w-0">
@@ -269,7 +271,7 @@ export const TerminalTradeView: React.FC = () => {
                   : "text-sub hover:text-themed"
               }`}
             >
-              DCA / TWAP
+              DCA planner
             </button>
           </div>
 
@@ -419,7 +421,7 @@ export const TerminalTradeView: React.FC = () => {
               {isBuy && jit.needed && (
                 <div className="p-2.5 rounded-card bg-amber-500/10 border border-amber-500/30 font-mono text-[11px] text-amber-500 flex items-center gap-2">
                   <Icon name="swap_calls" className="material-symbols-outlined text-[15px]" />
-                  <span>{environmentMode === "mainnet" ? "Unwind USYC separately to fund this trade. The deployed trade path uses liquid USDC." : `Simulation unwinds USYC to cover $${(jit.shortfall || 0).toFixed(2)}.`}</span>
+                  <span>{environmentMode === "mainnet" ? "Unwind USYC separately to fund this trade. The deployed trade path uses liquid USDC." : `Unwind USYC separately before reviewing this trade.`}</span>
                 </div>
               )}
 
@@ -429,7 +431,7 @@ export const TerminalTradeView: React.FC = () => {
                   variant="primary"
                   size="lg"
                   fullWidth
-                  onClick={prepareTradeReview}
+                  onClick={() => void prepareTradeReview()}
                   isLoading={executing}
                   disabled={!amount || amount <= 0}
                   leftIcon={<Icon name={livePortfolio ? "verified" : "science"} className="material-symbols-outlined text-[18px]" />}
@@ -518,7 +520,7 @@ export const TerminalTradeView: React.FC = () => {
               </div>
 
               <div className="p-3 rounded-card bg-themed-card/50 border border-themed/30 font-mono text-xs space-y-1 text-muted">
-                <div className="text-themed font-semibold">Autonomous TWAP Breakdown:</div>
+                <div className="text-themed font-semibold">Planned slices, no automatic executor:</div>
                 <div>Total Slices: {Math.max(1, Math.floor(dcaSpendTotal / (dcaSliceSize || 1)))} fills</div>
                 <div>Frequency: Every {dcaFreqSec >= 3600 ? `${dcaFreqSec / 3600}h` : `${dcaFreqSec / 60}m`}</div>
                 <div>Gov: Zero-custody EIP-712 scoped permit</div>

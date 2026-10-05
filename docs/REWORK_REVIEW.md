@@ -31,4 +31,29 @@
 
 ## Remaining product limits
 
-The deployed v1 contract isn't changed by this PR. Live agent mandates remain disabled. DCA plans have no autonomous runner. Session receipts aren't persisted across reloads. USYC issuer access and router liquidity are external constraints. A successful browser check doesn't prove a live trade with the user's wallet has executed.
+The deployed v1 contract isn't changed by this PR. Live agent mandates remain disabled. DCA plans have no autonomous runner. Receipts now persist in a device archive, with portable exports. Browser storage is not a shared accounting database. USYC issuer access and router liquidity are external constraints. A successful browser check doesn't prove a live trade with the user's wallet has executed.
+
+
+## Judge-readiness follow-up
+
+- Walkthrough sweeps now use shared NAV conversion and produce an inspectable simulated receipt.
+- App-level cash reserves block buys during review and on fresh raw-balance checks before approval and broadcast. Reserve changes invalidate reviewed quotes, and buy presets use spendable cash.
+- Live treasury actions use the shared quote/review flow. Unwind review preserves exact requested USYC units.
+- Successful execution decoding requires the exact TradeSettled topic and well-formed logs.
+- Versioned device archives retain receipt raw amounts and anchor updates. Mainnet workspace restores saved records without restoring wallet authorization.
+- Submitted transaction hashes survive reload. Unresolved transactions block new mainnet writes and can be resolved through RPC. Confirmed event recovery creates a labelled receipt without claiming recovery of the original quote or signature.
+- Wallet-free verification matches actual transaction status, recipient contract, event, trader, route, raw amounts, block, output, and certificate integrity. Anchor availability is separate from event verification.
+- Splash, analysis, yield comparison, and verification status copy no longer imply autonomy, feed attestation, a bank benchmark, or checks that have not run.
+- Infrastructure verification now uses the application's fetch transport. A separate strict source comparison revealed a provenance gap: maintained source does not reproduce the live executable runtime with recorded settings. The infrastructure report explicitly flags it; `verify:source` fails until resolved.
+
+No new wallet trade was broadcast during this follow-up. Public USDC/USYC execution evidence remains a builder-signature step, documented in ARC_MICROGRANT_PROOF.md.
+
+
+### Follow-up validation
+
+- 60 deterministic regressions pass and production TypeScript/Vite build passes.
+- Desktop and 390px mobile Chromium checks pass: tour sweep NAV conversion, tour receipt inspection, archive surviving reload, saved mainnet record restoration, invalid transaction rejection, successful mocked settlement-event verification, verification deep links, no horizontal overflow, no error overlays, and no page errors.
+- Successful browser settlement evidence used mocked RPC responses and is not a real wallet transaction.
+- All three GeckoTerminal pool smoke checks pass.
+- Live Arc deployment, runtime fingerprint, ABI/domain, router, USYC target, owner, and unpaused state were checked successfully through the fetch transport.
+- Strict compiled-source/runtime reproduction fails and is reported separately. The observed live executable hash differs from the maintained source compilation. No new contract was deployed to bypass this finding.

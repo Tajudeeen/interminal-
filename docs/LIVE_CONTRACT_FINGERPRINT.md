@@ -21,9 +21,15 @@ This page records the immutable identity of the Interminal settlement contract c
 6. The deployed EIP-712 domain separator matches Interminal, version 1, chain 5042, and the settlement address.
 7. The configured Arc router, USDC interface, and USYC addresses resolve.
 
-## Source provenance
+## Source provenance status: unresolved
 
-The canonical `contracts/InterminalSettlement.sol` source is now the exact Solidity revision used for the live Arc deployment. CI compiles that file with the recorded optimizer settings and fails if the resulting runtime differs from the live contract byte-for-byte.
+A strict executable-runtime comparison during the judge-readiness pass found that `contracts/InterminalSettlement.sol`, compiled with solc 0.8.28 and the recorded optimizer settings, does **not** reproduce the deployed executable runtime. The previous claim that CI proved source-to-chain equality was incorrect. Prior checks compared local source with the local artifact and checked the live fingerprint independently.
 
-The repository also preserves `contracts/deployed/InterminalSettlementV1.sol` as an explicitly labelled historical snapshot and `contracts/InterminalSettlementV2.sol` as a future hardened successor. V2 is **not deployed** and is never presented by the app as a live capability.
+Observed live executable-runtime keccak256, after removing Solidity metadata:
+`0x6f866206a102a9424e5a352116113c80f9f29e3bd8da97cb28398a631b58bdbb`
 
+The full live runtime fingerprint and deployment identity remain independently checkable. They do not establish that the maintained source is the deployed source.
+
+`npm run verify:arc` reports infrastructure checks and explicitly reports this provenance gap. `npm run verify:source` is a separate strict gate and fails until the original source/build settings reproduce the live executable code, or a reviewed successor is deployed and its source/runtime evidence is updated.
+
+The repository preserves `contracts/deployed/InterminalSettlementV1.sol` as a historical repository snapshot, not verified deployed source. `contracts/InterminalSettlementV2.sol` remains an undeployed hardened successor. Do not present either as verified live source.

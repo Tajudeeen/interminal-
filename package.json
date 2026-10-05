@@ -11,7 +11,9 @@
     "compile": "node scripts/compile.mjs",
     "deploy": "node scripts/deploy.mjs",
     "verify:arc": "node scripts/verifyArc.mjs",
-    "verify:market": "node scripts/verifyMarketData.mjs"
+    "verify:market": "node scripts/verifyMarketData.mjs",
+    "verify:execution": "node scripts/verifyExecution.mjs",
+    "verify:source": "node scripts/verifyArc.mjs --require-source-match"
   },
   "keywords": [],
   "author": "",

@@ -1,3 +1,4 @@
+import { SettlementEvidencePanel } from "../treasury/SettlementEvidencePanel";
 import { Icon } from "../ui/Icon";
 import React, { useEffect, useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
@@ -74,6 +75,8 @@ export const ProofRpcView: React.FC = () => {
         </div>
       </div>
 
+      <p className="text-sm text-sub border border-amber-500/40 rounded-card p-4">Source reproduction is unresolved: the maintained Solidity source does not match the live executable runtime with recorded settings. Infrastructure reads and event verification below are separate checks. The strict repository source gate currently fails.</p>
+      <SettlementEvidencePanel />
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card-themed border border-themed rounded-card p-4">
@@ -81,7 +84,7 @@ export const ProofRpcView: React.FC = () => {
           <div className="mt-1 font-display font-black text-2xl text-pos">
             {localRows.filter((r: any) => r.ok).length} / {localRows.length || 14} PASS
           </div>
-          <div className="font-mono text-[10px] text-muted mt-0.5">Zero runtime security bypasses</div>
+          <div className="font-mono text-[10px] text-muted mt-0.5">Local regression checks, not a contract audit</div>
         </div>
 
         <div className="card-themed border border-themed rounded-card p-4">
@@ -89,7 +92,7 @@ export const ProofRpcView: React.FC = () => {
           <div className="mt-1 font-display font-black text-2xl text-themed tnum">
             Chain {proof.live?.chainId || ARC.chainId}
           </div>
-          <div className="font-mono text-[10px] text-pos mt-0.5">Arc Mainnet Verified</div>
+          <div className="font-mono text-[10px] text-pos mt-0.5">{proof.live?.chainOk ? "Arc RPC chain matched" : "Not yet verified"}</div>
         </div>
 
         <div className="card-themed border border-themed rounded-card p-4">
@@ -111,7 +114,7 @@ export const ProofRpcView: React.FC = () => {
                 Arc Mainnet Settlement Engine Verifier
               </h2>
               <p className="font-mono text-xs text-muted">
-                Live cryptographic binding: EIP-712 DOMAIN_SEPARATOR and verified bytecode
+                Live reads: bytecode presence and EIP-712 domain match
               </p>
             </div>
           </div>
@@ -171,11 +174,11 @@ export const ProofRpcView: React.FC = () => {
         <div className="p-3 rounded-card bg-themed-card/40 border border-themed/20 font-mono text-[11px] space-y-1 text-muted">
           <div className="flex items-center justify-between text-themed font-semibold">
             <span>Critical Settlement Reads:</span>
-            <span className="text-pos font-bold">Live RPC Verified</span>
+            <span className="text-pos font-bold">{settlementDetails?.isDomainMatch ? "Domain read matched" : "Not yet verified"}</span>
           </div>
           <div>• <code className="text-cyan">DOMAIN_SEPARATOR()</code> [0x3644e515] - Returns canonical EIP-712 domain hash</div>
-          <div>• <code className="text-cyan">anchorReceipt(bytes32)</code> [0xea683470] - Immutably logs audit certificate hash into block storage</div>
-          <div>• <code className="text-cyan">isReceiptAnchored(bytes32)</code> [0x9815336b] - Pure on-chain verification function for auditors</div>
+          <div>• <code className="text-cyan">anchorReceipt(bytes32)</code> [0xea683470] - Writes a certificate digest. Does not independently prove execution</div>
+          <div>• <code className="text-cyan">isReceiptAnchored(bytes32)</code> [0x9815336b] - Checks whether a digest was stored</div>
         </div>
       </div>
 
@@ -185,7 +188,7 @@ export const ProofRpcView: React.FC = () => {
         <div className="card-themed border border-themed rounded-card p-5 space-y-3">
           <div className="flex items-center justify-between pb-2 border-b border-themed/30">
             <h3 className="font-display font-bold text-sm text-themed">
-              14 Fail-Closed Gate Proofs
+              Local authorization checks
             </h3>
             <span className="font-mono text-[10px] text-pos font-bold">DETERMINISTIC</span>
           </div>
@@ -196,7 +199,7 @@ export const ProofRpcView: React.FC = () => {
                 key={r.id}
                 className="p-2.5 rounded-card bg-themed-card/50 border border-themed/20 flex items-start gap-2.5 font-mono text-xs"
               >
-                <Icon name="check_circle" className="material-symbols-outlined text-[16px] text-pos shrink-0 mt-0.5" />
+                <Icon name={r.ok ? "check_circle" : "cancel"} className={`material-symbols-outlined text-[16px] shrink-0 mt-0.5 ${r.ok ? "text-pos" : "text-neg"}`} />
                 <div className="min-w-0">
                   <div className="font-semibold text-themed">{r.id}</div>
                   <div className="text-[11px] text-muted mt-0.5">{r.detail}</div>
@@ -301,7 +304,7 @@ export const ProofRpcView: React.FC = () => {
                     rel="noreferrer"
                     className="text-pos font-semibold hover:underline inline-flex items-center gap-1"
                   >
-                    <span>Verified</span>
+                    <span>Explorer</span>
                     <Icon name="open_in_new" className="material-symbols-outlined text-[12px]" />
                   </a>
                 </td>

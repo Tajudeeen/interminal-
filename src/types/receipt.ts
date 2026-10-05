@@ -1,5 +1,6 @@
 export interface TradeReceipt {
   receiptVersion: string;
+  recoveredFromEvent?: boolean;
   mode: "simulation" | "mainnet";
   status: "simulated" | "draft" | "signed" | "pending" | "confirmed" | "failed";
   network: string;

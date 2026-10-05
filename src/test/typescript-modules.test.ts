@@ -44,7 +44,7 @@ describe("React TypeScript Modular Engine", () => {
         logs: [
           {
             address: "0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36",
-            topics: ["0x0", "0x" + "a".repeat(64), "0x" + trader.slice(2).padStart(64, "0")],
+            topics: ["0x6b3c2ce72b7b275a10cd77f8750ffdb92c7a6bd7e9c40b8b81652fd1448e0bc8", "0x" + "a".repeat(64), "0x" + trader.slice(2).padStart(64, "0")],
             data,
           },
         ],

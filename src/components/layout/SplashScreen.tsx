@@ -83,7 +83,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
         {/* Tagline */}
         <p className="font-display text-sm sm:text-base text-neutral-300 font-medium max-w-xs leading-snug">
-          The autonomous treasury desk for <span className="text-shimmer font-semibold">Arc</span>.
+          The wallet-controlled treasury desk for <span className="text-shimmer font-semibold">Arc</span>.
         </p>
 
         {/* Sub-tagline */}
