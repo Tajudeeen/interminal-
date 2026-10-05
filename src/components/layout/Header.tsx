@@ -1,134 +1,133 @@
-import React from "react";
+import { Icon } from "../ui/Icon";
+import React, { useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
-import { shortAddr } from "../../lib/arc/wallet";
 import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
+import { GlassModalWrapper } from "../modals/GlassModalWrapper";
+import { NAV_ITEMS } from "./navigation";
 
 export const Header: React.FC = () => {
-  const {
-    setView,
-    theme,
-    toggleTheme,
-    address,
-    connected,
-    livePortfolio,
-    connectWallet,
-    setGasTankModalOpen,
-    setSearchOpen,
-    nativeGasBalance,
-    startJudgeTour,
-    environmentMode,
-    wrongNetwork,
-    switchToCurrentNetwork,
-    openMainnetReview,
-  } = useAppStore();
-
+  const s = useAppStore();
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <header className="lg:hidden sticky top-0 z-30 surface-themed border-b border-themed px-4 py-2.5 flex items-center justify-between">
-      <button
-        onClick={() => setView("landing")}
-        className="flex items-center gap-2.5 focus:outline-none group text-left"
-      >
-        <Logo size={28} />
-        <div className="text-left leading-tight">
-          <div className="font-display font-extrabold text-sm text-themed group-hover:text-lime-500 transition-colors">
+    <>
+      <header className="desk-mobile-header lg:hidden">
+        <button
+          onClick={() => s.setView("landing")}
+          className="flex items-center gap-2"
+          aria-label="Interminal home"
+        >
+          <Logo size={25} />
+          <span className="font-display font-extrabold text-sm">
             INTERMINAL
-          </div>
-          <div className="font-mono text-[8px] text-muted uppercase">{environmentMode === "testnet" ? "Arc Testnet · 5042002" : "Arc Mainnet · 5042"}</div>
-        </div>
-      </button>
-
-      <div className="flex items-center gap-2">
-        {/* Environment status */}
-        <span className={`hidden sm:inline-flex items-center gap-1.5 px-2 py-1 rounded-pill border font-mono text-[9px] uppercase ${environmentMode === "testnet" ? "border-cyan/30 text-cyan bg-cyan/5" : "border-lime-500/25 text-lime-500 bg-lime-500/5"}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${environmentMode === "testnet" ? "bg-cyan" : "bg-lime-500"}`} />
-          {environmentMode === "testnet" ? "testnet" : environmentMode === "mainnet" ? "mainnet" : "demo"}
-        </span>
-
-        {/* Interactive Tour Button */}
-        <Button
-          size="xs"
-          variant="outline"
-          className="border-cyan/40 text-cyan hover:bg-cyan/10 font-bold"
-          onClick={startJudgeTour}
-          leftIcon={<span className="w-1.5 h-1.5 rounded-full bg-cyan animate-pulse" />}
-        >
-          Take a Tour
-        </Button>
-        {/* Gas balance: live Arc uses native USDC directly; refuel is demo-only. */}
-        {environmentMode === "demo" ? (
-          <button
-            onClick={() => setGasTankModalOpen(true)}
-            className="flex items-center gap-1 px-2 py-1 rounded-pill card-themed border border-themed text-[11px] font-mono text-sub hover:text-themed"
-          >
-            <span className="material-symbols-outlined text-[13px] text-amber-500">local_gas_station</span>
-            <span>{nativeGasBalance.toFixed(2)}</span>
-          </button>
-        ) : (
-          <div
-            className="flex items-center gap-1 px-2 py-1 rounded-pill card-themed border border-themed text-[11px] font-mono text-sub"
-            title="Native USDC is the Arc gas balance"
-          >
-            <span className="material-symbols-outlined text-[13px] text-amber-500">local_gas_station</span>
-            <span>{livePortfolio ? nativeGasBalance.toFixed(2) : "—"}</span>
-          </div>
-        )}
-
-        {/* Search */}
-        <button
-          onClick={() => setSearchOpen(true)}
-          className="p-1.5 rounded card-themed border border-themed text-sub hover:text-themed"
-          title="Search Markets"
-        >
-          <span className="material-symbols-outlined text-[16px]">search</span>
-        </button>
-
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="p-1.5 rounded card-themed border border-themed text-sub hover:text-themed"
-          title="Toggle Theme"
-        >
-          <span className="material-symbols-outlined text-[16px]">
-            {theme === "dark" ? "light_mode" : "dark_mode"}
           </span>
         </button>
-
-        {/* Connect / Account */}
-        {connected ? (
-          wrongNetwork ? (
-            <Button
-              size="xs"
-              variant="outline"
-              onClick={switchToCurrentNetwork}
-              leftIcon={<span className="material-symbols-outlined text-[13px]">sync</span>}
-            >
+        <div className="flex items-center gap-2">
+          {s.wrongNetwork ? (
+            <Button size="xs" onClick={s.switchToCurrentNetwork}>
               Switch
             </Button>
+          ) : s.address ? (
+            <button
+              onClick={() => setMenuOpen(true)}
+              className="desk-account-dot"
+              aria-label="Wallet controls"
+            />
           ) : (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-pill card-themed border border-themed text-[11px] font-mono">
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  livePortfolio ? "bg-pos animate-pulse" : "bg-neutral-500"
-                }`}
-              />
-              <span className="truncate max-w-[64px]">{shortAddr(address)}</span>
-            </div>
-          )
-        ) : environmentMode === "demo" ? (
-          <Button size="xs" variant="outline" onClick={openMainnetReview}>
-            Mainnet
-          </Button>
-        ) : (
-          <Button
-            size="xs"
-            variant="primary"
-            onClick={() => connectWallet(environmentMode === "testnet" ? "testnet" : "mainnet")}
+            <Button
+              size="xs"
+              isLoading={s.connecting}
+              onClick={() =>
+                s.environmentMode === "demo"
+                  ? s.openMainnetReview()
+                  : s.connectWallet(
+                      s.environmentMode === "testnet" ? "testnet" : "mainnet",
+                    )
+              }
+            >
+              {s.environmentMode === "demo" ? "Mainnet" : "Connect"}
+            </Button>
+          )}
+          <button
+            onClick={() => setMenuOpen(true)}
+            aria-label="Open workspace menu"
+            className="desk-icon-button"
           >
-            Connect
+            <Icon name="menu" className="material-symbols-outlined" />
+          </button>
+        </div>
+      </header>
+      <GlassModalWrapper
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        title="Workspace"
+        subtitle={
+          s.environmentMode === "demo"
+            ? "Simulation · no funds move"
+            : s.environmentMode === "testnet"
+              ? "Arc testnet"
+              : "Arc mainnet"
+        }
+      >
+        <nav
+          className="desk-navigation"
+          aria-label="Mobile workspace navigation"
+        >
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                item.id === "testnet" ? s.launchTestnet() : s.setView(item.id);
+                setMenuOpen(false);
+              }}
+              aria-current={s.view === item.id ? "page" : undefined}
+              className={s.view === item.id ? "active" : ""}
+            >
+              <Icon name={item.icon} className="material-symbols-outlined" />
+              <span>
+                {item.label}
+                <small className="block text-muted font-normal mt-1">
+                  {item.detail}
+                </small>
+              </span>
+            </button>
+          ))}
+        </nav>
+        <div className="grid grid-cols-2 gap-2 mt-5">
+          <Button variant="secondary" onClick={s.toggleTheme}>
+            Switch theme
           </Button>
-        )}
-      </div>
-    </header>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setMenuOpen(false);
+              s.setSearchOpen(true);
+            }}
+          >
+            Search markets
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setMenuOpen(false);
+              s.startJudgeTour();
+            }}
+          >
+            Demo walkthrough
+          </Button>
+          {s.connected && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setMenuOpen(false);
+                s.disconnectWallet();
+              }}
+            >
+              End session
+            </Button>
+          )}
+        </div>
+      </GlassModalWrapper>
+    </>
   );
 };

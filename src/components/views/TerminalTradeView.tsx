@@ -1,3 +1,4 @@
+import { Icon } from "../ui/Icon";
 import React, { useEffect } from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
@@ -46,6 +47,7 @@ export const TerminalTradeView: React.FC = () => {
     theme,
     setSearchOpen,
     connectWallet,
+    executing,
   } = useAppStore();
 
   const p = PAIRS[pairKey] || PAIRS["ETH/USDC"];
@@ -62,13 +64,13 @@ export const TerminalTradeView: React.FC = () => {
   const userBaseBal = balances[p.base] || 0;
   const userUsdcBal = balances.USDC || 0;
 
-  const jit = calculateJitUnwind({
+  const jit = amount > 0 ? calculateJitUnwind({
     tradeAmountUsd: amount,
     liquidUsdc: userUsdcBal,
     usycBalance: balances.USYC || 0,
     usycPriceUsd: PAIRS["USYC/USDC"].price,
     slippageBps: slippage * 100,
-  });
+  }) : { needed: false, shortfall: 0 };
 
   // Calculate percentage sizing
   const handlePercentageSize = (pct: number) => {
@@ -117,7 +119,7 @@ export const TerminalTradeView: React.FC = () => {
             size="sm"
             variant="primary"
             onClick={() => connectWallet("mainnet")}
-            leftIcon={<span className="material-symbols-outlined text-[15px]">account_balance_wallet</span>}
+            leftIcon={<Icon name="account_balance_wallet" className="material-symbols-outlined text-[15px]" />}
           >
             Connect Mainnet
           </Button>
@@ -132,11 +134,10 @@ export const TerminalTradeView: React.FC = () => {
             className="flex items-center gap-2 px-3 py-1.5 rounded-card card-themed border border-themed hover:border-lime-500/50 text-themed group transition-colors"
           >
             <span className="font-display font-black text-lg">{pairKey}</span>
-            <span className="material-symbols-outlined text-[16px] text-muted group-hover:text-lime-500 transition-colors">
-              unfold_more
-            </span>
+            <Icon name="unfold_more" className="material-symbols-outlined text-[16px] text-muted group-hover:text-lime-500 transition-colors" />
           </button>
           <div>
+            <div className="text-[10px] text-muted">{marketFeedStatus.live ? marketFeedStatus.source : "Reference price · not a live quote"}</div>
             <div className="font-display font-extrabold text-xl text-themed tnum">
               ${p.price < 10 ? p.price.toFixed(4) : p.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
@@ -176,7 +177,7 @@ export const TerminalTradeView: React.FC = () => {
                 ? "border-cyan/40 bg-cyan/10 text-cyan"
                 : "border-themed/40 card-themed text-muted hover:text-themed"
             } ${!analysis ? "opacity-50 cursor-not-allowed" : ""}`}
-            title={analysis ? "Show or hide support and resistance levels" : "Run AI Quant analysis first"}
+            title={analysis ? "Show or hide support and resistance levels" : "Run Signal analysis analysis first"}
           >
             Levels {showLevels ? "On" : "Off"}
           </button>
@@ -197,9 +198,9 @@ export const TerminalTradeView: React.FC = () => {
             size="sm"
             variant="outline"
             onClick={runAiAnalysis}
-            leftIcon={<span className="material-symbols-outlined text-[15px] text-lime-500">psychology</span>}
+            leftIcon={<Icon name="psychology" className="material-symbols-outlined text-[15px] text-lime-500" />}
           >
-            AI Quant
+            Signal analysis
           </Button>
         </div>
       </div>
@@ -387,7 +388,7 @@ export const TerminalTradeView: React.FC = () => {
               {/* Output & Route Preview Box */}
               <div className="p-3 rounded-card bg-themed-card/50 border border-themed/30 space-y-1.5 font-mono text-xs">
                 <div className="flex justify-between">
-                  <span className="text-muted">Estimated Receive:</span>
+                  <span className="text-muted">Modeled output:</span>
                   <span className="text-themed font-bold tnum">
                     {isBuy
                       ? `${quote.received.toFixed(5)} ${p.base}`
@@ -395,7 +396,7 @@ export const TerminalTradeView: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">Guaranteed Minimum:</span>
+                  <span className="text-muted">Modeled minimum:</span>
                   <span className="text-themed tnum">
                     {isBuy
                       ? `${quote.minReceived.toFixed(5)} ${p.base}`
@@ -403,22 +404,22 @@ export const TerminalTradeView: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">Price Impact:</span>
+                  <span className="text-muted">Modeled impact:</span>
                   <span className="text-themed font-medium tnum">
                     {(quote.impact * 100).toFixed(2)}%
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">Settlement Gas:</span>
-                  <span className="text-pos font-medium">~$0.0012 USDC</span>
+                  <span className="text-muted">Gas estimate:</span>
+                  <span className="text-pos font-medium">Wallet estimates at submission</span>
                 </div>
               </div>
 
               {/* JIT Unwind Notice if applicable */}
               {isBuy && jit.needed && (
                 <div className="p-2.5 rounded-card bg-amber-500/10 border border-amber-500/30 font-mono text-[11px] text-amber-500 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[15px]">swap_calls</span>
-                  <span>JIT Unwind: ${(jit.shortfall || 0).toFixed(2)} covered by USYC T-Bills.</span>
+                  <Icon name="swap_calls" className="material-symbols-outlined text-[15px]" />
+                  <span>{environmentMode === "mainnet" ? "Unwind USYC separately to fund this trade. The deployed trade path uses liquid USDC." : `Simulation unwinds USYC to cover $${(jit.shortfall || 0).toFixed(2)}.`}</span>
                 </div>
               )}
 
@@ -429,10 +430,11 @@ export const TerminalTradeView: React.FC = () => {
                   size="lg"
                   fullWidth
                   onClick={prepareTradeReview}
+                  isLoading={executing}
                   disabled={!amount || amount <= 0}
-                  leftIcon={<span className="material-symbols-outlined text-[18px]">{livePortfolio ? "verified" : "science"}</span>}
+                  leftIcon={<Icon name={livePortfolio ? "verified" : "science"} className="material-symbols-outlined text-[18px]" />}
                 >
-                  {livePortfolio ? "Execute on Arc Mainnet" : mainnetReview ? "Connect Wallet to Trade" : "Simulate Trade"}
+                  {livePortfolio ? "Get router quote & review" : mainnetReview ? "Connect Wallet to Trade" : "Simulate Trade"}
                 </Button>
                 <div className="flex flex-col gap-1 px-1 text-[10px] font-mono text-muted pt-1 border-t border-themed/20">
                   <div className="flex items-center justify-between">
@@ -451,7 +453,7 @@ export const TerminalTradeView: React.FC = () => {
                       className="text-cyan hover:underline inline-flex items-center gap-0.5"
                     >
                       <span>{shortAddr(ARC.settlement)}</span>
-                      <span className="material-symbols-outlined text-[10px]">open_in_new</span>
+                      <Icon name="open_in_new" className="material-symbols-outlined text-[10px]" />
                     </a>
                   </div>
                 </div>
@@ -527,7 +529,7 @@ export const TerminalTradeView: React.FC = () => {
                 size="lg"
                 fullWidth
                 onClick={startDcaPlan}
-                leftIcon={<span className="material-symbols-outlined text-[18px]">schedule</span>}
+                leftIcon={<Icon name="schedule" className="material-symbols-outlined text-[18px]" />}
               >
                 Create DCA Simulation Plan
               </Button>

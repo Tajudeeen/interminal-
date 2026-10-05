@@ -1,3 +1,4 @@
+import { Icon } from "../ui/Icon";
 import React, { useState } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
@@ -94,7 +95,7 @@ export const GasTankModal: React.FC = () => {
               onClick={handleRefuel}
               disabled={(balances.USDC || 0) < selectedAmount}
               isLoading={gasRefueling}
-              leftIcon={<span className="material-symbols-outlined text-[18px]">local_gas_station</span>}
+              leftIcon={<Icon name="local_gas_station" className="material-symbols-outlined text-[18px]" />}
             >
               Simulate Gas Refill (${selectedAmount} USDC)
             </Button>

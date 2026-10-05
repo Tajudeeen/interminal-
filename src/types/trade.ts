@@ -9,6 +9,8 @@ export interface TradeQuoteParams {
 }
 
 export interface TradeQuote {
+  context?: { pair: string; side: TradeSide; amount: number; slippage: number; address: string | null; mode: string };
+  raw?: { amountIn: string; minOut: string; tokenIn: string; tokenOut: string };
   price: number;
   received: number;
   effective: number;

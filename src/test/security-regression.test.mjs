@@ -35,7 +35,8 @@ describe("security regression guards", () => {
 
   it("keeps imported tokens isolated from verified markets and live execution", () => {
     const store = source("src/store/useAppStore.ts");
-    expect(store).toContain('const pairKey = "CUSTOM/" + sym + "-" + addr.slice(2, 8).toUpperCase() + "/USDC"');
+    expect(store).toContain('PAIRS[symbolPairKey]');
+    expect(store).toContain('sym + "-" + addr.slice(2, 8).toUpperCase() + "/USDC"');
     expect(store).toContain('p.cat === "imported"');
     expect(store).toContain("view-only until its contract is independently verified");
   });

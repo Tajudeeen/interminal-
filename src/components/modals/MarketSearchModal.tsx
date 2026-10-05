@@ -1,3 +1,4 @@
+import { Icon } from "../ui/Icon";
 import React, { useMemo } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
@@ -30,15 +31,13 @@ export const MarketSearchModal: React.FC = () => {
       isOpen={searchOpen}
       onClose={() => setSearchOpen(false)}
       title="Search Markets & Tokens"
-      subtitle="Arc Mainnet Verified Pools & External Feeds"
+      subtitle="Registered Arc tokens and reference markets"
       maxWidth="max-w-lg"
     >
       <div className="space-y-4">
         {/* Search input with autofocus */}
         <div className="relative">
-          <span className="material-symbols-outlined absolute left-3 top-2.5 text-[18px] text-muted">
-            search
-          </span>
+          <Icon name="search" className="material-symbols-outlined absolute left-3 top-2.5 text-[18px] text-muted" />
           <input
             type="text"
             placeholder="Search pair, symbol, or category (e.g. ETH, EURC, defi)..."
@@ -70,16 +69,9 @@ export const MarketSearchModal: React.FC = () => {
               </div>
               <div className="text-right">
                 <div className="font-mono font-bold text-xs text-themed">
-                  ${data.price < 10 ? data.price.toFixed(4) : data.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {data.cat === "imported" ? "—" : "$" + (data.price < 10 ? data.price.toFixed(4) : data.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}
                 </div>
-                <div
-                  className={`font-mono text-[10px] ${
-                    data.change >= 0 ? "text-pos" : "text-neg"
-                  }`}
-                >
-                  {data.change >= 0 ? "+" : ""}
-                  {data.change.toFixed(2)}%
-                </div>
+                <div className="font-mono text-[10px] text-muted">{data.cat === "imported" ? "No valuation available" : "Reference value"}</div>
               </div>
             </button>
           ))}
@@ -100,7 +92,7 @@ export const MarketSearchModal: React.FC = () => {
             }}
             className="font-mono text-xs text-pos hover:underline font-semibold flex items-center gap-1"
           >
-            <span className="material-symbols-outlined text-[15px]">add_circle</span>
+            <Icon name="add_circle" className="material-symbols-outlined text-[15px]" />
             Import Custom ERC-20
           </button>
         </div>

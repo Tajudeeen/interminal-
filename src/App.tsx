@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import { useAppStore } from "./store/useAppStore";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Header } from "./components/layout/Header";
@@ -6,17 +6,18 @@ import { BottomNav } from "./components/layout/BottomNav";
 import { MarketTickerMarquee } from "./components/layout/MarketTickerMarquee";
 import { ToastStack } from "./components/layout/ToastStack";
 import { SplashScreen } from "./components/layout/SplashScreen";
+import { WorkspaceErrorBoundary } from "./components/layout/WorkspaceErrorBoundary";
 import { JudgeTourBar } from "./components/layout/JudgeTourBar";
 
 // Views
 import { LandingView } from "./components/views/LandingView";
-import { TreasuryCockpitView } from "./components/views/TreasuryCockpitView";
-import { TerminalTradeView } from "./components/views/TerminalTradeView";
-import { MarketsView } from "./components/views/MarketsView";
-import { AiAnalystView } from "./components/views/AiAnalystView";
-import { CorporateLedgerView } from "./components/views/CorporateLedgerView";
-import { ProofRpcView } from "./components/views/ProofRpcView";
-import { TestnetLabView } from "./components/views/TestnetLabView";
+const TreasuryCockpitView = lazy(() => import("./components/views/TreasuryCockpitView").then(m => ({ default: m.TreasuryCockpitView })));
+const TerminalTradeView = lazy(() => import("./components/views/TerminalTradeView").then(m => ({ default: m.TerminalTradeView })));
+const MarketsView = lazy(() => import("./components/views/MarketsView").then(m => ({ default: m.MarketsView })));
+const AiAnalystView = lazy(() => import("./components/views/AiAnalystView").then(m => ({ default: m.AiAnalystView })));
+const CorporateLedgerView = lazy(() => import("./components/views/CorporateLedgerView").then(m => ({ default: m.CorporateLedgerView })));
+const ProofRpcView = lazy(() => import("./components/views/ProofRpcView").then(m => ({ default: m.ProofRpcView })));
+const TestnetLabView = lazy(() => import("./components/views/TestnetLabView").then(m => ({ default: m.TestnetLabView })));
 
 // Modals
 import { GasTankModal } from "./components/modals/GasTankModal";
@@ -29,10 +30,10 @@ import { ImportTokenModal } from "./components/modals/ImportTokenModal";
 export const App: React.FC = () => {
   const { view, theme, setTheme, setSearchOpen, syncMarketData, environmentMode } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
+  const finishSplash = useCallback(() => setShowSplash(false), []);
 
   useEffect(() => {
-    // Initial theme setup
-    setTheme(theme);
+    // Theme is applied independently of market refreshes.
 
     // Global keyboard shortcuts (Ctrl+K or Cmd+K for search)
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -58,6 +59,8 @@ export const App: React.FC = () => {
     };
   }, [setSearchOpen, syncMarketData, environmentMode]);
 
+  useEffect(() => { setTheme(theme); }, [theme, setTheme]);
+
   const renderCurrentView = () => {
     switch (view) {
       case "landing":
@@ -82,12 +85,12 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-bg text-themed flex flex-col lg:flex-row antialiased">
+    <div className="h-dvh overflow-hidden bg-bg text-themed flex flex-col lg:flex-row antialiased">
       {/* Institutional Desktop Sidebar (Visible on lg: screens) */}
       <Sidebar />
 
       {/* Main Content Viewport */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0 h-dvh">
         {/* Mobile / Tablet Header (Hidden on lg:) */}
         <Header />
 
@@ -95,10 +98,12 @@ export const App: React.FC = () => {
         <MarketTickerMarquee />
 
         {/* Dynamic Viewport Container with Smooth Transitions */}
-        <main className="app-scroll flex-1 overflow-y-auto pb-16 lg:pb-8 scroll-smooth">
-          <div key={view} className="animate-view-fade w-full h-full">
-            {renderCurrentView()}
-          </div>
+        <main className="app-scroll flex-1 min-h-0 overflow-y-auto pb-16 lg:pb-8 scroll-smooth">
+          <WorkspaceErrorBoundary key={view}>
+            <Suspense fallback={<div role="status" className="p-8 text-sub text-sm">Loading workspace…</div>}>
+              <div className="animate-view-fade w-full min-h-full">{renderCurrentView()}</div>
+            </Suspense>
+          </WorkspaceErrorBoundary>
         </main>
       </div>
 
@@ -123,7 +128,7 @@ export const App: React.FC = () => {
       {showSplash && (
         <SplashScreen
           durationMs={2000}
-          onComplete={() => setShowSplash(false)}
+          onComplete={finishSplash}
         />
       )}
     </div>

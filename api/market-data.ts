@@ -62,7 +62,7 @@ export default async function handler(req, res) {
   const pool = POOLS[pair];
   const resolution = RESOLUTION[timeframe];
 
-  if (!pool || !resolution) {
+  if (!Object.hasOwn(POOLS, pair) || !Object.hasOwn(RESOLUTION, timeframe)) {
     return json(res, 400, {
       error: "Unsupported Arc market or timeframe",
       supportedPairs: Object.keys(POOLS),
@@ -86,6 +86,7 @@ export default async function handler(req, res) {
   try {
     const response = await fetch(url, {
       headers: { Accept: GECKO_ACCEPT },
+      signal: AbortSignal.timeout(9000),
     });
 
     const payload = await response.json();

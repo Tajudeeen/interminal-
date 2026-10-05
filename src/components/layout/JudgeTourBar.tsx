@@ -1,3 +1,4 @@
+import { Icon } from "../ui/Icon";
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { ARC, USYC_APY } from "../../constants/arc";
@@ -104,7 +105,7 @@ export const JudgeTourBar: React.FC = () => {
             className="text-muted hover:text-themed transition-colors p-1"
             title="Close Tour"
           >
-            <span className="material-symbols-outlined text-[18px]">close</span>
+            <Icon name="close" className="material-symbols-outlined text-[18px]" />
           </button>
         </div>
 
@@ -142,7 +143,7 @@ export const JudgeTourBar: React.FC = () => {
                 size="sm"
                 className="flex-1 min-w-0"
                 onClick={handleStep1Sweep}
-                leftIcon={<span className="material-symbols-outlined text-[16px]">bolt</span>}
+                leftIcon={<Icon name="bolt" className="material-symbols-outlined text-[16px]" />}
               >
                 1-Click Sweep ${excessCash.toLocaleString()} to USYC
               </Button>
@@ -151,7 +152,7 @@ export const JudgeTourBar: React.FC = () => {
                 size="sm"
                 className="flex-1 min-w-0"
                 onClick={() => goToStep(2)}
-                rightIcon={<span className="material-symbols-outlined text-[14px]">arrow_forward</span>}
+                rightIcon={<Icon name="arrow_forward" className="material-symbols-outlined text-[14px]" />}
               >
                 Next: JIT Unwind
               </Button>
@@ -171,7 +172,7 @@ export const JudgeTourBar: React.FC = () => {
                 size="sm"
                 className="flex-1 min-w-0"
                 onClick={handleStep2SimulateTrade}
-                leftIcon={<span className="material-symbols-outlined text-[16px]">swap_calls</span>}
+                leftIcon={<Icon name="swap_calls" className="material-symbols-outlined text-[16px]" />}
               >
                 Open $25k JIT Scenario
               </Button>
@@ -180,7 +181,7 @@ export const JudgeTourBar: React.FC = () => {
                 size="sm"
                 className="flex-1 min-w-0"
                 onClick={() => goToStep(3)}
-                rightIcon={<span className="material-symbols-outlined text-[14px]">arrow_forward</span>}
+                rightIcon={<Icon name="arrow_forward" className="material-symbols-outlined text-[14px]" />}
               >
                 Next: Arc Audit
               </Button>
@@ -200,7 +201,7 @@ export const JudgeTourBar: React.FC = () => {
                 size="sm"
                 className="flex-1 min-w-0"
                 onClick={handleStep3InspectReceipt}
-                leftIcon={<span className="material-symbols-outlined text-[16px]">verified</span>}
+                leftIcon={<Icon name="verified" className="material-symbols-outlined text-[16px]" />}
               >
                 Inspect Cryptographic Certificate
               </Button>
