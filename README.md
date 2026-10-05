@@ -118,3 +118,7 @@ npm run verify:arc
 - No new mainnet transaction was sent to validate this rework. The submission still needs a successful USDC/USYC execution from an eligible wallet. Wallet write paths were checked with mocked regression tests; read-only chain checks and browser flows are reported separately in the review.
 
 Built by [@Deeen_Codes](https://x.com/Deeen_Codes).
+
+### Reproducible successor deployment
+
+`npm run prepare:deployment` creates the hardened successor artifact and an unsigned deployment transaction without a key. `npm run deploy` uses a securely provided environment key and refuses to accept altered builds or a mismatching on-chain runtime. `npm run verify:deployment` independently checks the creation transaction and full runtime and can resume an interrupted deployment. None of these commands changes the live app address. See [the remaining chain steps](docs/CLOSE_CHAIN_GAPS.md). `npm run verify:treasury-history` checks the complete settlement event history in bounded RPC ranges.

@@ -1,94 +1,48 @@
-import fs from "fs";
-import path from "path";
-import { ethers } from "ethers";
-import { fileURLToPath } from "url";
+import fs from 'node:fs';
+import { ethers } from 'ethers';
+import { ArcReadProvider } from './arcRpc.mjs';
+import { validateBuild } from './contractBuild.mjs';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const root = path.join(__dirname, "..");
-const artifactPath = path.join(root, "artifacts", "InterminalSettlement.json");
-
-if (!fs.existsSync(artifactPath)) {
-  console.error("Artifact not found. Run 'node scripts/compile.mjs' first.");
-  process.exit(1);
-}
-
-const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
-
-const ARC_RPC = process.env.ARC_RPC || "https://rpc.mainnet.arc.io";
-const ARC_CHAIN_ID = 5042;
-// Never accept private keys as CLI arguments. Shell history, process listings, CI logs,
-// and pasted commands can expose argv values. Deployment credentials must come from
-// the process environment or the deployment platform's secret manager.
+// This path only deploys the hardened successor. It never changes the live app address.
+const sourcePath = new URL('../contracts/InterminalSettlementV2.sol', import.meta.url);
+const artifactPath = new URL('../artifacts/InterminalSettlementV2.json', import.meta.url);
+const recordPath = new URL('../artifacts/successor-deployment.json', import.meta.url);
 const privateKey = process.env.PRIVATE_KEY;
 
 async function main() {
-  console.log("=== Interminal Settlement — Arc Mainnet Deployer ===");
-  console.log("RPC:", ARC_RPC);
-  console.log("Target Chain ID:", ARC_CHAIN_ID);
-
+  if (!fs.existsSync(artifactPath)) throw new Error('Run npm run prepare:deployment first');
+  const artifact = validateBuild(JSON.parse(fs.readFileSync(artifactPath, 'utf8')), sourcePath);
+  const unsignedTransaction = { chainId: 5042, value: '0x0', data: artifact.bytecode };
+  const packagePath = new URL('../artifacts/successor-unsigned-transaction.json', import.meta.url);
+  fs.writeFileSync(packagePath, JSON.stringify(unsignedTransaction, null, 2) + '\n');
   if (!privateKey) {
-    console.log("\n[Notice] No PRIVATE_KEY provided in environment or arguments.");
-    console.log("To deploy headlessly via CLI:");
-    console.log("  $env:PRIVATE_KEY=\"0x...\"; node scripts/deploy.mjs");
-    console.log("Or deploy directly with 1-click in the Interminal browser interface (MetaMask/Rabby)!");
-    console.log("\nCurrent compiled contract:");
-    console.log("  Contract:", artifact.contractName);
-    console.log("  Bytecode Size:", (artifact.bytecode.length / 2 - 1), "bytes");
-    console.log("  ABI Methods:", artifact.abi.filter(x => x.type === "function").length);
+    console.log('Reproducible successor and unsigned deployment transaction prepared. Wallet signing is required.');
+    console.log('Unsigned transaction:', packagePath.pathname);
+    console.log('Expected runtime:', artifact.runtimeKeccak256);
     return;
   }
-
-  const provider = new ethers.JsonRpcProvider(ARC_RPC, {
-    chainId: ARC_CHAIN_ID,
-    name: "arc-mainnet"
-  });
-
-  const network = await provider.getNetwork();
-  console.log("Connected Network:", network.name, "ChainId:", Number(network.chainId));
-  if (Number(network.chainId) !== ARC_CHAIN_ID) {
-    throw new Error(`Chain ID mismatch! Expected ${ARC_CHAIN_ID}, got ${Number(network.chainId)}`);
-  }
-
+  if (fs.existsSync(recordPath)) throw new Error('A successor deployment record already exists; verify it before attempting another deployment');
+  const provider = new ArcReadProvider(process.env.ARC_RPC || 'https://rpc.mainnet.arc.io', { chainId: 5042, name: 'arc-mainnet' });
+  if (Number((await provider.getNetwork()).chainId) !== 5042) throw new Error('Wrong chain');
   const wallet = new ethers.Wallet(privateKey, provider);
-  console.log("Deployer Address:", wallet.address);
-
-  const balance = await provider.getBalance(wallet.address);
-  console.log(`Deployer Arc Gas Balance: ${ethers.formatUnits(balance, 18)} native USDC`);
-
-  if (balance === 0n) {
-    throw new Error("Deployer has zero native USDC gas balance on Arc mainnet. Fund the wallet with native USDC first.");
-  }
-
-  console.log("\nBroadcasting deployment transaction to Arc Mainnet...");
   const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, wallet);
-
-  const feeData = await provider.getFeeData();
-  const tx = await factory.deploy({
-    gasLimit: 3_500_000,
-    gasPrice: feeData.gasPrice || ethers.parseUnits("0.1", "gwei")
-  });
-
-  console.log("Deployment Tx Hash:", tx.deploymentTransaction().hash);
-  console.log("Waiting for confirmation on Arc...");
-
-  await tx.waitForDeployment();
-  const deployedAddress = await tx.getAddress();
-  console.log("\n========================================================");
-  console.log("SUCCESS! InterminalSettlement deployed to Arc Mainnet!");
-  console.log("Contract Address:", deployedAddress);
-  console.log(`Explorer Link: https://explorer.arc.io/address/${deployedAddress}`);
-  console.log("========================================================\n");
-
-  artifact.deployedAddress = deployedAddress;
-  artifact.deploymentTx = tx.deploymentTransaction().hash;
-  artifact.deployedAt = new Date().toISOString();
-  artifact.deployer = wallet.address;
-
-  fs.writeFileSync(artifactPath, JSON.stringify(artifact, null, 2), "utf8");
-  console.log("Updated artifacts/InterminalSettlement.json with deployment records.");
+  const request = await factory.getDeployTransaction();
+  request.gasLimit = (await provider.estimateGas({ ...request, from: wallet.address })) * 120n / 100n;
+  const tx = await wallet.sendTransaction(request);
+  // Persist the hash before waiting so a transport interruption cannot hide a broadcast.
+  const record = { status: 'pending', chainId: 5042, transactionHash: tx.hash, deployer: wallet.address, sourceSha256: artifact.sourceSha256, expectedRuntimeKeccak256: artifact.runtimeKeccak256 };
+  fs.writeFileSync(recordPath, JSON.stringify(record, null, 2) + '\n');
+  console.log('Deployment submitted:', tx.hash);
+  const receipt = await tx.wait();
+  if (receipt?.status !== 1 || !receipt.contractAddress) throw new Error('Deployment did not succeed');
+  const code = await provider.getCode(receipt.contractAddress);
+  if (code !== artifact.deployedBytecode) throw new Error('Deployed full runtime does not match the reproducible artifact; do not promote this address');
+  const settlement = new ethers.Contract(receipt.contractAddress, artifact.abi, provider);
+  if ((await settlement.owner()).toLowerCase() !== wallet.address.toLowerCase() || await settlement.paused()) throw new Error('Deployment state differs');
+  const expectedDomain = ethers.TypedDataEncoder.hashDomain({ name: 'Interminal', version: '1', chainId: 5042, verifyingContract: receipt.contractAddress });
+  if (await settlement.DOMAIN_SEPARATOR() !== expectedDomain) throw new Error('EIP-712 domain differs');
+  Object.assign(record, { status: 'verified', address: receipt.contractAddress, blockNumber: receipt.blockNumber, runtimeKeccak256: ethers.keccak256(code), domainSeparator: expectedDomain });
+  fs.writeFileSync(recordPath, JSON.stringify(record, null, 2) + '\n');
+  console.log(JSON.stringify(record, null, 2));
 }
-
-main().catch((err) => {
-  console.error("Deployment failed:", err.message || err);
-  process.exit(1);
-});
+main().catch(error => { console.error(error.message); process.exitCode = 1; });

@@ -64,3 +64,7 @@ Interminal is a wallet-controlled treasury desk for teams holding USDC on Arc. O
 ## Scope
 
 Mainnet trading requires explicit review and wallet signatures. USYC issuer eligibility and router liquidity are external requirements. The app does not send payroll or wires. Unwind and subsequent trade are separate operations. Live agent mandates remain blocked on deployed v1. DCA is a planner without a background runner. This is an early proof of concept, not an institutional treasury service.
+
+## Full historical scan and successor preparation
+
+A complete RPC scan from block 23,367,508 through 24,448,374 returned zero `TradeSettled` events from the configured settlement. The bounded report is `artifacts/treasury-history.json`; rerun `npm run verify:treasury-history` for later blocks. A reproducible unsigned successor package is prepared, but no new deployment or trade has been broadcast. See [CLOSE_CHAIN_GAPS.md](CLOSE_CHAIN_GAPS.md).
