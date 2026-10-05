@@ -5,6 +5,7 @@ import crypto from "crypto";
 import { fileURLToPath } from "url";
 import path from "path";
 import { ethers } from "ethers";
+import { ArcReadProvider } from "./scripts/arcRpc.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const src = fs.readFileSync(path.join(root, "legacy", "app.js"), "utf8");
@@ -431,7 +432,7 @@ await testAsync("Smart Contract: buildTradeTicket matches on-chain hashTradeTick
   const localHash = ethers.TypedDataEncoder.hash(ticket.domain, cleanTypes, ticket.message);
 
   // Compute live hash on Arc Mainnet deployed contract
-  const provider = new ethers.JsonRpcProvider(ARC.rpc);
+  const provider = new ArcReadProvider(ARC.rpc);
   const abi = [
     "function hashTradeTicket((address trader,address tokenIn,address tokenOut,uint256 amountIn,uint256 minAmountOut,uint256 nonce,uint256 deadline)) view returns (bytes32)"
   ];
@@ -459,7 +460,7 @@ await testAsync("Smart Contract: buildAgentMandateTicket matches on-chain hashAg
   const localHash = ethers.TypedDataEncoder.hash(ticket.domain, cleanMandateTypes, ticket.message);
 
   // Compute live hash on Arc Mainnet deployed contract
-  const provider = new ethers.JsonRpcProvider(ARC.rpc);
+  const provider = new ArcReadProvider(ARC.rpc);
   const abi = [
     "function hashAgentMandate((address authorizer,address agent,uint256 maxCumulativeSpend,uint256 maxSpendPerTx,uint256 maxSlippageBps,uint256 allowedPairsMask,uint256 expiry,uint256 nonce)) view returns (bytes32)"
   ];

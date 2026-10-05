@@ -33,3 +33,5 @@ The full live runtime fingerprint and deployment identity remain independently c
 `npm run verify:arc` reports infrastructure checks and explicitly reports this provenance gap. `npm run verify:source` is a separate strict gate and fails until the original source/build settings reproduce the live executable code, or a reviewed successor is deployed and its source/runtime evidence is updated.
 
 The repository preserves `contracts/deployed/InterminalSettlementV1.sol` as a historical repository snapshot, not verified deployed source. `contracts/InterminalSettlementV2.sol` remains an undeployed hardened successor. Do not present either as verified live source.
+
+A reproducible hardened successor package and strict deployment verification are now available via `npm run prepare:deployment` and `npm run verify:deployment`. The package is unsigned and does not change this live address. See [CLOSE_CHAIN_GAPS.md](CLOSE_CHAIN_GAPS.md) for the remaining wallet actions.
