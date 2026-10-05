@@ -26,7 +26,7 @@ The deployed Arc contract is the final authority for live `executeTradeTicket` v
 - Router execution with a minimum output bound.
 - Receipt-hash state recording.
 
-The current canonical source for those deployed capabilities is `contracts/InterminalSettlement.sol`.
+The maintained reference source is `contracts/InterminalSettlement.sol`. A strict comparison found that its compiled executable runtime does not match the live runtime with recorded settings. These source-level controls must not be presented as source-verified live guarantees. Runtime fingerprinting, domain reads, and actual settlement-event verification are separate evidence.
 
 ## What the browser does not guarantee
 
@@ -51,6 +51,9 @@ Execution certificates use canonical JSON and SHA-256. The digest proves integri
 - External market-data APIs can be unavailable or stale.
 - Wallets may display or reject transactions differently.
 - A compromised user wallet can authorize its own transactions.
+- App-level cash reserve checks are not enforced by deployed v1 against other clients.
+- Device receipt archives can be deleted or modified locally. Verify execution against Arc and export backups.
+- A submitted transaction may confirm after a polling timeout. Resolve its hash before retrying.
 - The prototype has no institutional key ceremony, multi-signature approval workflow, withdrawal recovery process, or production monitoring/SOC function.
 
 ## Verification commands
@@ -64,7 +67,7 @@ From the repository root:
 `npm run verify:market`
 `npm run verify:arc`
 
-The Arc verifier is intentionally fail-closed on deployment, bytecode, EIP-712, and canonical-source mismatches.
+The Arc infrastructure verifier is fail-closed on deployment identity, recorded bytecode fingerprint, and EIP-712 domain mismatches. The separate `npm run verify:source` gate is fail-closed on compiled-source/runtime mismatches and currently fails.
 
 ## Responsible disclosure
 

@@ -1,10 +1,11 @@
+import { verifySettlement } from "../../lib/evidence/settlement";
 import { Icon } from "../ui/Icon";
 import React, { useState } from "react";
 import { GlassModalWrapper } from "./GlassModalWrapper";
 import { useAppStore } from "../../store/useAppStore";
 import { ARC } from "../../constants/arc";
 import { verifyReceiptIntegrity } from "../../lib/crypto/eip712";
-import { anchorReceiptOnchain, checkReceiptAnchoredOnchain } from "../../lib/arc/receiptAnchor";
+import { anchorReceiptOnchain } from "../../lib/arc/receiptAnchor";
 import { shortAddr } from "../../lib/arc/wallet";
 import { Button } from "../ui/Button";
 
@@ -12,6 +13,7 @@ export const AuditReceiptModal: React.FC = () => {
   const {
     activeReceiptModal,
     setActiveReceiptModal,
+    updateReceipt,
     addToast,
     address,
     wrongNetwork,
@@ -30,15 +32,11 @@ export const AuditReceiptModal: React.FC = () => {
     setVerifyingOnchain(true);
     setOnchainStatusText(null);
     try {
-      const isAnchored = await checkReceiptAnchoredOnchain(activeReceiptModal, settlementContractAddress);
-      if (isAnchored) {
-        setOnchainStatusText("Anchored in Arc Mainnet State and verified via isReceiptAnchored");
-        setActiveReceiptModal({ ...activeReceiptModal, onchainAnchored: true });
-        addToast("On-Chain Verified", "Receipt hash verified in Arc settlement contract storage.", "ok");
-      } else {
-        setOnchainStatusText("Receipt hash not yet anchored in Arc settlement contract.");
-        addToast("Not Anchored", "Receipt hash is held in local audit storage.", "info");
-      }
+      if (!activeReceiptModal.transactionHash || activeReceiptModal.mode !== "mainnet") throw new Error("Simulation is not mainnet evidence");
+      const evidence = await verifySettlement(activeReceiptModal.transactionHash, activeReceiptModal);
+      setOnchainStatusText(`Settlement event and certificate match. Digest anchor ${evidence.certificateAnchored ? "found" : "not found"}.`);
+      updateReceipt({ ...activeReceiptModal, status: "confirmed", onchainAnchored: evidence.certificateAnchored === true });
+      addToast("Execution verified", "Transaction, settlement event, route, amounts, and certificate checked against Arc RPC.", "ok");
     } catch (e: any) {
       setOnchainStatusText("Failed to query Arc RPC: " + (e?.message || String(e)));
     } finally {
@@ -79,11 +77,13 @@ export const AuditReceiptModal: React.FC = () => {
     setAnchorStage("Awaiting wallet approval...");
     try {
       setAnchorStage("Broadcasting to Arc Mainnet...");
+      if (!activeReceiptModal.transactionHash) throw new Error("Missing execution transaction");
+      await verifySettlement(activeReceiptModal.transactionHash, activeReceiptModal);
       const txHash = await anchorReceiptOnchain(activeReceiptModal, address, settlementContractAddress);
       setAnchorStage("Confirmed on Arc L1");
       addToast("Receipt Anchored!", `Anchored in Arc state. Tx: ${shortAddr(txHash)}`, "ok");
       // update state
-      setActiveReceiptModal({ ...activeReceiptModal, onchainAnchored: true, anchorTx: txHash });
+      updateReceipt({ ...activeReceiptModal, onchainAnchored: true, anchorTx: txHash });
     } catch (e: any) {
       setAnchorStage("");
       addToast("Anchoring Failed", e?.message || String(e), "err");
@@ -118,6 +118,7 @@ export const AuditReceiptModal: React.FC = () => {
           <span className="text-[10px] opacity-80">Canonical JSON · SHA-256</span>
         </div>
 
+        {activeReceiptModal.recoveredFromEvent ? <p className="text-sm text-sub">Recovered from a confirmed settlement event. The original reviewed quote, slippage setting, and wallet signature were not recovered. Execution provenance can still be queried independently.</p> : null}
         {/* Execution Provenance */}
         <div className="grid grid-cols-2 gap-2 text-xs font-mono">
           <div className="p-3 rounded-card card-themed border border-themed/30">

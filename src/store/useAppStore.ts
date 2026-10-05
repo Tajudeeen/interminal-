@@ -1,3 +1,7 @@
+import { verifySettlement, reconstructReceiptFromEvent } from "../lib/evidence/settlement";
+import { readPending, writePending } from "../lib/evidence/pending";
+import { assertCashReserve, readWalletReserve, saveWalletReserve } from "../lib/math/reserve";
+import { readArchive, saveArchive, mergeReceipts } from "../lib/evidence/archive";
 import { simulateTrade, simulateTreasury } from "../lib/math/simulation";
 import { create } from "zustand";
 import { ARC, TOKEN_ALLOW } from "../constants/arc";
@@ -90,6 +94,9 @@ export interface AppState {
   activity: any[];
   mandates: AgentMandateDescriptor[];
   auditReceipts: TradeReceipt[];
+  archiveWarning: boolean;
+  pendingTransactions: string[];
+  resolvePendingTransaction: (hash: string) => Promise<void>;
   lastTx: any | null;
   pendingQuote: TradeQuote | null;
   reviewOpen: boolean;
@@ -141,6 +148,8 @@ export interface AppState {
   setMandateModalOpen: (open: boolean) => void;
   setReviewOpen: (open: boolean) => void;
   setActiveReceiptModal: (receipt: TradeReceipt | null) => void;
+  importReceipt: (receipt: TradeReceipt) => void;
+  updateReceipt: (receipt: TradeReceipt) => void;
   setImportTokenOpen: (open: boolean) => void;
   setShowLevels: (show: boolean) => void;
   addToast: (title: string, body: string, kind?: ToastItem["kind"]) => void;
@@ -153,7 +162,7 @@ export interface AppState {
   syncMarketData: () => Promise<void>;
   runAiAnalysis: () => void;
   startDcaPlan: () => void;
-  prepareTradeReview: () => Promise<void>;
+  prepareTradeReview: (exactInputTokens?: number) => Promise<void>;
   executeTrade: () => Promise<void>;
   refuelGasTank: (amountUsdc: number) => Promise<void>;
   createAgentMandate: (params: { spendUsd: number; slipBps: number; ttlHours: number; pairs: string[]; agent?: string }) => Promise<void>;
@@ -316,6 +325,23 @@ export const useAppStore = create<AppState>((set, get) => {
     activity: getInitialActivity(),
     mandates: [],
     auditReceipts: getInitialAuditReceipts(),
+    archiveWarning: false,
+    pendingTransactions: readPending(),
+    resolvePendingTransaction: async (hash) => {
+      const receipt = await publicRpc("eth_getTransactionReceipt", [hash]);
+      if (!receipt || !["0x0", "0x1"].includes(receipt.status)) throw new Error("Transaction not yet resolved. Do not repeat it.");
+      if (receipt.status === "0x1") {
+        const evidence = await verifySettlement(hash);
+        get().importReceipt(reconstructReceiptFromEvent(evidence));
+      }
+      const remaining = get().pendingTransactions.filter(item => item.toLowerCase() !== hash.toLowerCase());
+      writePending(remaining);
+      set({ pendingTransactions: remaining });
+      get().addToast(receipt.status === "0x1" ? "Settlement confirmed" : "Transaction reverted", "Resolved from Arc RPC. Reconnect to refresh balances before another trade.", "info");
+      set({ livePortfolio: false });
+    },
+    importReceipt: (receipt) => set(s => ({ auditReceipts: mergeReceipts(s.auditReceipts, [receipt]) })),
+    updateReceipt: (receipt) => set(s => ({ auditReceipts: s.auditReceipts.map(r => r.receiptId === receipt.receiptId ? receipt : r), activeReceiptModal: receipt })),
     lastTx: null,
     pendingQuote: null,
     reviewOpen: false,
@@ -346,6 +372,7 @@ export const useAppStore = create<AppState>((set, get) => {
     setJudgeTourOpen: (open) => set({ judgeTourOpen: open }),
     setJudgeTourStep: (step) => set({ judgeTourStep: step }),
     startJudgeTour: () => {
+      if (get().executing || get().connecting) return;
       get().launchDemo();
       set({ judgeTourOpen: true, judgeTourStep: 1, view: "portfolio" });
     },
@@ -363,9 +390,10 @@ export const useAppStore = create<AppState>((set, get) => {
     toggleTheme: () => {
       const next = get().theme === "dark" ? "light" : "dark";
       if (typeof document !== "undefined" && "startViewTransition" in document) {
-        (document as any).startViewTransition(() => {
+        const transition = (document as any).startViewTransition(() => {
           get().setTheme(next);
         });
+        void transition.ready.catch(() => {});
       } else {
         get().setTheme(next);
       }
@@ -399,10 +427,12 @@ export const useAppStore = create<AppState>((set, get) => {
         pendingQuote: null,
         reviewOpen: false,
         lastTx: null,
-        auditReceipts: [],
+        auditReceipts: readArchive().filter(r => r.mode === "mainnet"),
         activity: [],
         dcaOrders: [],
         mandates: [],
+        judgeTourOpen: false,
+        activeReceiptModal: null,
         view: "portfolio",
       });
       get().addToast(
@@ -419,6 +449,7 @@ export const useAppStore = create<AppState>((set, get) => {
       walletEventCleanup = null;
       set({
         environmentMode: "testnet",
+        judgeTourOpen: false,
         balances: {}, nativeGasBalance: 0, amount: 0, targetBufferUsd: 0, stressTestAmount: 0,
         pendingQuote: null, reviewOpen: false, activeReceiptModal: null, lastTx: null,
         auditReceipts: [], activity: [], dcaOrders: [], mandates: [],
@@ -522,12 +553,13 @@ export const useAppStore = create<AppState>((set, get) => {
 
     setView: (view) => {
       if (typeof document !== "undefined" && "startViewTransition" in document) {
-        (document as any).startViewTransition(() => {
+        const transition = (document as any).startViewTransition(() => {
           set({ view, searchOpen: false });
           requestAnimationFrame(() => {
             document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
           });
         });
+        void transition.ready.catch(() => {});
       } else {
         set({ view, searchOpen: false });
         requestAnimationFrame(() => {
@@ -688,7 +720,12 @@ export const useAppStore = create<AppState>((set, get) => {
     setOrderType: (orderType) => set({ orderType }),
     setAmount: (amount) => { if (!get().executing) set({ amount, pendingQuote: null, reviewOpen: false }); },
     setSlippage: (slippage) => { if (!get().executing) set({ slippage, pendingQuote: null, reviewOpen: false }); },
-    setTargetBufferUsd: (targetBufferUsd) => set({ targetBufferUsd }),
+    setTargetBufferUsd: (targetBufferUsd) => {
+      if (get().executing || !Number.isFinite(targetBufferUsd) || targetBufferUsd < 0) return;
+      set({ targetBufferUsd, pendingQuote: null, reviewOpen: false });
+      const address = get().address;
+      if (get().environmentMode === "mainnet" && address && !saveWalletReserve(address, targetBufferUsd)) get().addToast("Reserve saved for this session", "Device storage is unavailable. Recheck your reserve after reconnecting.", "warn");
+    },
     setStressTestAmount: (stressTestAmount) => set({ stressTestAmount }),
     setDcaSpendTotal: (dcaSpendTotal) => set({ dcaSpendTotal }),
     setDcaSliceSize: (dcaSliceSize) => set({ dcaSliceSize }),
@@ -795,7 +832,7 @@ export const useAppStore = create<AppState>((set, get) => {
                 balances,
                 nativeGasBalance: nextNativeGasBalance,
                 ticketNonce,
-                targetBufferUsd: liveSizing.targetBufferUsd,
+                targetBufferUsd: readWalletReserve(nextAddress, liveSizing.targetBufferUsd),
                 stressTestAmount: liveSizing.stressTestAmount,
                 amount: liveSizing.tradeDefaultUsd,
                 dcaSpendTotal: liveSizing.dcaSpendTotal,
@@ -837,7 +874,7 @@ export const useAppStore = create<AppState>((set, get) => {
                 wrongNetwork: false,
                 livePortfolio: true,
                 balances,
-                targetBufferUsd: liveSizing.targetBufferUsd,
+                targetBufferUsd: readWalletReserve(nextAddress, liveSizing.targetBufferUsd),
                 stressTestAmount: liveSizing.stressTestAmount,
                 amount: liveSizing.tradeDefaultUsd,
                 dcaSpendTotal: liveSizing.dcaSpendTotal,
@@ -886,7 +923,7 @@ export const useAppStore = create<AppState>((set, get) => {
             balances,
             nativeGasBalance,
             ticketNonce,
-            targetBufferUsd: liveSizing.targetBufferUsd,
+            targetBufferUsd: readWalletReserve(address, liveSizing.targetBufferUsd),
             stressTestAmount: liveSizing.stressTestAmount,
             amount: liveSizing.tradeDefaultUsd,
             dcaSpendTotal: liveSizing.dcaSpendTotal,
@@ -951,7 +988,7 @@ export const useAppStore = create<AppState>((set, get) => {
             livePortfolio: true,
             balances,
             ticketNonce,
-            targetBufferUsd: liveSizing.targetBufferUsd,
+            targetBufferUsd: readWalletReserve(currentAddress, liveSizing.targetBufferUsd),
             stressTestAmount: liveSizing.stressTestAmount,
             amount: liveSizing.tradeDefaultUsd,
             dcaSpendTotal: liveSizing.dcaSpendTotal,
@@ -978,6 +1015,7 @@ export const useAppStore = create<AppState>((set, get) => {
       const demoPair = "ETH/USDC";
       set({
         environmentMode: "demo",
+        judgeTourOpen: false,
         pendingQuote: null, reviewOpen: false, activeReceiptModal: null, lastTx: null, walletError: "",
         auditReceipts: [], activity: [], mandates: [], dcaOrders: [],
         testnetTaskComplete: false,
@@ -1158,7 +1196,7 @@ export const useAppStore = create<AppState>((set, get) => {
       );
     },
 
-    prepareTradeReview: async () => {
+    prepareTradeReview: async (exactInputTokens?: number) => {
       const { pair: pairKey, side, amount, slippage, balances, environmentMode, address } = get();
       if (get().executing) return;
       const p = PAIRS[assertPair(pairKey)];
@@ -1177,10 +1215,12 @@ export const useAppStore = create<AppState>((set, get) => {
           let price = p.price;
           if (side === "sell") price = formatUnits("0x" + (await routerAmountOut(tokenIn, tokenOut, parseUnits(1, inputDecimals))).toString(16), 6);
           if (!Number.isFinite(price) || price <= 0) throw new Error("Invalid router price");
-          const input = side === "buy" ? amount : amount / price;
+          const input = side === "buy" ? amount : (exactInputTokens ?? amount / price);
+          if (!Number.isFinite(input) || input <= 0) throw new Error("Invalid token input");
           // The deployed trade contract does not automatically unwind USYC.
           if (input > (balances[side === "buy" ? "USDC" : p.base] || 0)) throw new Error("Input exceeds wallet balance. Unwind USYC separately before buying.");
           const amountIn = parseUnits(input, inputDecimals);
+          if (side === "buy") assertCashReserve(parseUnits(balances.USDC || 0, 6), amountIn, get().targetBufferUsd);
           const output = await routerAmountOut(tokenIn, tokenOut, amountIn);
           if (amountIn <= 0n || output <= 0n) throw new Error("Router returned zero output");
           const minOut = output * BigInt(10_000 - Math.round(slippage * 100)) / 10_000n;
@@ -1192,6 +1232,7 @@ export const useAppStore = create<AppState>((set, get) => {
           quote.raw = { amountIn: amountIn.toString(), minOut: minOut.toString(), tokenIn, tokenOut };
           quote.expiresAt = Date.now() + 60_000;
         } else {
+          if (side === "buy") assertCashReserve(parseUnits(balances.USDC || 0, 6), parseUnits(amount, 6), get().targetBufferUsd);
           simulateTrade(balances, p.base, side, amount, p.price, quote.received, PAIRS["USYC/USDC"].price, slippage * 100);
         }
         const now = get();
@@ -1218,6 +1259,10 @@ export const useAppStore = create<AppState>((set, get) => {
       } = get();
 
       const liveIntent = environmentMode === "mainnet";
+      if (liveIntent && get().pendingTransactions.length) {
+        get().addToast("Resolve submitted transaction first", "Open Activity & receipts and query its Arc status. A timeout does not mean a transaction failed.", "warn");
+        return;
+      }
       if (get().executing || !pendingQuote) return;
       const context = pendingQuote.context;
       if (!context || context.pair !== pairKey || context.side !== side || context.amount !== amount || context.slippage !== get().slippage || context.address !== address || context.mode !== environmentMode) {
@@ -1259,6 +1304,7 @@ export const useAppStore = create<AppState>((set, get) => {
         const trader = normalizeAddress(address || DEMO_ADDRESS);
 
         if (!liveIntent) {
+          if (side === "buy") assertCashReserve(parseUnits(balances.USDC || 0, 6), parseUnits(amount, 6), get().targetBufferUsd);
           const receipt = generateTradeReceipt({
             quote: pendingQuote,
             pairKey,
@@ -1315,6 +1361,14 @@ export const useAppStore = create<AppState>((set, get) => {
         const livePriceUsd = pendingQuote.price;
         const liveQuote = pendingQuote;
 
+        const validateFreshInput = async () => {
+          const raw = await publicRpc("eth_call", [{ to: tokenIn, data: "0x70a08231" + trader.slice(2).padStart(64, "0") }, "latest"]);
+          if (typeof raw !== "string" || !/^0x[\da-f]+$/i.test(raw)) throw new Error("Input balance unavailable");
+          const balance = BigInt(raw);
+          if (balance < amountInRaw) throw new Error("Wallet input balance changed. Review again.");
+          if (side === "buy") assertCashReserve(balance, amountInRaw, get().targetBufferUsd);
+        };
+        await validateFreshInput();
         const onchainNonce = await readTraderNonce(trader);
         const ticket = buildTradeTicket(trader, pairKey, side, amount, liveQuote, onchainNonce, livePriceUsd);
         ticket.message.amountIn = amountInRaw.toString();
@@ -1367,11 +1421,16 @@ export const useAppStore = create<AppState>((set, get) => {
 
         if (Date.now() > pendingQuote.expiresAt) throw new Error("Quote expired while signing. Review again.");
         if (!get().livePortfolio || get().address !== trader || get().wrongNetwork) throw new Error("Wallet session changed before broadcast");
+        await validateFreshInput();
         get().addToast("Broadcasting", "Sending executeTradeTicket to the deployed Arc settlement contract.", "info");
         const txHash = await walletRpc("eth_sendTransaction", [
           { from: trader, to: ARC.settlement, data: calldata, gas: "0x55730" },
         ]);
 
+        const pending = [...get().pendingTransactions, txHash];
+        const savedPending = writePending(pending);
+        set({ pendingTransactions: pending });
+        if (!savedPending) get().addToast("Save the transaction hash", `Device storage unavailable. Track ${txHash} on Arc Explorer before trying another trade.`, "warn");
         get().addToast("Pending", "Arc accepted the transaction. Waiting for confirmation.", "info");
         const confirmed = await waitForTransactionReceipt(txHash);
 
@@ -1385,6 +1444,11 @@ export const useAppStore = create<AppState>((set, get) => {
         if (!settled) {
           throw new Error("Arc transaction confirmed, but the deployed settlement event could not be verified");
         }
+
+        if (settled.amountIn !== amountInRaw || settled.amountOut < minOutRaw) throw new Error("Confirmed event does not match reviewed input/output bounds. Resolve and inspect the submitted transaction before retrying.");
+        const remainingPending = get().pendingTransactions.filter(hash => hash !== txHash);
+        writePending(remainingPending);
+        set({ pendingTransactions: remainingPending });
 
         const settledReceived = formatUnits(
           "0x" + settled.amountOut.toString(16),
@@ -1414,6 +1478,8 @@ export const useAppStore = create<AppState>((set, get) => {
           sig,
           transactionHash: txHash,
           executionReceiptHash: settled.receiptHash,
+          actualAmountInRaw: settled.amountIn.toString(),
+          actualAmountOutRaw: settled.amountOut.toString(),
           actualReceived: Number(settledReceived),
           side,
           amount,
@@ -1453,7 +1519,7 @@ export const useAppStore = create<AppState>((set, get) => {
           ticketNonce: onchainNonce + 1,
           // Keep explicit user edits, but nudge defaults only when their values
           // were still using the old demo defaults at the time of execution.
-          targetBufferUsd: get().targetBufferUsd === 5000 ? liveSizing.targetBufferUsd : get().targetBufferUsd,
+          targetBufferUsd: get().targetBufferUsd,
           stressTestAmount: get().stressTestAmount === 25000 ? liveSizing.stressTestAmount : get().stressTestAmount,
           auditReceipts: [receipt, ...auditReceipts].slice(0, 50),
           activity: [
@@ -1586,6 +1652,7 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     runProof: async () => {
+      if (get().proof.running) return;
       set((s) => ({ proof: { ...s.proof, running: true, local: failClosedLocalProofs() } }));
       try {
         const live = await verifyArcLive();
@@ -1594,7 +1661,8 @@ export const useAppStore = create<AppState>((set, get) => {
           block: head?.block || s.block,
           proof: { running: false, live, local: failClosedLocalProofs(), checkedAt: Date.now() },
         }));
-        get().addToast("Proof Verification Complete", "All 14 fail-closed gates and live RPC verified.", "ok");
+        const passed = live.chainOk && live.rows.every(r => r.ok) && failClosedLocalProofs().every(r => r.ok);
+        get().addToast(passed ? "Checks passed" : "Verification incomplete", "Review each result below. Infrastructure checks do not prove a treasury trade executed.", passed ? "ok" : "warn");
       } catch (e: any) {
         set({
           proof: {
@@ -1630,7 +1698,9 @@ export const useAppStore = create<AppState>((set, get) => {
 
       if (!liveIntent) {
         let nextBalances;
-        try { nextBalances = simulateTreasury(get().balances, sweepAmountUsdc, direction, PAIRS["USYC/USDC"].price); }
+        try {
+          if (direction === "sweep") assertCashReserve(parseUnits(get().balances.USDC || 0, 6), parseUnits(sweepAmountUsdc, 6), get().targetBufferUsd);
+          nextBalances = simulateTreasury(get().balances, sweepAmountUsdc, direction, PAIRS["USYC/USDC"].price); }
         catch (err: any) { get().addToast("Treasury action blocked", err.message, "err"); return; }
         if (direction === "sweep") {
           const receipt = generateTradeReceipt({
@@ -1710,178 +1780,11 @@ export const useAppStore = create<AppState>((set, get) => {
         return;
       }
 
-      set({ executing: true });
-      try {
-        const trader = normalizeAddress(address!);
-        const isSweep = direction === "sweep";
-        const tokenIn = isSweep ? ARC.usdcErc20 : ARC.tokens.USYC.address;
-        const tokenOut = isSweep ? ARC.tokens.USYC.address : ARC.usdcErc20;
-        const amountInRaw = parseUnits(sweepAmountUsdc, 6);
-        if (amountInRaw <= 0n) throw new Error("Treasury amount rounds to zero");
-
-        get().addToast("Live Treasury Quote", "Reading the Arc AMM USDC/USYC route before signing.", "info");
-        const quotedOutRaw = await routerAmountOut(tokenIn, tokenOut, amountInRaw);
-        if (quotedOutRaw <= 0n) throw new Error("Arc AMM returned zero output for the treasury route");
-
-        const slippageBps = 5;
-        const minOutRaw = quotedOutRaw * 9995n / 10000n;
-        const received = formatUnits("0x" + quotedOutRaw.toString(16), 6);
-        const minReceived = formatUnits("0x" + minOutRaw.toString(16), 6);
-        const effective = isSweep
-          ? sweepAmountUsdc / Math.max(received, Number.EPSILON)
-          : received / Math.max(sweepAmountUsdc, Number.EPSILON);
-
-        const nonce = await readTraderNonce(trader);
-        const deadline = Math.floor(Date.now() / 1000) + 600;
-        const ticket = {
-          types: {
-            EIP712Domain: [
-              { name: "name", type: "string" },
-              { name: "version", type: "string" },
-              { name: "chainId", type: "uint256" },
-              { name: "verifyingContract", type: "address" },
-            ],
-            TradeTicket: [
-              { name: "trader", type: "address" },
-              { name: "tokenIn", type: "address" },
-              { name: "tokenOut", type: "address" },
-              { name: "amountIn", type: "uint256" },
-              { name: "minAmountOut", type: "uint256" },
-              { name: "nonce", type: "uint256" },
-              { name: "deadline", type: "uint256" },
-            ],
-          },
-          primaryType: "TradeTicket" as const,
-          domain: {
-            name: "Interminal",
-            version: "1",
-            chainId: ARC.chainId,
-            verifyingContract: ARC.settlement,
-          },
-          message: {
-            trader,
-            tokenIn: tokenIn.toLowerCase(),
-            tokenOut: tokenOut.toLowerCase(),
-            amountIn: amountInRaw.toString(),
-            minAmountOut: minOutRaw.toString(),
-            nonce,
-            deadline,
-          },
-        };
-
-        const currentAllowance = await erc20Allowance(tokenIn, trader, ARC.settlement);
-        if (currentAllowance < amountInRaw) {
-          get().addToast("Approval Required", "Approve the exact treasury input amount.", "info");
-          const approvalTx = await sendApproval(trader, tokenIn, ARC.settlement, amountInRaw);
-          await waitForTransactionReceipt(approvalTx);
-        }
-
-        get().addToast("Signature Required", "Sign the bounded treasury TradeTicket.", "info");
-        const sig = await walletRpc("eth_signTypedData_v4", [trader, JSON.stringify(ticket)]);
-        if (typeof sig !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(sig)) {
-          throw new Error("Wallet returned malformed EIP-712 signature");
-        }
-
-        const cleanSig = sig.slice(2);
-        const pad32 = (v: string | number | bigint) =>
-          typeof v === "string"
-            ? v.replace(/^0x/i, "").toLowerCase().padStart(64, "0")
-            : BigInt(v).toString(16).padStart(64, "0");
-        const sigLen = (cleanSig.length / 2).toString(16).padStart(64, "0");
-        const sigPadded = cleanSig.padEnd(Math.ceil(cleanSig.length / 64) * 64, "0");
-        const calldata =
-          "0x254f432b" +
-          pad32(trader) +
-          pad32(tokenIn) +
-          pad32(tokenOut) +
-          pad32(amountInRaw) +
-          pad32(minOutRaw) +
-          pad32(nonce) +
-          pad32(deadline) +
-          (256).toString(16).padStart(64, "0") +
-          sigLen +
-          sigPadded;
-
-        get().addToast("Broadcasting", "Submitting treasury execution to Arc Mainnet.", "info");
-        const txHash = await walletRpc("eth_sendTransaction", [
-          { from: trader, to: ARC.settlement, data: calldata, gas: "0x55730" },
-        ]);
-
-        const confirmed = await waitForTransactionReceipt(txHash);
-        const receipt = generateTradeReceipt({
-          quote: {
-            price: PAIRS["USYC/USDC"].price,
-            effective,
-            received,
-            minReceived,
-            impact: 0,
-            slippageBps,
-            gasUsd: 0.0012,
-            expiresAt: Date.now() + 600000,
-          },
-          pairKey: "USYC/USDC",
-          trader,
-          sig,
-          transactionHash: txHash,
-          side: isSweep ? "buy" : "sell",
-          amountUsd: sweepAmountUsdc,
-          mode: "mainnet",
-          status: "confirmed",
-          blockNumber: confirmed.blockNumber,
-        });
-
-        set((state) => ({ auditReceipts: [receipt, ...state.auditReceipts].slice(0, 50), lastTx: { show: true, hash: txHash, price: effective, label: "Treasury action confirmed", receipt } }));
-        try {
-          await anchorReceiptOnchain(receipt, trader);
-          if (!(await checkReceiptAnchoredOnchain(receipt))) throw new Error("Anchor verification unavailable");
-        } catch {
-          receipt.onchainAnchored = false;
-          get().addToast("Treasury action confirmed · anchor incomplete", "Funds moved successfully. Its receipt is retained; don't repeat the action to retry its separate anchor.", "warn");
-        }
-        let freshBalances = get().balances;
-        try { freshBalances = await loadOnchainPortfolio(trader); await refreshLivePairValuation(); }
-        catch { set({ livePortfolio: false }); get().addToast("Treasury action confirmed", "Wallet refresh failed. Reconnect before further execution.", "warn"); }
-
-        let nativeGasBalance = get().nativeGasBalance;
-        try {
-          nativeGasBalance = formatUnits(await publicRpc("eth_getBalance", [trader, "latest"]), ARC.nativeDecimals);
-        } catch {}
-
-        set((s) => ({
-          balances: freshBalances,
-          nativeGasBalance,
-          ticketNonce: nonce + 1,
-          auditReceipts: [receipt, ...s.auditReceipts.filter(item => item.receiptId !== receipt.receiptId)].slice(0, 50),
-          activity: [
-            {
-              ts: Date.now(),
-              type: "sweep",
-              label: isSweep
-                ? "Confirmed Yield Sweep: $" + sweepAmountUsdc.toLocaleString() + " USDC → USYC"
-                : "Confirmed JIT Unwind: $" + sweepAmountUsdc.toLocaleString() + " USYC → USDC",
-              detail: "Arc Mainnet · block #" + confirmed.blockNumber.toLocaleString() + " · " + (receipt.onchainAnchored ? "certificate anchor verified" : "certificate anchor incomplete"),
-              hash: txHash,
-              receiptId: receipt.receiptId,
-              receipt,
-            },
-            ...s.activity,
-          ],
-          executing: false,
-        }));
-
-        get().addToast(
-          isSweep ? "Yield Sweep Confirmed" : "JIT Unwind Confirmed",
-          "Arc block #" + confirmed.blockNumber.toLocaleString() + " confirmed. " + (receipt.onchainAnchored ? "Certificate anchor verified." : "Receipt saved; anchor incomplete."),
-          "ok",
-        );
-      } catch (err: any) {
-        set({ executing: false });
-        get().addToast(
-          "Treasury Action Failed",
-          err?.code === 4001 ? "Wallet action rejected." : (err?.message || String(err)),
-          "err",
-        );
-      }
+      // Every live treasury action must enter the shared review flow.
+      get().setPair("USYC/USDC");
+      get().setSide(direction === "sweep" ? "buy" : "sell");
+      get().setAmount(direction === "sweep" ? sweepAmountUsdc : sweepAmountUsdc * PAIRS["USYC/USDC"].price);
+      await get().prepareTradeReview(direction === "unwind" ? sweepAmountUsdc : undefined);
     },
 
     importCustomToken: async (address: string) => {
@@ -1944,4 +1847,14 @@ export const useAppStore = create<AppState>((set, get) => {
       }
     },
   };
+});
+
+// Archive certificates only. Wallet authorization, balances, and pending reviews are never persisted.
+useAppStore.subscribe((state, previous) => {
+  if (state.auditReceipts !== previous.auditReceipts && state.auditReceipts.length) {
+    const saved = saveArchive(state.auditReceipts);
+    if (typeof window !== "undefined" && state.archiveWarning === saved) {
+      useAppStore.setState({ archiveWarning: !saved });
+    }
+  }
 });

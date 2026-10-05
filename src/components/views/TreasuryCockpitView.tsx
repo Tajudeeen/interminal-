@@ -31,7 +31,6 @@ export const TreasuryCockpitView: React.FC = () => {
     nativeGasBalance,
     executeSweepOnchain,
     environmentMode,
-    setPair, setSide, setAmount, prepareTradeReview,
   } = useAppStore();
 
   const [simHorizonDays, setSimHorizonDays] = useState<number>(365);
@@ -56,7 +55,7 @@ export const TreasuryCockpitView: React.FC = () => {
         remainingUsyc: 0,
       }
     : calculateJitUnwind({
-        tradeAmountUsd: stressTestAmount,
+        tradeAmountUsd: stressTestAmount + targetBufferUsd,
         liquidUsdc,
         usycBalance,
         usycPriceUsd: PAIRS["USYC/USDC"].price,
@@ -96,10 +95,7 @@ export const TreasuryCockpitView: React.FC = () => {
       addToast("Sweep Not Needed", "Liquid USDC is within the target operating cash buffer.", "info");
       return;
     }
-    if (environmentMode === "mainnet") {
-      setPair("USYC/USDC"); setSide("buy"); setAmount(sweep.sweepAmount);
-      void prepareTradeReview();
-    } else { void executeSweepOnchain(sweep.sweepAmount, "sweep"); }
+    void executeSweepOnchain(sweep.sweepAmount, "sweep");
   };
 
   const handleJitUnwind = () => {
@@ -111,10 +107,7 @@ export const TreasuryCockpitView: React.FC = () => {
       addToast("Insufficient USYC", "Combined USDC + USYC cannot cover the disbursement.", "err");
       return;
     }
-    if (environmentMode === "mainnet") {
-      setPair("USYC/USDC"); setSide("sell"); setAmount(jit.usycToRedeem * PAIRS["USYC/USDC"].price);
-      void prepareTradeReview();
-    } else { void executeSweepOnchain(jit.usycToRedeem, "unwind"); }
+    void executeSweepOnchain(jit.usycToRedeem, "unwind");
   };
 
   const handleSimulateInflow = (amt: number) => {
@@ -142,7 +135,7 @@ export const TreasuryCockpitView: React.FC = () => {
 
   // Yield over selected horizon
   const horizonYieldUsyc = usycNavUsd * (USYC_APY * (simHorizonDays / 365));
-  const horizonYieldBank = usycNavUsd * (0.0005 * (simHorizonDays / 365));
+  const horizonYieldBank = 0;
   const horizonAlphaDelta = horizonYieldUsyc - horizonYieldBank;
 
   return (
@@ -154,7 +147,7 @@ export const TreasuryCockpitView: React.FC = () => {
             Treasury Cockpit
           </h1>
           <p className="font-mono text-xs text-muted mt-1">
-            Policy-Driven Cash Rebalancing · USYC Treasury Asset · JIT Liquidity Unwind
+            Cash reserve · Reviewed USYC allocation · Separate liquidity unwind
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -179,6 +172,10 @@ export const TreasuryCockpitView: React.FC = () => {
         </div>
       </div>
 
+      <p className="text-sm text-sub rounded-card border border-themed p-4">
+        Cash reserve protection applies to trades submitted through this app. It is checked again before signing and broadcast.
+        The deployed contract does not enforce your reserve against other apps. USYC eligibility and router liquidity can prevent execution.
+      </p>
       {/* Network & Execution Status Banner */}
       {livePortfolio && !wrongNetwork ? (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-card bg-pos/10 border border-pos/40 text-xs gap-3">
@@ -416,10 +413,10 @@ export const TreasuryCockpitView: React.FC = () => {
           <div className="flex items-start justify-between">
             <div>
               <h2 className="font-display font-bold text-base text-themed">
-                Just-In-Time (JIT) Liquidity Bridge
+                Review a USYC liquidity unwind
               </h2>
               <p className="font-mono text-xs text-muted mt-1 leading-relaxed">
-                When an outgoing wire or trade exceeds liquid USDC, calculate the USYC shortfall and execute a fresh USYC/USDC AMM route on Arc with a bounded output floor.
+                Model the USYC needed to fund a planned trade while preserving your cash reserve. Review the unwind first, then review the trade separately. NAV sizing is an estimate, not a router guarantee.
               </p>
             </div>
             <span
@@ -471,7 +468,7 @@ export const TreasuryCockpitView: React.FC = () => {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">Deficit Requiring JIT Unwind:</span>
+              <span className="text-muted">Shortfall including cash reserve:</span>
               <span className={`${jit.needed ? "text-amber-500 font-bold" : "text-muted"} tnum`}>
                 {mainnetReview ? "—" : "$" + jit.deficit.toLocaleString()}
               </span>
@@ -502,7 +499,7 @@ export const TreasuryCockpitView: React.FC = () => {
               isLoading={executing}
               leftIcon={<Icon name="swap_horiz" className="material-symbols-outlined text-[16px]" />}
             >
-              Execute JIT USYC/USDC Rebalance: ${jit.usycToRedeem.toLocaleString(undefined, { maximumFractionDigits: 6 })} USYC → USDC{livePortfolio ? " (On-Chain)" : " (Sim)"}
+              Review USYC unwind: ${jit.usycToRedeem.toLocaleString(undefined, { maximumFractionDigits: 6 })} USYC → USDC{livePortfolio ? " (On-Chain)" : " (Sim)"}
             </Button>
           )}
         </div>
@@ -555,22 +552,22 @@ export const TreasuryCockpitView: React.FC = () => {
           </div>
 
           <div className="p-4 rounded-card bg-themed-card/50 border border-themed/30">
-            <div className="text-[10px] text-muted uppercase">Illustrative Bank Benchmark (0.05%)</div>
+            <div className="text-[10px] text-muted uppercase">Unallocated cash assumption (0%)</div>
             <div className="text-2xl font-bold text-muted mt-1 font-display tnum">
               {mainnetReview ? "—" : "+$" + horizonYieldBank.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="text-[10px] text-muted mt-1">
-              Standard corporate checking deposit
+              Scenario baseline, not a bank rate
             </div>
           </div>
 
           <div className="p-4 rounded-card bg-pos/10 border border-pos/30">
-            <div className="text-[10px] text-pos font-bold uppercase">Net Treasury Outperformance</div>
+            <div className="text-[10px] text-pos font-bold uppercase">Modeled yield before execution costs</div>
             <div className="text-2xl font-black text-pos mt-1 font-display tnum">
               {mainnetReview ? "—" : "+$" + horizonAlphaDelta.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="text-[10px] text-pos mt-1 font-semibold">
-              Additional corporate cash generated
+              Estimate excludes fees, access limits, and price changes
             </div>
           </div>
         </div>

@@ -63,7 +63,7 @@ export const CapitalFlowDiagram: React.FC = () => {
         {/* Node 3: JIT Unwind Bridge */}
         <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/40 relative group hover:border-lime-500/50 transition-colors">
           <div className="flex items-center justify-between text-muted text-[10px] font-mono uppercase">
-            <span>Stage 3 · JIT</span>
+            <span>Stage 3 · Unwind</span>
             <Icon name="swap_calls" className="material-symbols-outlined text-[16px] text-amber-500" />
           </div>
           <div className="font-display font-bold text-sm text-themed mt-1">USYC/USDC Rebalance</div>
@@ -71,7 +71,7 @@ export const CapitalFlowDiagram: React.FC = () => {
             1 USYC ≈ ${PAIRS["USYC/USDC"].price.toFixed(6)} USDC
           </div>
           <div className="font-mono text-[10px] text-muted mt-1">
-            Router quote · slippage applies
+            NAV reference · review a router quote
           </div>
         </div>
 

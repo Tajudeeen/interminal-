@@ -16,11 +16,13 @@ Opening mainnet review doesn't connect a wallet or submit a transaction. Testnet
 
 ## Operator workflow
 
-1. Open **Treasury** to inspect holdings, liquid USDC, and the USYC position. Set the operating cash buffer and model a disbursement.
+1. Open **Treasury** to inspect holdings, liquid USDC, and the USYC position. Set the operating cash reserve and model the liquidity needed for a planned trade.
 2. Review a sweep, unwind, or trade. Mainnet treasury buttons use the same router-backed review as the trade desk.
 3. Inspect the input, estimated output, minimum output, slippage, and quote expiry. The wallet may request an exact input-token approval before signing.
 4. Sign the EIP-712 trade ticket and submit settlement. The signed raw input and minimum match the reviewed router quote. Expired or changed reviews are blocked.
 5. Open **Activity & receipts** to inspect the confirmed transaction and certificate. A separate anchor failure doesn't undo settlement or erase the confirmed receipt. Don't repeat a settled trade to retry its anchor.
+
+Buy reviews preserve your configured cash reserve. The app checks raw USDC balances before approval and again immediately before broadcast. Percentage sizing excludes the reserve. Changing the reserve invalidates an open review. This protection applies to this app; the deployed v1 contract cannot enforce the reserve against other apps or direct contract calls.
 
 The deployed trade path spends liquid USDC. It doesn't automatically unwind a USYC position to fund a buy. Unwind separately and review the next trade after wallet balances refresh.
 
@@ -31,8 +33,8 @@ The deployed trade path spends liquid USDC. It doesn't automatically unwind a US
 - **Trade desk:** chart, sizing controls, quote review, and bounded execution.
 - **Markets:** registered Arc routes, clearly labeled reference values, filters, and read-only imported-token metadata.
 - **Analysis:** deterministic EMA, RSI, MACD, and support/resistance signals. No remote AI service or autonomous trading agent.
-- **Activity & receipts:** session executions, integrity checks, explorer links, and inspectable JSON certificates.
-- **Verification:** public RPC, contract fingerprint, and local negative authorization checks.
+- **Activity & receipts:** device-saved executions, pending transaction recovery, explorer links, and exportable JSON certificates.
+- **Verification:** wallet-free transaction and certificate verification, infrastructure reads, and local negative authorization checks.
 - **Testnet lab:** optional wallet/network rehearsal.
 
 Desktop uses a persistent sidebar. Mobile includes quick navigation and a full workspace menu, including verification and testnet. Modals trap keyboard focus, restore focus on close, support Escape, and scroll inside the viewport. SVG icons are bundled, so a failed font request can't replace icons with raw text. Views load separately to reduce the initial JavaScript bundle.
@@ -66,6 +68,21 @@ The registry is in `src/constants/arc.ts`. Exact approvals are restricted to the
 
 **Live agent mandates remain disabled on the deployed v1 contract.** The hardened successor source isn't a deployed upgrade. DCA/TWAP records are browser-side plans and don't run a background executor. The current product requires explicit user review and wallet signatures.
 
+## Verify execution independently
+
+Open **Verification**, paste a settlement transaction hash, and run the read-only check. Or import an exported mainnet receipt. The verifier requires a successful transaction to the configured contract and its exact `TradeSettled` event, then compares trader, route, block, received output, and raw amounts where present. Certificate anchoring is reported separately. A digest anchor alone is never sufficient proof of execution.
+
+A verified transaction without a certificate can rebuild an event-based receipt. Recovered receipts explicitly state that the original quote and wallet signature were not recovered. An unresolved broadcast blocks new mainnet executions until its chain status is checked in Activity. A reverted transaction can be resolved without claiming settlement.
+
+Share a wallet-free reviewer link with `?verify=0xTRANSACTION_HASH` or run:
+
+```sh
+npm run verify:execution -- 0xTRANSACTION_HASH
+npm run verify:execution -- --receipt exported-receipt.json
+```
+
+The CLI verifies the event independently with ethers and requires exact raw amounts for certificate matching. Old receipts missing raw amounts can still be inspected in the app; regenerate event evidence from their transaction for current CLI checks.
+
 See [the live contract fingerprint](docs/LIVE_CONTRACT_FINGERPRINT.md), [Arc submission evidence](docs/ARC_MICROGRANT_PROOF.md), and [the rework review](docs/REWORK_REVIEW.md).
 
 ## Run locally
@@ -93,11 +110,11 @@ npm run verify:arc
 
 ## Current limits
 
-- This rework doesn't replace or redeploy the v1 settlement contract.
+- This rework doesn't replace or redeploy the v1 settlement contract. Its full runtime fingerprint is recorded, but strict compiled-source reproduction is unresolved. `npm run verify:source` fails until the actual source/build settings or a reproducible successor deployment resolve it.
 - USYC treasury moves use a router route, not a promise of instant par redemption. Eligibility and liquidity can prevent execution.
 - Gas is estimated by the wallet. A fixed sub-cent fee isn't guaranteed.
-- Receipts and plans are session state. Export receipts before resetting a workspace or reloading. This isn't a durable accounting system.
+- Receipts and unresolved submitted transaction hashes are saved in versioned device storage. Mainnet receipts reopen in the mainnet workspace. Export JSON for portable backups. The archive retains up to 200 certificates, and wallet-specific reserve settings are saved locally. Plans remain session state; clearing browser storage removes the archive. This is not a shared accounting database.
 - Market valuation can use reference prices and shouldn't be treated as a guaranteed liquidation value.
-- No new mainnet transaction was sent to validate this rework. Wallet write paths were checked with mocked regression tests; read-only chain checks and browser flows are reported separately in the review.
+- No new mainnet transaction was sent to validate this rework. The submission still needs a successful USDC/USYC execution from an eligible wallet. Wallet write paths were checked with mocked regression tests; read-only chain checks and browser flows are reported separately in the review.
 
 Built by [@Deeen_Codes](https://x.com/Deeen_Codes).

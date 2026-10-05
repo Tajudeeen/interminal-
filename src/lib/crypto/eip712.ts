@@ -368,6 +368,9 @@ export interface GenerateReceiptParams {
   transactionHash?: string;
   executionReceiptHash?: string;
   actualReceived?: number;
+  recoveredFromEvent?: boolean;
+  actualAmountInRaw?: string;
+  actualAmountOutRaw?: string;
   quote: TradeQuote;
   pairKey?: string;
   pair?: string;
@@ -398,6 +401,7 @@ export function generateTradeReceipt({
   transactionHash,
   executionReceiptHash,
   actualReceived,
+  actualAmountInRaw, actualAmountOutRaw, recoveredFromEvent,
 }: GenerateReceiptParams): TradeReceipt {
   const effectivePairKey = pairKey || pair || "ETH/USDC";
   const pairObj = PAIRS[assertPair(effectivePairKey)];
@@ -440,6 +444,9 @@ export function generateTradeReceipt({
     actualReceived: actualReceived ?? null,
   };
 
+  if (recoveredFromEvent) receipt.recoveredFromEvent = true;
+  if (actualAmountInRaw != null) receipt.actualAmountInRaw = actualAmountInRaw;
+  if (actualAmountOutRaw != null) receipt.actualAmountOutRaw = actualAmountOutRaw;
   const canonicalPayload = { ...receipt };
   delete canonicalPayload.integrityDigest;
   delete canonicalPayload.status;

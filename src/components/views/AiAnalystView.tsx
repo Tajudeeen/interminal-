@@ -11,6 +11,10 @@ export const AiAnalystView: React.FC = () => {
     setSide,
     setAmount,
     analysis,
+    indicators,
+    timeframe,
+    targetBufferUsd,
+    slippage,
     runAiAnalysis,
     setView,
     setMandateModalOpen,
@@ -21,10 +25,8 @@ export const AiAnalystView: React.FC = () => {
   } = useAppStore();
 
   useEffect(() => {
-    if (!analysis || analysis.pair !== activePair) {
-      runAiAnalysis();
-    }
-  }, [activePair]);
+    if (indicators) runAiAnalysis();
+  }, [activePair, timeframe, indicators, runAiAnalysis]);
 
   const p = PAIRS[activePair] || PAIRS["ETH/USDC"];
   const pairsList = ["ETH/USDC", "BTC/USDC", "EURC/USDC", "USYC/USDC", "SOL/USDC", "AVAX/USDC"];
@@ -47,7 +49,7 @@ export const AiAnalystView: React.FC = () => {
     const recommendedSide = analysis.trend === "Bearish" ? "sell" : "buy";
     const recommendedPair = PAIRS[analysis.pair] || p;
     const maxWalletValue = recommendedSide === "buy"
-      ? Math.max(0, balances.USDC || 0)
+      ? Math.max(0, (balances.USDC || 0) - targetBufferUsd)
       : Math.max(0, (balances[recommendedPair.base] || 0) * recommendedPair.price);
     const recommendedAmount = livePortfolio ? Math.min(500, maxWalletValue) : 500;
 
@@ -215,7 +217,7 @@ export const AiAnalystView: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-cyan animate-pulse" />
                 <h3 className="font-display font-bold text-sm text-themed uppercase tracking-wider">
-                  Proposed Autonomous Action & Policy Verification
+                  Suggested trade for your review
                 </h3>
               </div>
               <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-cyan/15 text-cyan border border-cyan/30 font-bold">
@@ -230,11 +232,11 @@ export const AiAnalystView: React.FC = () => {
                   {analysis.trend === "Bearish" ? "Take Profit / Hedge" : "Treasury Rebalance"}: {analysis.pair}
                 </div>
                 <div className="font-mono text-xs text-sub mt-0.5">
-                  Allocate ${livePortfolio ? Math.min(500, Math.max(0, balances.USDC || 0)).toLocaleString() : 500} USDC based on {analysis.regime.toLowerCase()} regime & favorable risk/reward ({analysis.rr}:1)
+                  Allocate ${livePortfolio ? Math.min(500, Math.max(0, (balances.USDC || 0) - targetBufferUsd)).toLocaleString() : 500} USDC based on {analysis.regime.toLowerCase()} regime & favorable risk/reward ({analysis.rr}:1)
                 </div>
               </div>
               <div className="text-right font-mono text-xs text-pos font-bold shrink-0">
-                Size: ${livePortfolio ? Math.min(500, Math.max(0, balances.USDC || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "500.00"} USDC
+                Size: ${livePortfolio ? Math.min(500, Math.max(0, (balances.USDC || 0) - targetBufferUsd)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "500.00"} USDC
               </div>
             </div>
 
@@ -250,8 +252,8 @@ export const AiAnalystView: React.FC = () => {
 
               <div className="p-2.5 rounded-card bg-pos/10 border border-pos/30 text-pos flex items-center justify-between">
                 <div>
-                  <div className="text-[10px] opacity-75">Daily Spend Cap</div>
-                  <div className="font-bold">&lt; $5,000 Limit</div>
+                  <div className="text-[10px] opacity-75">Cash reserve in app</div>
+                  <div className="font-bold">${targetBufferUsd.toLocaleString()} USDC</div>
                 </div>
                 <Icon name="check_circle" className="material-symbols-outlined text-[16px]" />
               </div>
@@ -259,14 +261,14 @@ export const AiAnalystView: React.FC = () => {
               <div className="p-2.5 rounded-card bg-pos/10 border border-pos/30 text-pos flex items-center justify-between">
                 <div>
                   <div className="text-[10px] opacity-75">Slippage Bound</div>
-                  <div className="font-bold">&lt;= 30 bps</div>
+                  <div className="font-bold">{Math.round(slippage * 100)} bps in quote review</div>
                 </div>
                 <Icon name="check_circle" className="material-symbols-outlined text-[16px]" />
               </div>
 
               <div className="p-2.5 rounded-card bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center justify-between">
                 <div>
-                  <div className="text-[10px] opacity-75">Officer Permit</div>
+                  <div className="text-[10px] opacity-75">Wallet signature</div>
                   <div className="font-bold">EIP-712 Required</div>
                 </div>
                 <Icon name="fingerprint" className="material-symbols-outlined text-[16px]" />
@@ -280,7 +282,7 @@ export const AiAnalystView: React.FC = () => {
                 onClick={handleExecuteRecommendedPolicy}
                 leftIcon={<Icon name="verified" className="material-symbols-outlined text-[16px]" />}
               >
-                Approve & Execute via EIP-712 Permit
+                Get quote & review trade
               </Button>
               <Button
                 variant="secondary"
@@ -303,7 +305,7 @@ export const AiAnalystView: React.FC = () => {
                     Deterministic Mathematical Grounding & Formula Verifier
                   </div>
                   <div className="font-mono text-[10px] text-muted">
-                    No black-box hallucinations. All signals computed from verified price bars.
+                    Rule-based indicators from the selected public feed. Feed accuracy is not independently verified.
                   </div>
                 </div>
               </div>
@@ -358,9 +360,10 @@ export const AiAnalystView: React.FC = () => {
                 variant="secondary"
                 size="md"
                 onClick={() => setMandateModalOpen(true)}
+                disabled={livePortfolio}
                 leftIcon={<Icon name="verified_user" className="material-symbols-outlined text-[16px]" />}
               >
-                Sign Scoped Agent Mandate
+                Explore simulated mandate
               </Button>
             </div>
           </div>
