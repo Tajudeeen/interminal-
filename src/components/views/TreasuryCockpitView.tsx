@@ -401,7 +401,7 @@ export const TreasuryCockpitView: React.FC = () => {
                 leftIcon={<Icon name="bolt" className="material-symbols-outlined text-[16px]" />}
               >
                 {sweep.recommended
-                  ? `Sweep $${sweep.sweepAmount.toLocaleString()} USDC → USYC treasury position${livePortfolio ? " (On-Chain)" : " (Sim)"}`
+                  ? `Sweep $${sweep.sweepAmount.toLocaleString()} USDC → USYC${livePortfolio ? " (On-Chain)" : " (Sim)"}`
                   : "Cash Buffer Fully Balanced"}
               </Button>
             </div>
