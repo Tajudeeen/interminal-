@@ -1,56 +1,56 @@
 import { Icon } from "../ui/Icon";
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
-import { PAIRS } from "../../constants/pairs";
+import { ARC } from "../../constants/arc";
 
-// One active feed, one source. Reference prices never masquerade as a live ticker.
 export const MarketTickerMarquee: React.FC = () => {
   const {
     environmentMode,
-    marketFeedStatus,
-    pair,
     setView,
     livePortfolio,
     wrongNetwork,
   } = useAppStore();
+
+  const modeLabel =
+    environmentMode === "demo"
+      ? "Demo · Arc mainnet target"
+      : environmentMode === "testnet"
+        ? "Optional Arc testnet rehearsal"
+        : wrongNetwork
+          ? "Wrong network"
+          : "Arc Mainnet";
+
   return (
     <div className="desk-statusbar" role="status">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0">
         <span
           className={`status-dot ${environmentMode === "demo" ? "demo" : wrongNetwork ? "warning" : ""}`}
         />
-        <span>
-          {environmentMode === "demo"
-            ? "Demo workspace"
-            : environmentMode === "testnet"
-              ? "Testnet rehearsal"
-              : "Mainnet workspace"}
-        </span>
+        <span className="font-semibold">{modeLabel}</span>
         <span className="hidden sm:inline text-muted">
-          {environmentMode === "demo"
-            ? "Simulated balances · no funds move"
-            : livePortfolio
-              ? "Wallet balances loaded"
-              : "Connect a wallet to load holdings"}
+          {environmentMode === "mainnet" && livePortfolio
+            ? "Chain 5042 · wallet holdings loaded · gas in USDC"
+            : environmentMode === "mainnet"
+              ? "Chain 5042 · connect wallet to load holdings · gas in USDC"
+              : environmentMode === "demo"
+                ? "Core flow mirrors the Arc mainnet path without moving funds"
+                : "Testnet is not submission proof"}
         </span>
       </div>
-      {environmentMode !== "testnet" && (
-        <button
-          onClick={() => setView("terminal")}
-          className="flex items-center gap-2 text-xs"
-        >
-          <span>{pair}</span>
-          <span className="text-sub">
-            {marketFeedStatus.live
-              ? `$${PAIRS[pair]?.price.toLocaleString("en-US", { maximumFractionDigits: 4 })}`
-              : "Feed unavailable"}
-          </span>
-          <Icon
-            name="north_east"
-            className="material-symbols-outlined text-sm"
-          />
-        </button>
-      )}
+      <button
+        onClick={() => setView("proof")}
+        className="flex items-center gap-2 text-xs shrink-0"
+        title={ARC.settlement}
+      >
+        <span className="hidden sm:inline text-muted">Settlement</span>
+        <span className="font-mono">
+          {ARC.settlement.slice(0, 6)}…{ARC.settlement.slice(-4)}
+        </span>
+        <Icon
+          name="verified_user"
+          className="material-symbols-outlined text-sm"
+        />
+      </button>
     </div>
   );
 };
