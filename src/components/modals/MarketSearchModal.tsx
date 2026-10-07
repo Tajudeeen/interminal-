@@ -5,13 +5,14 @@ import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
 
 export const MarketSearchModal: React.FC = () => {
-  const { searchOpen, setSearchOpen, searchQuery, setSearchQuery, setPair, setView, setImportTokenOpen } =
+  const { searchOpen, setSearchOpen, searchQuery, setSearchQuery, setPair, setView } =
     useAppStore();
 
   const filteredPairs = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return Object.entries(PAIRS);
-    return Object.entries(PAIRS).filter(([key, meta]) => {
+    const registered = Object.entries(PAIRS).filter(([, meta]) => !!meta.address && meta.cat !== "imported");
+    if (!q) return registered;
+    return registered.filter(([key, meta]) => {
       return (
         key.toLowerCase().includes(q) ||
         meta.base.toLowerCase().includes(q) ||
@@ -30,8 +31,8 @@ export const MarketSearchModal: React.FC = () => {
     <GlassModalWrapper
       isOpen={searchOpen}
       onClose={() => setSearchOpen(false)}
-      title="Search Markets & Tokens"
-      subtitle="Registered Arc tokens and reference markets"
+      title="Choose an Arc route"
+      subtitle="Registered Arc assets only · execution still requires a fresh router quote"
       maxWidth="max-w-lg"
     >
       <div className="space-y-4">
@@ -40,7 +41,7 @@ export const MarketSearchModal: React.FC = () => {
           <Icon name="search" className="material-symbols-outlined absolute left-3 top-2.5 text-[18px] text-muted" />
           <input
             type="text"
-            placeholder="Search pair, symbol, or category (e.g. ETH, EURC, defi)..."
+            placeholder="Search registered Arc asset (e.g. USYC, EURC, ETH)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             autoFocus
@@ -82,20 +83,6 @@ export const MarketSearchModal: React.FC = () => {
           )}
         </div>
 
-        {/* Custom Token Action */}
-        <div className="pt-2 border-t border-themed/20 flex items-center justify-between">
-          <span className="font-mono text-[11px] text-muted">Token not listed?</span>
-          <button
-            onClick={() => {
-              setSearchOpen(false);
-              setImportTokenOpen(true);
-            }}
-            className="font-mono text-xs text-pos hover:underline font-semibold flex items-center gap-1"
-          >
-            <Icon name="add_circle" className="material-symbols-outlined text-[15px]" />
-            Import Custom ERC-20
-          </button>
-        </div>
       </div>
     </GlassModalWrapper>
   );
