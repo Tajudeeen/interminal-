@@ -1,8 +1,22 @@
 # Interminal
 
-A wallet-controlled treasury desk for teams holding USDC on Arc. Operators can set an operating cash buffer, model USYC allocations, review a router quote, sign a bounded trade ticket, and inspect execution receipts.
+Interminal is a reserve-aware USDC treasury proof on Arc Mainnet. An operator keeps an explicit USDC operating reserve, reviews a USDC → USYC router quote, signs a bounded EIP-712 trade ticket, and exports a receipt that another person can verify against Arc without connecting a wallet.
 
-[Open the app](https://useinterminal.vercel.app/) · [Settlement contract](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36) · [Security notes](SECURITY.md)
+[Open the app](https://useinterminal.vercel.app/) · [Settlement contract](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36) · [Builder profile](https://x.com/Deeen_Codes) · [Submission pack](docs/ARC_MICROGRANT_SUBMISSION.md) · [Security notes](SECURITY.md)
+
+## Arc Microgrant fit
+
+The submission is intentionally scoped as a working Arc-native proof, not a broad trading platform.
+
+| Host expectation | Interminal evidence |
+| --- | --- |
+| Live deployment on Arc mainnet | Production app points to Arc Mainnet chain `5042` and the deployed settlement contract below |
+| Public repository | This repository is public and contains the application, contract references, verification scripts, tests, and evidence docs |
+| Short explanation of what Arc is used for | Arc provides USDC-denominated gas, the live settlement layer, registered USDC/USYC assets, and the transaction/event history used by the verifier |
+| Public builder profile | [@Deeen_Codes](https://x.com/Deeen_Codes) |
+| Not testnet-only | Mainnet is the primary workflow; testnet is an optional developer rehearsal and is never presented as submission proof |
+
+The core reviewer path is **Treasury → Execute → Receipts → Verify**. Markets, read-only indicator context, and testnet rehearsal are secondary tools.
 
 ## Choose a workspace
 
@@ -10,17 +24,17 @@ A wallet-controlled treasury desk for teams holding USDC on Arc. Operators can s
 | --- | --- | --- |
 | Demo | Explicit simulated balances | Local simulation and simulated receipts. No wallet transaction. |
 | Mainnet | Holdings read from an Arc wallet | Exact approval when needed, EIP-712 signature, settlement transaction, and a separate receipt-anchor transaction. |
-| Testnet lab | Arc Testnet wallet | Optional 0.01 native-USDC self-transfer to check wallet, network, submission, and confirmation. It doesn't test the mainnet settlement contract. |
+| Optional testnet rehearsal | Arc Testnet wallet | Wallet/network check only. It is not part of the grant proof and doesn't test the mainnet settlement contract. |
 
-Opening mainnet review doesn't connect a wallet or submit a transaction. Testnet is optional. A generic wallet connection targets mainnet unless the user explicitly opens the testnet lab.
+Opening mainnet review doesn't connect a wallet or submit a transaction. Testnet rehearsal is optional. A generic wallet connection targets mainnet unless the user explicitly opens the optional testnet tool.
 
 ## Operator workflow
 
-1. Open **Treasury** to inspect holdings, liquid USDC, and the USYC position. Set the operating cash reserve and model the liquidity needed for a planned trade.
-2. Review a sweep, unwind, or trade. Mainnet treasury buttons use the same router-backed review as the trade desk.
-3. Inspect the input, estimated output, minimum output, slippage, and quote expiry. The wallet may request an exact input-token approval before signing.
-4. Sign the EIP-712 trade ticket and submit settlement. The signed raw input and minimum match the reviewed router quote. Expired or changed reviews are blocked.
-5. Open **Activity & receipts** to inspect the confirmed transaction and certificate. A separate anchor failure doesn't undo settlement or erase the confirmed receipt. Don't repeat a settled trade to retry its anchor.
+1. Open **Treasury** and set the USDC operating reserve.
+2. Open **Execute** and review a USDC → USYC Arc router quote, including exact input, minimum output, slippage, and expiry.
+3. Sign the bounded EIP-712 ticket and submit settlement. An exact token approval may be requested first.
+4. Open **Receipts** to inspect/export the confirmed execution evidence.
+5. Open **Verify** from a fresh wallet-free session and check the transaction, exact `TradeSettled` event, trader, route, raw amounts, block, output, and certificate integrity.
 
 Buy reviews preserve your configured cash reserve. The app checks raw USDC balances before approval and again immediately before broadcast. Percentage sizing excludes the reserve. Changing the reserve invalidates an open review. This protection applies to this app; the deployed v1 contract cannot enforce the reserve against other apps or direct contract calls.
 
@@ -28,16 +42,21 @@ The deployed trade path spends liquid USDC. It doesn't automatically unwind a US
 
 ## Screens
 
-- **Home:** product explanation, interactive capital/buffer scenario, and demo/mainnet entry points.
-- **Treasury:** cash policy, modeled yield, USYC position, sweep and unwind review.
-- **Trade desk:** chart, sizing controls, quote review, and bounded execution.
-- **Markets:** registered Arc routes, clearly labeled reference values, filters, and read-only imported-token metadata.
-- **Analysis:** deterministic EMA, RSI, MACD, and support/resistance signals. No remote AI service or autonomous trading agent.
-- **Activity & receipts:** device-saved executions, pending transaction recovery, explorer links, and exportable JSON certificates.
-- **Verification:** wallet-free transaction and certificate verification, infrastructure reads, and local negative authorization checks.
-- **Testnet lab:** optional wallet/network rehearsal.
+### Core submission path
 
-Desktop uses a persistent sidebar. Mobile includes quick navigation and a full workspace menu, including verification and testnet. Modals trap keyboard focus, restore focus on close, support Escape, and scroll inside the viewport. SVG icons are bundled, so a failed font request can't replace icons with raw text. Views load separately to reduce the initial JavaScript bundle.
+- **Home:** states the Arc mainnet use case, links the live contract/repo/builder profile, and offers a clearly marked simulation.
+- **Treasury:** reserve policy, real wallet holdings in mainnet mode, USYC position, sweep/unwind review, and deployed Arc infrastructure references.
+- **Execute:** chart/reference context plus the fresh Arc router quote, bounded review, explicit wallet signing, and settlement submission.
+- **Receipts:** confirmed execution records, pending-transaction recovery, explorer links, JSON export, and independent evidence entry point.
+- **Verify:** wallet-free transaction/event/certificate verification and live Arc infrastructure reads.
+
+### Optional lab
+
+- **Arc routes:** only registered Arc assets and treasury routes are foregrounded.
+- **Market context:** read-only deterministic indicators. It cannot choose a trade side, size a position, create an agent mandate, or pre-fill an execution.
+- **Testnet rehearsal:** optional wallet/network check. It is not submission evidence.
+
+Desktop and mobile both prioritize the four-step mainnet proof path. Experimental agent-mandate and DCA planner UI is excluded from the submission runtime.
 
 ## Market data and valuation
 
@@ -45,10 +64,9 @@ Charts never fall back to generated candles in the production data path.
 
 - WETH/USDC, cirBTC/USDC, and EURC/USDC candles use GeckoTerminal Arc pools through the same-origin `/api/market-data` serverless endpoint.
 - USYC uses Hashnote NAV reports and a daily line chart. A NAV reference isn't an executable redemption quote.
-- Other supported chart references use Binance public klines and are labeled global references. They aren't Arc liquidity.
 - A failed feed shows an unavailable state. A selected feed doesn't make every row in the market directory live.
 - Directory reference prices and modeled trade previews aren't executable quotes. Mainnet review fetches a separate Arc router quote.
-- Registered token addresses don't guarantee issuer eligibility, a usable pool, or liquidity. Imported tokens remain view-only for live execution.
+- Registered token addresses don't guarantee issuer eligibility, a usable pool, or liquidity. The submission route directory foregrounds registered Arc assets only.
 - The USYC net-yield reference is 3.225%, checked against the issuer product data on 2026-10-07. Return estimates exclude fees, price changes, access restrictions, and execution costs. This isn't a guaranteed return.
 
 TradingView Lightweight Charts provides rendering, not market data. Attribution remains enabled. The CSP permits the specific read-only feed hosts used by the app, including Hashnote and Binance.
@@ -66,7 +84,7 @@ TradingView Lightweight Charts provides rendering, not market data. Attribution 
 
 The registry is in `src/constants/arc.ts`. Exact approvals are restricted to the verified settlement spender and registered token addresses. Mainnet execution requires a loaded wallet on the expected chain. Switching modes clears financial session state and detaches prior wallet subscriptions.
 
-**Live agent mandates remain disabled on the deployed v1 contract.** The hardened successor source isn't a deployed upgrade. DCA/TWAP records are browser-side plans and don't run a background executor. The current product requires explicit user review and wallet signatures.
+**Live agent mandates remain disabled on the deployed v1 contract.** The hardened successor source isn't a deployed upgrade. Experimental agent-mandate and DCA planner interfaces are excluded from the current submission runtime. The submitted product requires explicit user review and wallet signatures.
 
 ## Verify execution independently
 
@@ -87,9 +105,7 @@ See [the live contract fingerprint](docs/LIVE_CONTRACT_FINGERPRINT.md), [Arc sub
 
 ## Submission readiness
 
-Final hardening was merged on 2026-10-07 at commit `14c4175f0d80f21254bcc5248c564533d62820ff`. GitHub Actions run `269` passed unit tests, production build, protocol/legacy regressions, GeckoTerminal Arc market-data verification, and Arc mainnet verification. Vercel promoted the same commit to `useinterminal.vercel.app` with deployment state `READY`.
-
-The software and documentation are synchronized. One material proof item remains before submission: execute one small successful USDC-to-USYC settlement from an eligible Arc mainnet wallet, export its receipt, verify it independently, and replace the documented transaction placeholder with the observed hash and permanent `?verify=0x...` reviewer link.
+The previous final-hardening baseline passed the full CI and production deployment checks. This host-alignment pass narrows the public product around the Arc-native proof path and removes non-core automation/advisory UI from the submission experience. One material proof item still remains before submission: execute one small successful USDC-to-USYC settlement from an eligible Arc mainnet wallet, export its receipt, verify it independently, and replace the documented transaction placeholder with the observed hash and permanent `?verify=0x...` reviewer link.
 
 ## Run locally
 
@@ -119,7 +135,7 @@ npm run verify:arc
 - This rework doesn't replace or redeploy the v1 settlement contract. Its full runtime fingerprint is recorded, but strict compiled-source reproduction is unresolved. `npm run verify:source` fails until the actual source/build settings or a reproducible successor deployment resolve it.
 - USYC treasury moves use a router route, not a promise of instant par redemption. Eligibility and liquidity can prevent execution.
 - Gas is estimated by the wallet. A fixed sub-cent fee isn't guaranteed.
-- Receipts and unresolved submitted transaction hashes are saved in versioned device storage. Mainnet receipts reopen in the mainnet workspace. Export JSON for portable backups. The archive retains up to 200 certificates, and wallet-specific reserve settings are saved locally. Plans remain session state; clearing browser storage removes the archive. This is not a shared accounting database.
+- Receipts and unresolved submitted transaction hashes are saved in versioned device storage. Mainnet receipts reopen in the mainnet workspace. Export JSON for portable backups. The archive retains up to 200 certificates, and wallet-specific reserve settings are saved locally. Clearing browser storage removes the archive. This is not a shared accounting database.
 - Market valuation can use reference prices and shouldn't be treated as a guaranteed liquidation value.
 - No new mainnet transaction was sent to validate this rework. The submission still needs a successful USDC/USYC execution from an eligible wallet. Wallet write paths were checked with mocked regression tests; read-only chain checks and browser flows are reported separately in the review.
 

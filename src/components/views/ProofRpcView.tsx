@@ -46,10 +46,10 @@ export const ProofRpcView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display font-black text-2xl sm:text-3xl text-themed tracking-tight">
-            Proof Engine & Fail-Closed Verifier
+            Verify an Arc execution
           </h1>
           <p className="font-mono text-xs text-muted mt-1">
-            Mathematical Bounds · Negative Tests · Live Arc Mainnet (Chain 5042) Queries
+            Wallet-free settlement checks · Live Arc Mainnet (Chain 5042) · Independent receipt verification
           </p>
         </div>
 
@@ -111,7 +111,7 @@ export const ProofRpcView: React.FC = () => {
             <Icon name="verified_user" className="material-symbols-outlined text-[20px] text-cyan" />
             <div>
               <h2 className="font-display font-bold text-base text-themed">
-                Arc Mainnet Settlement Engine Verifier
+                Arc Mainnet settlement checks
               </h2>
               <p className="font-mono text-xs text-muted">
                 Live reads: bytecode presence and EIP-712 domain match

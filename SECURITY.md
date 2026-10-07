@@ -34,7 +34,7 @@ A displayed quote is not a guarantee that liquidity will remain available until 
 
 Market data is sourced from external public feeds. Chart data is not itself settlement evidence.
 
-DCA scheduling and the browser walkthrough are simulations. The browser does not run a background autonomous executor.
+Legacy DCA planning logic is simulation-only and is excluded from the Arc Microgrant submission runtime. The browser walkthrough is also a simulation and never represents mainnet history.
 
 Agent-mandate signing is an authorization artifact in the current application. The live browser does not run an unattended agent. A security review found that deployed v1 `executeAgentTrade` validates the signed pair bitmask but does not bind `execution.tokenIn` and `execution.tokenOut` to the selected pair. If a user gave the v1 settlement contract an ERC-20 allowance and then authorized an agent, that gap could let the agent spend within the budget on an unintended token route. The browser therefore blocks new live agent-mandate signing against v1.
 
@@ -83,3 +83,12 @@ On 2026-10-07, GitHub Actions run `269` passed the unit suite, TypeScript/Vite p
 The final UI removes absolute "zero custody", fixed gas-cost, zero price-impact, fixed USYC NAV, autonomous treasury, and source-verified protocol claims. These wording changes are security-relevant because they keep displayed guarantees aligned with the actual trust boundaries described in this document.
 
 The remaining missing proof is not a hidden software check: a real eligible-wallet USDC/USYC settlement still needs to be signed, mined, exported, and independently verified before the project claims end-to-end treasury execution evidence.
+
+
+## Arc Microgrant submission surface
+
+The public submission path is intentionally smaller than the repository's full experimental history.
+
+The primary runtime exposes reserve policy, reviewed Arc execution, receipts, and wallet-free verification. The disabled v1 agent-mandate interface and DCA planner are not presented in the submission runtime. Read-only market context cannot choose a side, size a position, create a mandate, or pre-fill an execution.
+
+This reduction is deliberate: the grant proof should be judged on the mainnet behavior that is active and defensible today, not on experimental automation that is not safe or necessary for the current use case.

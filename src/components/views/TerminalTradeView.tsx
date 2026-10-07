@@ -16,8 +16,6 @@ export const TerminalTradeView: React.FC = () => {
     pair: pairKey,
     side,
     setSide,
-    orderType,
-    setOrderType,
     amount,
     setAmount,
     slippage,
@@ -33,13 +31,6 @@ export const TerminalTradeView: React.FC = () => {
     marketFeedStatus,
     balances,
     targetBufferUsd,
-    dcaSpendTotal,
-    setDcaSpendTotal,
-    dcaSliceSize,
-    setDcaSliceSize,
-    dcaFreqSec,
-    setDcaFreqSec,
-    startDcaPlan,
     prepareTradeReview,
     runAiAnalysis,
     livePortfolio,
@@ -179,7 +170,7 @@ export const TerminalTradeView: React.FC = () => {
                 ? "border-cyan/40 bg-cyan/10 text-cyan"
                 : "border-themed/40 card-themed text-muted hover:text-themed"
             } ${!analysis ? "opacity-50 cursor-not-allowed" : ""}`}
-            title={analysis ? "Show or hide support and resistance levels" : "Run Signal analysis analysis first"}
+            title={analysis ? "Show or hide support and resistance levels" : "Compute market context first"}
           >
             Levels {showLevels ? "On" : "Off"}
           </button>
@@ -200,9 +191,9 @@ export const TerminalTradeView: React.FC = () => {
             size="sm"
             variant="outline"
             onClick={runAiAnalysis}
-            leftIcon={<Icon name="psychology" className="material-symbols-outlined text-[15px] text-lime-500" />}
+            leftIcon={<Icon name="query_stats" className="material-symbols-outlined text-[15px] text-lime-500" />}
           >
-            Signal analysis
+            Market context
           </Button>
         </div>
       </div>
@@ -251,30 +242,6 @@ export const TerminalTradeView: React.FC = () => {
 
         {/* Right Column: Execution Desk (Span 1) */}
         <div className="card-themed border border-themed rounded-card p-5 space-y-4">
-          {/* Order Type Tabs: Market vs DCA / TWAP */}
-          <div className="grid grid-cols-2 gap-1 p-1 rounded-card bg-themed-card/60 border border-themed/40 font-display text-xs font-bold">
-            <button
-              onClick={() => setOrderType("market")}
-              className={`py-1.5 rounded-card transition-colors ${
-                orderType === "market"
-                  ? "bg-lime-500 text-black font-extrabold shadow-sm"
-                  : "text-sub hover:text-themed"
-              }`}
-            >
-              Instant Market
-            </button>
-            <button
-              onClick={() => setOrderType("dca")}
-              className={`py-1.5 rounded-card transition-colors ${
-                orderType === "dca"
-                  ? "bg-lime-500 text-black font-extrabold shadow-sm"
-                  : "text-sub hover:text-themed"
-              }`}
-            >
-              DCA planner
-            </button>
-          </div>
-
           {/* Buy / Sell Toggle Buttons (Functional side switcher with tactile React Buttons) */}
           <div className="grid grid-cols-2 gap-2">
             <Button
@@ -295,9 +262,8 @@ export const TerminalTradeView: React.FC = () => {
             </Button>
           </div>
 
-          {/* Market Execution Mode */}
-          {orderType === "market" && (
-            <div className="space-y-4">
+          {/* Mainnet execution controls */}
+          <div className="space-y-4">
               {/* Size Input with Light/Dark Mode Adapting Colors */}
               <div>
                 <div className="flex justify-between text-[11px] font-mono text-muted mb-1.5">
@@ -461,82 +427,7 @@ export const TerminalTradeView: React.FC = () => {
                 </div>
               </div>
             </div>
-          )}
 
-          {/* DCA / TWAP Execution Mode */}
-          {orderType === "dca" && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-mono text-muted mb-1.5">
-                  Total Allocation Budget (USDC)
-                </label>
-                <input
-                  type="number"
-                  value={dcaSpendTotal || ""}
-                  onChange={(e) => setDcaSpendTotal(Number(e.target.value))}
-                  placeholder="500"
-                  className="w-full px-3 py-2 rounded-card bg-themed-card text-themed border border-themed/50 font-mono text-xs focus:outline-none focus:border-lime-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-mono text-muted mb-1.5">
-                  Slice Size per Interval (USDC)
-                </label>
-                <input
-                  type="number"
-                  value={dcaSliceSize || ""}
-                  onChange={(e) => setDcaSliceSize(Number(e.target.value))}
-                  placeholder="50"
-                  className="w-full px-3 py-2 rounded-card bg-themed-card text-themed border border-themed/50 font-mono text-xs focus:outline-none focus:border-lime-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-mono text-muted mb-1.5">
-                  Execution Cadence
-                </label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {[
-                    { label: "1m", sec: 60 },
-                    { label: "5m", sec: 300 },
-                    { label: "1h", sec: 3600 },
-                    { label: "1d", sec: 86400 },
-                  ].map((cad) => (
-                    <button
-                      key={cad.label}
-                      type="button"
-                      onClick={() => setDcaFreqSec(cad.sec)}
-                      className={`py-1 rounded font-mono text-xs transition-colors ${
-                        dcaFreqSec === cad.sec
-                          ? "bg-lime-500 text-black font-bold"
-                          : "card-themed border border-themed/30 text-sub hover:text-themed hover:border-lime-500/30"
-                      }`}
-                    >
-                      {cad.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-3 rounded-card bg-themed-card/50 border border-themed/30 font-mono text-xs space-y-1 text-muted">
-                <div className="text-themed font-semibold">Planned slices, no automatic executor:</div>
-                <div>Total Slices: {Math.max(1, Math.floor(dcaSpendTotal / (dcaSliceSize || 1)))} fills</div>
-                <div>Frequency: Every {dcaFreqSec >= 3600 ? `${dcaFreqSec / 3600}h` : `${dcaFreqSec / 60}m`}</div>
-                <div>Gov: Zero-custody EIP-712 scoped permit</div>
-              </div>
-
-              <Button
-                variant="primary"
-                size="lg"
-                fullWidth
-                onClick={startDcaPlan}
-                leftIcon={<Icon name="schedule" className="material-symbols-outlined text-[18px]" />}
-              >
-                Create DCA Simulation Plan
-              </Button>
-            </div>
-          )}
         </div>
       </div>
     </div>

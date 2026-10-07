@@ -4,7 +4,7 @@ import { useAppStore } from "../../store/useAppStore";
 import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
 import { GlassModalWrapper } from "../modals/GlassModalWrapper";
-import { NAV_ITEMS } from "./navigation";
+import { CORE_NAV_ITEMS, LAB_NAV_ITEMS } from "./navigation";
 
 export const Header: React.FC = () => {
   const s = useAppStore();
@@ -73,7 +73,28 @@ export const Header: React.FC = () => {
           className="desk-navigation"
           aria-label="Mobile workspace navigation"
         >
-          {NAV_ITEMS.map((item) => (
+          <p className="eyebrow mt-2 mb-2">Mainnet proof</p>
+          {CORE_NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                s.setView(item.id);
+                setMenuOpen(false);
+              }}
+              aria-current={s.view === item.id ? "page" : undefined}
+              className={s.view === item.id ? "active" : ""}
+            >
+              <Icon name={item.icon} className="material-symbols-outlined" />
+              <span>
+                {item.label}
+                <small className="block text-muted font-normal mt-1">
+                  {item.detail}
+                </small>
+              </span>
+            </button>
+          ))}
+          <p className="eyebrow mt-2 mb-2">Optional lab</p>
+          {LAB_NAV_ITEMS.map((item) => (
             <button
               key={item.id}
               onClick={() => {
@@ -104,7 +125,7 @@ export const Header: React.FC = () => {
               s.setSearchOpen(true);
             }}
           >
-            Search markets
+            Search Arc routes
           </Button>
           <Button
             variant="secondary"
@@ -113,7 +134,7 @@ export const Header: React.FC = () => {
               s.startJudgeTour();
             }}
           >
-            Demo walkthrough
+            Reviewer walkthrough
           </Button>
           {s.connected && (
             <Button

@@ -7,8 +7,8 @@ import { Button } from "../ui/Button";
 export const LandingView: React.FC = () => {
   const { launchDemo, openMainnetReview, startJudgeTour, setView } =
     useAppStore();
-  const [capital, setCapital] = useState(250000);
-  const [buffer, setBuffer] = useState(10000);
+  const [capital, setCapital] = useState(10000);
+  const [buffer, setBuffer] = useState(2500);
   const liquid = Math.min(capital, buffer);
   const allocated = capital - liquid;
   const modeledYield = allocated * USYC_APY;
@@ -28,19 +28,19 @@ export const LandingView: React.FC = () => {
         <div className="welcome-copy">
           <div className="eyebrow flex items-center gap-2">
             <span className="status-dot" />
-            Built for treasury operators
+            Live on Arc Mainnet · Chain 5042
           </div>
           <h1>
-            Put idle cash
+            Keep USDC ready.
             <br />
-            to work.
+            Put the rest to work.
             <br />
-            <span>Keep control.</span>
+            <span>Prove every move.</span>
           </h1>
           <p className="welcome-description">
-            A treasury desk for teams holding USDC on Arc. Set your cash buffer,
-            review USYC moves, and keep an inspectable receipt for every
-            execution.
+            A focused Arc mainnet treasury proof. Keep an operating USDC reserve,
+            review a USDC → USYC router quote, sign it in your wallet, and verify
+            the confirmed settlement without trusting this interface.
           </p>
           <div className="flex flex-wrap gap-3 mt-8">
             <Button
@@ -54,14 +54,14 @@ export const LandingView: React.FC = () => {
                 />
               }
             >
-              Open mainnet workspace
+              Review live Arc flow
             </Button>
             <Button size="lg" variant="secondary" onClick={launchDemo}>
               Try the demo
             </Button>
           </div>
           <p className="text-muted text-xs mt-4">
-            Explore first. Connecting a wallet never submits a transaction.
+            Arc uses USDC for gas. Connecting a wallet only loads state; execution still requires an explicit review and wallet signature.
           </p>
           <button onClick={startJudgeTour} className="welcome-walkthrough">
             <Icon name="play_circle" className="material-symbols-outlined" />
@@ -71,7 +71,7 @@ export const LandingView: React.FC = () => {
         </div>
         <div className="welcome-scenario">
           <div className="flex justify-between items-center mb-7">
-            <span className="eyebrow">Plan your cash position</span>
+            <span className="eyebrow">Small treasury scenario</span>
             <span className="scenario-tag">Scenario</span>
           </div>
           <label className="text-sub text-sm block" htmlFor="scenario-capital">
@@ -85,21 +85,21 @@ export const LandingView: React.FC = () => {
             id="scenario-capital"
             aria-label="Treasury capital"
             type="range"
-            min="25000"
-            max="1000000"
-            step="25000"
+            min="1000"
+            max="50000"
+            step="1000"
             value={capital}
             onChange={(e) => setCapital(Number(e.target.value))}
           />
           <div className="scenario-presets">
-            {[50000, 100000, 250000, 1000000].map((n) => (
+            {[5000, 10000, 25000, 50000].map((n) => (
               <button
                 key={n}
                 onClick={() => setCapital(n)}
                 aria-pressed={capital === n}
                 className={capital === n ? "active" : ""}
               >
-                ${n === 1000000 ? "1m" : n / 1000 + "k"}
+                ${n / 1000}k
               </button>
             ))}
           </div>
@@ -113,7 +113,7 @@ export const LandingView: React.FC = () => {
               onChange={(e) => setBuffer(Number(e.target.value))}
               className="rounded-lg border border-themed px-2 py-1 text-sm"
             >
-              {[5000, 10000, 25000, 50000].map((n) => (
+              {[500, 1000, 2500, 5000].map((n) => (
                 <option key={n} value={n}>
                   ${n.toLocaleString()}
                 </option>
@@ -132,13 +132,13 @@ export const LandingView: React.FC = () => {
               <strong>${liquid.toLocaleString()}</strong>
             </div>
             <div>
-              <small>Potential USYC allocation</small>
+              <small>Potential USYC move</small>
               <strong>${allocated.toLocaleString()}</strong>
             </div>
           </div>
           <div className="scenario-return">
             <div>
-              <small>Modeled annual return</small>
+              <small>Reference yield estimate</small>
               <strong>
                 +$
                 {modeledYield.toLocaleString("en-US", {
@@ -168,6 +168,38 @@ export const LandingView: React.FC = () => {
           >
             Try this cash policy in the demo
           </Button>
+        </div>
+      </section>
+      <section className="welcome-workflow" aria-label="Why Interminal is Arc-native">
+        <div className="welcome-section-title">
+          <span className="eyebrow">Why Arc</span>
+          <h2>The chain is part of the product.</h2>
+        </div>
+        <div className="workflow-grid">
+          <div className="workflow-card">
+            <div>
+              <Icon name="payments" className="material-symbols-outlined" />
+              <span>01</span>
+            </div>
+            <h3>USDC is the operating asset and gas</h3>
+            <p>Arc lets the same dollar-denominated asset support treasury operations and pay network fees, without a separate volatile gas token.</p>
+          </div>
+          <div className="workflow-card">
+            <div>
+              <Icon name="bolt" className="material-symbols-outlined" />
+              <span>02</span>
+            </div>
+            <h3>The settlement is on Arc mainnet</h3>
+            <p>The live path reviews a router quote, signs a bounded EIP-712 ticket, and submits it to the deployed settlement contract on Chain 5042.</p>
+          </div>
+          <div className="workflow-card">
+            <div>
+              <Icon name="verified_user" className="material-symbols-outlined" />
+              <span>03</span>
+            </div>
+            <h3>Execution can be checked without a wallet</h3>
+            <p>A reviewer can verify the transaction, exact TradeSettled event, route, raw amounts, block, and receipt integrity independently.</p>
+          </div>
         </div>
       </section>
       <section className="welcome-workflow" aria-label="Treasury workflow">
@@ -236,6 +268,14 @@ export const LandingView: React.FC = () => {
             className="hover:text-themed transition-colors"
           >
             GitHub ↗
+          </a>
+          <a
+            href="https://x.com/Deeen_Codes"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-themed transition-colors"
+          >
+            Builder ↗
           </a>
           <a
             href={`${ARC.explorer}/address/${ARC.settlement}`}

@@ -7,10 +7,9 @@ export const BottomNav: React.FC = () => {
 
   const navItems = [
     { id: "portfolio", label: "Treasury", icon: "savings" },
-    { id: "terminal", label: "Trade", icon: "candlestick_chart" },
-    { id: "markets", label: "Markets", icon: "query_stats" },
-    { id: "ai", label: "Analysis", icon: "psychology" },
-    { id: "ledger", label: "Ledger", icon: "receipt_long" },
+    { id: "terminal", label: "Execute", icon: "swap_horiz" },
+    { id: "ledger", label: "Receipts", icon: "receipt_long" },
+    { id: "proof", label: "Verify", icon: "verified_user" },
   ] as const;
 
   return (

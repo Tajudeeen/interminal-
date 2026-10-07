@@ -144,10 +144,10 @@ export const TreasuryCockpitView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display font-black text-2xl sm:text-3xl text-themed tracking-tight">
-            Treasury Cockpit
+            Arc USDC Treasury
           </h1>
           <p className="font-mono text-xs text-muted mt-1">
-            Cash reserve · Reviewed USYC allocation · Separate liquidity unwind
+            Operating reserve · USDC → USYC review · Arc Mainnet evidence
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -167,7 +167,7 @@ export const TreasuryCockpitView: React.FC = () => {
             onClick={() => setView("terminal")}
             leftIcon={<Icon name="candlestick_chart" className="material-symbols-outlined text-[16px]" />}
           >
-            Open Trade Desk
+            Review Arc execution
           </Button>
         </div>
       </div>

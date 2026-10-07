@@ -23,9 +23,7 @@ const TestnetLabView = lazy(() => import("./components/views/TestnetLabView").th
 import { GasTankModal } from "./components/modals/GasTankModal";
 import { ReviewTradeModal } from "./components/modals/ReviewTradeModal";
 import { AuditReceiptModal } from "./components/modals/AuditReceiptModal";
-import { AgentMandateModal } from "./components/modals/AgentMandateModal";
 import { MarketSearchModal } from "./components/modals/MarketSearchModal";
-import { ImportTokenModal } from "./components/modals/ImportTokenModal";
 
 export const App: React.FC = () => {
   const { view, theme, setTheme, setSearchOpen, syncMarketData, environmentMode } = useAppStore();
@@ -108,7 +106,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="h-dvh overflow-hidden bg-bg text-themed flex flex-col lg:flex-row antialiased">
-      {/* Institutional Desktop Sidebar (Visible on lg: screens) */}
+      {/* Desktop sidebar */}
       <Sidebar />
 
       {/* Main Content Viewport */}
@@ -136,14 +134,12 @@ export const App: React.FC = () => {
       <GasTankModal />
       <ReviewTradeModal />
       <AuditReceiptModal />
-      <AgentMandateModal />
       <MarketSearchModal />
-      <ImportTokenModal />
 
       {/* Real-Time Toast Notifications */}
       <ToastStack />
 
-      {/* Arc Hackathon Judge Showcase Tour Floating HUD */}
+      {/* Arc reviewer walkthrough */}
       <JudgeTourBar />
 
       {/* Short brand splash, once per browser session. Verification deep links skip it. */}

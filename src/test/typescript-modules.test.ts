@@ -279,7 +279,7 @@ describe("React TypeScript Modular Engine", () => {
   it("Zustand app store initializes with clean state and responds to actions", () => {
     const store = useAppStore.getState();
     expect(store.view).toBe("landing");
-    expect(store.pair).toBe("ETH/USDC");
+    expect(store.pair).toBe("USYC/USDC");
 
     store.setTargetBufferUsd(2500);
     expect(useAppStore.getState().targetBufferUsd).toBe(2500);
@@ -290,7 +290,7 @@ describe("React TypeScript Modular Engine", () => {
     store.setSide("sell");
     expect(useAppStore.getState().side).toBe("sell");
 
-    store.setOrderType("dca");
-    expect(useAppStore.getState().orderType).toBe("dca");
+    store.setAmount(750);
+    expect(useAppStore.getState().amount).toBe(750);
   });
 });

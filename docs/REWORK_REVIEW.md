@@ -91,3 +91,23 @@ The production Vercel deployment for the same commit reached `READY` and serves 
 ### Remaining judge-visible gap
 
 The software is production-deployed and internally consistent, but no real USDC/USYC settlement has yet been captured from an eligible Arc wallet. The final submission should add that real transaction hash, exported receipt, verification deep link, and independent CLI result. Until then, the repository intentionally does not claim end-to-end treasury execution proof.
+
+
+## Arc Microgrant host-alignment pass
+
+The final product review was repeated against the host's stated goal: a small, real Arc Mainnet experiment rather than a broad startup or trading-suite pitch.
+
+Changes made to the submission runtime:
+
+- Primary navigation reduced to **Treasury → Execute → Receipts → Verify**.
+- Arc Mainnet, Chain 5042, USDC gas, the deployed settlement, and wallet-free verification are foregrounded in the first screen.
+- Markets, deterministic indicator context, and testnet rehearsal moved to an optional lab.
+- The route directory foregrounds registered Arc assets instead of broad global references.
+- Market context is read-only. It cannot pick a side, size a trade, create a mandate, or pre-fill execution.
+- The disabled v1 agent-mandate UI was removed from the submission runtime.
+- The browser DCA/TWAP planner was removed from the submission runtime.
+- Receipt history no longer surfaces experimental mandate/DCA records alongside the grant's core evidence.
+- Public metadata now describes a reserve-aware USDC treasury proof on Arc Mainnet.
+- A dedicated `docs/ARC_MICROGRANT_SUBMISSION.md` contains the live link, public repo, builder profile, short description, Arc-specific use, reviewer path, and eligibility self-check.
+
+This pass deliberately reduces visible scope without removing the underlying verified treasury execution and evidence machinery. The remaining high-value step is unchanged: produce one real successful USDC → USYC Arc Mainnet settlement from an eligible wallet and publish its verification link.
