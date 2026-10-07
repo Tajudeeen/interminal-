@@ -83,7 +83,13 @@ npm run verify:execution -- --receipt exported-receipt.json
 
 The CLI verifies the event independently with ethers and requires exact raw amounts for certificate matching. Old receipts missing raw amounts can still be inspected in the app; regenerate event evidence from their transaction for current CLI checks.
 
-See [the live contract fingerprint](docs/LIVE_CONTRACT_FINGERPRINT.md), [Arc submission evidence](docs/ARC_MICROGRANT_PROOF.md), and [the rework review](docs/REWORK_REVIEW.md).
+See [the live contract fingerprint](docs/LIVE_CONTRACT_FINGERPRINT.md), [Arc submission evidence](docs/ARC_MICROGRANT_PROOF.md), [the rework review](docs/REWORK_REVIEW.md), and [the remaining chain-evidence steps](docs/CLOSE_CHAIN_GAPS.md).
+
+## Submission readiness
+
+Final hardening was merged on 2026-10-07 at commit `14c4175f0d80f21254bcc5248c564533d62820ff`. GitHub Actions run `269` passed unit tests, production build, protocol/legacy regressions, GeckoTerminal Arc market-data verification, and Arc mainnet verification. Vercel promoted the same commit to `useinterminal.vercel.app` with deployment state `READY`.
+
+The software and documentation are synchronized. One material proof item remains before submission: execute one small successful USDC-to-USYC settlement from an eligible Arc mainnet wallet, export its receipt, verify it independently, and replace the documented transaction placeholder with the observed hash and permanent `?verify=0x...` reviewer link.
 
 ## Run locally
 
