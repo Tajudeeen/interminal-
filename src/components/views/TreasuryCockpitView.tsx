@@ -495,85 +495,17 @@ export const TreasuryCockpitView: React.FC = () => {
         </div>
       </div>
 
-      {/* Interactive Yield Calculator & Bank Alpha Comparison */}
-      <div className="card-themed border border-themed rounded-card p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="font-mono text-[10px] uppercase tracking-widest text-lime-500 font-bold">
-              Treasury Horizon Projection
-            </div>
-            <h3 className="font-display font-bold text-base text-themed mt-0.5">
-              Yield Earned on Current Holdings ({mainnetReview ? "connect wallet for live NAV" : "~$" + usycNavUsd.toLocaleString("en-US", { maximumFractionDigits: 2 }) + " NAV"})
-            </h3>
-          </div>
-          {/* Horizon Period Buttons */}
-          <div className="flex gap-1.5 font-mono text-xs">
-            {[
-              { label: "30 Days", days: 30 },
-              { label: "90 Days", days: 90 },
-              { label: "180 Days", days: 180 },
-              { label: "1 Year", days: 365 },
-              { label: "3 Years", days: 1095 },
-            ].map((p) => (
-              <button
-                key={p.days}
-                onClick={() => setSimHorizonDays(p.days)}
-                className={`px-3 py-1.5 rounded-card transition-all ${
-                  simHorizonDays === p.days
-                    ? "bg-lime-500 text-black font-bold shadow-xs"
-                    : "card-themed border border-themed/40 text-sub hover:text-themed hover:border-lime-500/30"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 font-mono">
-          <div className="p-4 rounded-card bg-themed-card/50 border border-themed/30">
-            <div className="text-[10px] text-muted uppercase">USYC Net Reference Yield ({(USYC_APY * 100).toFixed(3)}%)</div>
-            <div className="text-2xl font-black text-pos mt-1 font-display tnum">
-              {mainnetReview ? "—" : "+$" + horizonYieldUsyc.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <div className="text-[10px] text-muted mt-1">
-              Yield accrues through USYC NAV
-            </div>
-          </div>
-
-          <div className="p-4 rounded-card bg-themed-card/50 border border-themed/30">
-            <div className="text-[10px] text-muted uppercase">Unallocated cash assumption (0%)</div>
-            <div className="text-2xl font-bold text-muted mt-1 font-display tnum">
-              {mainnetReview ? "—" : "+$" + horizonYieldBank.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <div className="text-[10px] text-muted mt-1">
-              Scenario baseline, not a bank rate
-            </div>
-          </div>
-
-          <div className="p-4 rounded-card bg-pos/10 border border-pos/30">
-            <div className="text-[10px] text-pos font-bold uppercase">Modeled yield before execution costs</div>
-            <div className="text-2xl font-black text-pos mt-1 font-display tnum">
-              {mainnetReview ? "—" : "+$" + horizonAlphaDelta.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
-            <div className="text-[10px] text-pos mt-1 font-semibold">
-              Estimate excludes fees, access limits, and price changes
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Verifiable Mathematical Models & Formula Engine */}
+      {/* Deterministic policy and execution checks */}
       <div className="card-themed border border-themed rounded-card p-5 space-y-4">
         <div className="flex items-center justify-between pb-2 border-b border-themed/20">
           <div className="flex items-center gap-2">
-            <Icon name="calculate" className="material-symbols-outlined text-[20px] text-pos" />
+            <Icon name="policy" className="material-symbols-outlined text-[20px] text-pos" />
             <div>
               <h3 className="font-display font-bold text-sm text-themed">
-                Deterministic Mathematical Grounding & Formula Verifier
+                Deterministic policy & execution checks
               </h3>
               <p className="font-mono text-xs text-muted">
-                Transparent equations governing capital allocation, opportunity cost, and JIT unwinds
+                The app decides what may be reviewed before it ever asks the wallet to sign.
               </p>
             </div>
           </div>
@@ -581,59 +513,52 @@ export const TreasuryCockpitView: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
-          {/* Formula 1: Opportunity Cost */}
           <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/20 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-themed">1. Opportunity Cost Drag</span>
-              <span className="text-[10px] text-amber-500 font-semibold">USYC YIELD DELTA</span>
+              <span className="font-bold text-themed">1. Reserve boundary</span>
+              <span className="text-[10px] text-lime-500 font-semibold">POLICY</span>
             </div>
-            <div className="p-2 rounded bg-themed/5 text-themed text-[11px] font-mono select-all">
-              Cost = Excess Cash × USYC reference yield × (Days / 365)
+            <div className="p-2 rounded bg-themed/5 text-themed text-[11px] select-all">
+              Eligible = max(0, Liquid USDC - Protected Reserve)
             </div>
             <div className="text-[11px] text-muted space-y-1">
-              <div>• Excess Cash: {mainnetReview ? "—" : "$" + idleCash.toLocaleString()} USDC</div>
-              <div>• Reference Rate: {(USYC_APY * 100).toFixed(3)}%</div>
-              <div>• Annual Drag: {mainnetReview ? "—" : "$" + cost.annualYieldUsd.toFixed(2)} USD</div>
-              <div>• Daily Drag: {mainnetReview ? "—" : "$" + cost.dailyYieldUsd.toFixed(3) + " / day"}</div>
+              <div>• Liquid USDC: {mainnetReview ? "—" : "$" + liquidUsdc.toLocaleString()}</div>
+              <div>• Protected Reserve: {mainnetReview ? "—" : "$" + targetBufferUsd.toLocaleString()}</div>
+              <div>• Eligible: {mainnetReview ? "—" : "$" + Math.max(0, liquidUsdc - targetBufferUsd).toLocaleString()}</div>
             </div>
           </div>
 
-          {/* Formula 2: Yield Sweep Threshold */}
           <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/20 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-themed">2. Yield Sweep Gate</span>
-              <span className="text-[10px] text-pos font-semibold">POLICY GATE</span>
+              <span className="font-bold text-themed">2. Reviewed move</span>
+              <span className="text-[10px] text-pos font-semibold">BOUNDED INPUT</span>
             </div>
-            <div className="p-2 rounded bg-themed/5 text-themed text-[11px] font-mono select-all">
-              Sweep = max(0, Liquid USDC - Buffer)
+            <div className="p-2 rounded bg-themed/5 text-themed text-[11px] select-all">
+              Proposed Input ≤ Policy-Eligible USDC
             </div>
             <div className="text-[11px] text-muted space-y-1">
-              <div>• Buffer Target: ${targetBufferUsd.toLocaleString()} USDC</div>
-              <div>• Excess Available: ${Math.max(0, liquidUsdc - targetBufferUsd).toLocaleString()} USDC</div>
-              <div className="text-pos font-semibold">
-                • Status: {liquidUsdc > targetBufferUsd ? "Sweep Triggered" : "Within Buffer"}
-              </div>
+              <div>• Reviewable USDC: {mainnetReview ? "—" : "$" + sweep.sweepAmount.toLocaleString()}</div>
+              <div>• Reserve stays outside the reviewed input</div>
+              <div className="text-pos font-semibold">• Rechecked before approval and broadcast</div>
             </div>
           </div>
 
-          {/* Formula 3: JIT Redemption Parity */}
           <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/20 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-themed">3. JIT USYC/USDC Rebalance</span>
+              <span className="font-bold text-themed">3. Arc settlement bounds</span>
               <span className="text-[10px] text-cyan font-semibold">BOUNDED OUTPUT</span>
             </div>
-            <div className="p-2 rounded bg-themed/5 text-themed text-[11px] font-mono select-all">
-              Minimum output is derived from the live Arc AMM quote
+            <div className="p-2 rounded bg-themed/5 text-themed text-[11px] select-all">
+              Minimum output comes from the fresh Arc router quote
             </div>
             <div className="text-[11px] text-muted space-y-1">
               <div>• Reference NAV: ${PAIRS["USYC/USDC"].price.toFixed(6)} per USYC</div>
-              <div>• Execution Cost: Determined by the live router quote and wallet gas estimate</div>
-              <div>• Fallback Gate: Fail-Closed when live quoted output is zero or unavailable</div>
+              <div>• Wallet signs explicit execution bounds</div>
+              <div>• Quote failure, expiry, or zero output blocks execution</div>
             </div>
           </div>
         </div>
       </div>
-
       {/* Asset Allocation Breakdown Table */}
       <div className="card-themed border border-themed rounded-card p-5">
         <h3 className="font-display font-bold text-sm text-themed mb-3">
