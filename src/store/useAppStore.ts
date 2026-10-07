@@ -406,8 +406,6 @@ export const useAppStore = create<AppState>((set, get) => {
         targetBufferUsd: 0,
         stressTestAmount: 0,
         amount: 0,
-        dcaSpendTotal: 0,
-        dcaSliceSize: 0,
         mandateSpend: 0,
         pendingQuote: null,
         reviewOpen: false,
@@ -815,8 +813,6 @@ export const useAppStore = create<AppState>((set, get) => {
                 targetBufferUsd: readWalletReserve(nextAddress, liveSizing.targetBufferUsd),
                 stressTestAmount: liveSizing.stressTestAmount,
                 amount: liveSizing.tradeDefaultUsd,
-                dcaSpendTotal: liveSizing.dcaSpendTotal,
-                dcaSliceSize: liveSizing.dcaSliceSize,
                 mandateSpend: liveSizing.mandateSpendUsd,
               });
               get().addToast("Wallet Refreshed", "Account changed. Mainnet holdings, prices, and controls were reloaded.", "ok");
@@ -857,8 +853,6 @@ export const useAppStore = create<AppState>((set, get) => {
                 targetBufferUsd: readWalletReserve(nextAddress, liveSizing.targetBufferUsd),
                 stressTestAmount: liveSizing.stressTestAmount,
                 amount: liveSizing.tradeDefaultUsd,
-                dcaSpendTotal: liveSizing.dcaSpendTotal,
-                dcaSliceSize: liveSizing.dcaSliceSize,
                 mandateSpend: liveSizing.mandateSpendUsd,
               });
               get().addToast("Arc Mainnet Ready", "Wallet moved back to Arc Mainnet. Live treasury state was refreshed.", "ok");
@@ -906,8 +900,6 @@ export const useAppStore = create<AppState>((set, get) => {
             targetBufferUsd: readWalletReserve(address, liveSizing.targetBufferUsd),
             stressTestAmount: liveSizing.stressTestAmount,
             amount: liveSizing.tradeDefaultUsd,
-            dcaSpendTotal: liveSizing.dcaSpendTotal,
-            dcaSliceSize: liveSizing.dcaSliceSize,
             mandateSpend: liveSizing.mandateSpendUsd,
             environmentMode: "mainnet",
             view: "portfolio",
@@ -971,8 +963,6 @@ export const useAppStore = create<AppState>((set, get) => {
             targetBufferUsd: readWalletReserve(currentAddress, liveSizing.targetBufferUsd),
             stressTestAmount: liveSizing.stressTestAmount,
             amount: liveSizing.tradeDefaultUsd,
-            dcaSpendTotal: liveSizing.dcaSpendTotal,
-            dcaSliceSize: liveSizing.dcaSliceSize,
             mandateSpend: liveSizing.mandateSpendUsd,
             nativeGasBalance: formatUnits(await walletRpc("eth_getBalance", [currentAddress, "latest"]), ARC.nativeDecimals),
             view: "portfolio",
