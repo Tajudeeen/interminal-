@@ -1,7 +1,7 @@
 {
   "name": "interminal",
   "version": "1.0.0",
-  "description": "Policy-controlled treasury infrastructure for USDC-denominated operations on Arc.",
+  "description": "Reserve-aware USDC treasury proof on Arc Mainnet with bounded wallet-signed execution and independently verifiable receipts.",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
