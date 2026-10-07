@@ -279,7 +279,7 @@ describe("React TypeScript Modular Engine", () => {
   it("Zustand app store initializes with clean state and responds to actions", () => {
     const store = useAppStore.getState();
     expect(store.view).toBe("landing");
-    expect(store.pair).toBe("ETH/USDC");
+    expect(store.pair).toBe("USYC/USDC");
 
     store.setTargetBufferUsd(2500);
     expect(useAppStore.getState().targetBufferUsd).toBe(2500);
