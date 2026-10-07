@@ -68,7 +68,7 @@ export const AiAnalystView: React.FC = () => {
                 <div>
                   <div className="font-display font-black text-xl text-themed">{analysis.pair}</div>
                   <div className="font-mono text-xs text-muted">
-                    {analysis.timeframe} · Reference price {analysis.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 }){"}"}
+                    {analysis.timeframe} · Reference price {"$"}{analysis.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                   </div>
                 </div>
               </div>
