@@ -24,7 +24,6 @@ import { GasTankModal } from "./components/modals/GasTankModal";
 import { ReviewTradeModal } from "./components/modals/ReviewTradeModal";
 import { AuditReceiptModal } from "./components/modals/AuditReceiptModal";
 import { MarketSearchModal } from "./components/modals/MarketSearchModal";
-import { ImportTokenModal } from "./components/modals/ImportTokenModal";
 
 export const App: React.FC = () => {
   const { view, theme, setTheme, setSearchOpen, syncMarketData, environmentMode } = useAppStore();
@@ -136,7 +135,6 @@ export const App: React.FC = () => {
       <ReviewTradeModal />
       <AuditReceiptModal />
       <MarketSearchModal />
-      <ImportTokenModal />
 
       {/* Real-Time Toast Notifications */}
       <ToastStack />
