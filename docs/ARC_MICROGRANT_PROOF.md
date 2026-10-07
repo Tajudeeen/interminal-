@@ -1,6 +1,6 @@
 # Arc Microgrant evidence
 
-Interminal is a reserve-aware USDC treasury proof on Arc Mainnet. It keeps the grant scope intentionally small: preserve an app-level operating reserve, review a USDC → USYC Arc router trade, sign it explicitly, and export execution evidence that another person can check without a wallet.
+Interminal is a reserve-aware treasury execution proof on Arc Mainnet. It keeps the grant scope intentionally small: protect an app-level USDC operating reserve, review only policy-eligible capital, sign explicit execution bounds, and export evidence that another person can check without a wallet. USYC is the current demonstration route.
 
 ## Public infrastructure
 
@@ -67,11 +67,11 @@ Markets, read-only indicators, and testnet rehearsal are secondary tools. Agent 
 
 ## Submission description
 
-Interminal is a wallet-controlled treasury desk for teams holding USDC on Arc. Operators set a cash reserve, review USYC router trades, sign bounded settlement tickets, and export receipts whose transaction provenance can be checked independently.
+Interminal is a wallet-controlled execution layer for USDC treasury operations on Arc. Operators set a protected reserve, review only eligible capital, sign bounded settlement tickets, and export receipts whose transaction provenance can be checked independently.
 
 ## Scope
 
-Mainnet trading requires explicit review and wallet signatures. USYC issuer eligibility and router liquidity are external requirements. The app does not send payroll or wires. Unwind and subsequent trade are separate operations. Live agent mandates remain blocked on deployed v1. DCA is a planner without a background runner. This is an early proof of concept, not an institutional treasury service.
+Mainnet execution requires explicit review and wallet signatures. USYC issuer eligibility and router liquidity are external requirements. The app does not send payroll or wires. Unwind and subsequent trade are separate operations. Live agent mandates remain blocked on deployed v1. This is an early execution-control proof of concept, not an institutional treasury service or a yield product.
 
 ## Full historical scan and successor preparation
 
@@ -99,3 +99,14 @@ The grant explicitly rewards small, working Arc mainnet experiments. The submiss
 - Landing-page copy explains why Arc is required: USDC-denominated gas, Chain 5042 settlement, and independently checkable transaction/event history.
 
 The remaining blocker is still empirical, not cosmetic: capture one real successful USDC → USYC settlement from an eligible Arc wallet before submitting.
+
+
+## Differentiation after ecosystem review
+
+Arc already has public treasury/yield products that route USDC into USYC or other RWA strategies. Interminal therefore does not claim that allocation itself as novel.
+
+The differentiated proof is the sequence:
+
+`protected reserve → policy-eligible amount → fresh Arc quote → explicit wallet-signed bounds → confirmed settlement → independent verification`
+
+That is the behavior the submission should demonstrate.
