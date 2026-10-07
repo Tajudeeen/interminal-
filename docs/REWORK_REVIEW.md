@@ -51,9 +51,43 @@ No new wallet trade was broadcast during this follow-up. Public USDC/USYC execut
 
 ### Follow-up validation
 
-- 60 deterministic regressions pass and production TypeScript/Vite build passes.
+- 62 deterministic tests pass and the production TypeScript/Vite build passes.
 - Desktop and 390px mobile Chromium checks pass: tour sweep NAV conversion, tour receipt inspection, archive surviving reload, saved mainnet record restoration, invalid transaction rejection, successful mocked settlement-event verification, verification deep links, no horizontal overflow, no error overlays, and no page errors.
 - Successful browser settlement evidence used mocked RPC responses and is not a real wallet transaction.
 - All three GeckoTerminal pool smoke checks pass.
 - Live Arc deployment, runtime fingerprint, ABI/domain, router, USYC target, owner, and unpaused state were checked successfully through the fetch transport.
 - Strict compiled-source/runtime reproduction fails and is reported separately. The observed live executable hash differs from the maintained source compilation. No new contract was deployed to bypass this finding.
+
+
+## Final submission hardening, 2026-10-07
+
+The final pass synchronized the judge-facing UI, metadata, README, security language, and deployed production build.
+
+Additional fixes:
+
+- Browser title, Open Graph, Twitter metadata, and no-JavaScript fallback now describe a wallet-controlled treasury desk instead of autonomous treasury infrastructure.
+- Stale 4.95% yield copy was removed. The shared USYC net-yield reference is 3.225%, checked on 2026-10-07, and UI displays derive from the shared constant.
+- Fixed gas-cost copy, fixed $1.0000 USYC NAV copy, and zero-curve-impact claims were removed.
+- Mainnet deployment checks are no longer labeled as source-verified protocol checks.
+- Simulated balance-sheet holdings are no longer labeled on-chain.
+- Agent-mandate UI explicitly states that live v1 signing is disabled because route binding is insufficient for unattended execution.
+- "Zero-custody" shorthand was replaced with wallet-signing language.
+- Landing-page footer now exposes Verification, GitHub, and the deployed settlement.
+- The splash screen is shortened, appears once per browser session, and is skipped for verification deep links.
+- A root MIT license was added and the pre-TypeScript client is explicitly marked archived.
+
+Final merged commit: `14c4175f0d80f21254bcc5248c564533d62820ff`.
+
+GitHub Actions run `269` passed:
+- dependency installation
+- unit tests
+- production build
+- protocol and legacy regression suite
+- GeckoTerminal Arc market-data verification
+- Arc mainnet verification
+
+The production Vercel deployment for the same commit reached `READY` and serves the `useinterminal.vercel.app` alias.
+
+### Remaining judge-visible gap
+
+The software is production-deployed and internally consistent, but no real USDC/USYC settlement has yet been captured from an eligible Arc wallet. The final submission should add that real transaction hash, exported receipt, verification deep link, and independent CLI result. Until then, the repository intentionally does not claim end-to-end treasury execution proof.

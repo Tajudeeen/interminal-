@@ -72,3 +72,14 @@ The Arc infrastructure verifier is fail-closed on deployment identity, recorded 
 ## Responsible disclosure
 
 Please open a private security report through the repository owner before publicly disclosing a security-sensitive issue whenever practical.
+
+
+## Final submission validation snapshot
+
+The submission-hardening production commit is `14c4175f0d80f21254bcc5248c564533d62820ff`.
+
+On 2026-10-07, GitHub Actions run `269` passed the unit suite, TypeScript/Vite production build, protocol and legacy regressions, GeckoTerminal market-data verification, and Arc mainnet infrastructure verification. Vercel then promoted the same commit to the production alias with deployment state `READY`.
+
+The final UI removes absolute "zero custody", fixed gas-cost, zero price-impact, fixed USYC NAV, autonomous treasury, and source-verified protocol claims. These wording changes are security-relevant because they keep displayed guarantees aligned with the actual trust boundaries described in this document.
+
+The remaining missing proof is not a hidden software check: a real eligible-wallet USDC/USYC settlement still needs to be signed, mined, exported, and independently verified before the project claims end-to-end treasury execution evidence.

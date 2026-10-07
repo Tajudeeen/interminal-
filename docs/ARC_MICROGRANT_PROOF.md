@@ -10,6 +10,9 @@ Interminal is a wallet-controlled USDC treasury prototype on Arc. It helps an op
 - Chain: Arc Mainnet, 5042
 - Settlement: https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36
 - Deployment: https://explorer.arc.io/tx/0x1d96a8c548268f851a22c23107fbac1a606bbd2b951856d5f9f0f4d3ecbae404
+- Submission-hardening production commit: `14c4175f0d80f21254bcc5248c564533d62820ff`
+- GitHub Actions verification: run `269`, passed on 2026-10-07
+- Production host status: Vercel `READY` for the same commit
 
 Deployment proves that a contract exists. It does not prove a USYC trade succeeded. The app and CLI distinguish those claims.
 
@@ -19,7 +22,9 @@ The stricter comparison found that the maintained source does not reproduce the 
 
 ## Treasury execution evidence status
 
-A new successful USDC/USYC wallet execution has **not** been produced in this engineering pass. The builder must capture one from an eligible wallet before claiming the treasury workflow is demonstrated end to end. Do not present a simulated receipt, unrelated swap, or deployment transaction as that proof.
+The application, documentation, CI, and production deployment are synchronized to the final submission-hardening state. A new successful USDC/USYC wallet execution has **not** yet been produced. That is the remaining material proof item before claiming the treasury workflow is demonstrated end to end.
+
+Do not present a simulated receipt, unrelated swap, contract deployment transaction, transaction digest, or testnet rehearsal as treasury execution proof.
 
 To complete the evidence:
 
@@ -51,11 +56,12 @@ To complete the evidence:
 
 ## 90-second reviewer path
 
-1. Open the app and try the walkthrough. Sweep once and inspect its clearly simulated receipt.
-2. Open the mainnet workspace to see wallet-gated holdings and the stated reserve-protection boundary.
-3. Open Verification and paste the builder's actual USDC/USYC transaction hash. No wallet or payment is needed.
-4. Import its exported certificate and verify settlement matching separately from anchoring.
-5. Download the evidence report or rerun the CLI.
+1. Open the app and use the reviewer walkthrough. The demo is visibly marked as simulation.
+2. Open the mainnet workspace to see wallet-gated holdings, live-router review, and the app-level reserve boundary.
+3. Open Verification from the landing-page footer. No wallet is needed to inspect a transaction.
+4. After the builder records the real USDC/USYC transaction, open its `?verify=0x...` deep link and verify the exact settlement event.
+5. Import the exported certificate and compare trader, route, raw amounts, block, output, and anchor status.
+6. Re-run `npm run verify:execution -- --receipt receipt.json` for independent CLI evidence.
 
 ## Submission description
 
@@ -68,3 +74,12 @@ Mainnet trading requires explicit review and wallet signatures. USYC issuer elig
 ## Full historical scan and successor preparation
 
 A complete RPC scan from block 23,367,508 through 24,448,374 returned zero `TradeSettled` events from the configured settlement. The bounded report is `artifacts/treasury-history.json`; rerun `npm run verify:treasury-history` for later blocks. A reproducible unsigned successor package is prepared, but no new deployment or trade has been broadcast. See [CLOSE_CHAIN_GAPS.md](CLOSE_CHAIN_GAPS.md).
+
+
+## Final submission-hardening validation
+
+On 2026-10-07 the final hardening pass removed stale autonomous, fixed-fee, fixed-price, zero-impact, and source-verification wording from the judge-facing product. Simulated holdings are labeled as simulation, live agent signing remains disabled on deployed v1, verification deep links skip the splash screen, and Verification/GitHub/settlement evidence are exposed directly from the landing page.
+
+The merged production commit is `14c4175f0d80f21254bcc5248c564533d62820ff`. GitHub Actions run `269` passed unit tests, production build, legacy/protocol regressions, GeckoTerminal Arc market-data verification, and Arc mainnet verification. Vercel reported the production deployment for that same commit as `READY`.
+
+This validates the software state and read-only infrastructure checks. It does not replace the still-missing real treasury settlement transaction.
