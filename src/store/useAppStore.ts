@@ -269,7 +269,7 @@ function getInitialActivity() {
 }
 
 export const useAppStore = create<AppState>((set, get) => {
-  const initialPair = "ETH/USDC";
+  const initialPair = "USYC/USDC";
 
   return {
     theme: getInitialTheme(),
@@ -296,7 +296,7 @@ export const useAppStore = create<AppState>((set, get) => {
     nativeGasBalance: 0,
     gasRefueling: false,
     pair: initialPair,
-    timeframe: "4h",
+    timeframe: "1D",
     chartMode: "candles",
     side: "buy",
     amount: 500,
@@ -982,7 +982,7 @@ export const useAppStore = create<AppState>((set, get) => {
       walletSession += 1;
       walletEventCleanup?.();
       walletEventCleanup = null;
-      const demoPair = "ETH/USDC";
+      const demoPair = "USYC/USDC";
       set({
         environmentMode: "demo",
         judgeTourOpen: false,
@@ -996,12 +996,12 @@ export const useAppStore = create<AppState>((set, get) => {
         wrongNetwork: false,
         providerLabel: "Demo Simulation",
         livePortfolio: false,
-        balances: { ETH: 3.5, WETH: 1.2, USDC: 14250, EURC: 5000, USYC: 10000, cirBTC: 0.15 },
-        targetBufferUsd: 500,
-        stressTestAmount: 2500,
+        balances: { USDC: 10000, USYC: 2500 },
+        targetBufferUsd: 2500,
+        stressTestAmount: 5000,
         view: "portfolio",
         pair: demoPair,
-        timeframe: "4h",
+        timeframe: "1D",
         candles: [],
         indicators: null,
         analysis: null,
@@ -1012,8 +1012,8 @@ export const useAppStore = create<AppState>((set, get) => {
       void get().syncMarketData();
 
       get().addToast(
-        "Treasury Cockpit Active",
-        "Simulation balances loaded. Market charts use live public market data and never fabricate candles.",
+        "Arc Treasury Demo Ready",
+        "Simulation loaded with a USDC operating reserve and USYC treasury position. The USYC chart uses the published reference feed; no Arc transaction is claimed.",
         "ok"
       );
     },
