@@ -1,6 +1,6 @@
 # Arc Microgrant evidence
 
-Interminal is a wallet-controlled USDC treasury prototype on Arc. It helps an operator preserve an app-level cash reserve, review a USYC router trade, and export execution evidence that another person can check without a wallet.
+Interminal is a reserve-aware USDC treasury proof on Arc Mainnet. It keeps the grant scope intentionally small: preserve an app-level operating reserve, review a USDC → USYC Arc router trade, sign it explicitly, and export execution evidence that another person can check without a wallet.
 
 ## Public infrastructure
 
@@ -56,12 +56,14 @@ To complete the evidence:
 
 ## 90-second reviewer path
 
-1. Open the app and use the reviewer walkthrough. The demo is visibly marked as simulation.
-2. Open the mainnet workspace to see wallet-gated holdings, live-router review, and the app-level reserve boundary.
-3. Open Verification from the landing-page footer. No wallet is needed to inspect a transaction.
-4. After the builder records the real USDC/USYC transaction, open its `?verify=0x...` deep link and verify the exact settlement event.
-5. Import the exported certificate and compare trader, route, raw amounts, block, output, and anchor status.
+1. Open the app. The first screen says exactly what Arc is used for and links the live settlement, public repo, and builder profile.
+2. Open **Treasury**. See the app-level USDC reserve boundary and real-wallet gate for mainnet holdings.
+3. Open **Execute**. The live path requests a fresh Arc router quote before any wallet signature.
+4. Open **Receipts** and **Verify**. Verification is wallet-free and separates transaction/event provenance from certificate anchoring.
+5. After the builder records the real USDC/USYC transaction, open its `?verify=0x...` deep link and verify the exact settlement event.
 6. Re-run `npm run verify:execution -- --receipt receipt.json` for independent CLI evidence.
+
+Markets, read-only indicators, and testnet rehearsal are secondary tools. Agent mandates and DCA planning are not part of the submission runtime.
 
 ## Submission description
 
@@ -83,3 +85,17 @@ On 2026-10-07 the final hardening pass removed stale autonomous, fixed-fee, fixe
 The merged production commit is `14c4175f0d80f21254bcc5248c564533d62820ff`. GitHub Actions run `269` passed unit tests, production build, legacy/protocol regressions, GeckoTerminal Arc market-data verification, and Arc mainnet verification. Vercel reported the production deployment for that same commit as `READY`.
 
 This validates the software state and read-only infrastructure checks. It does not replace the still-missing real treasury settlement transaction.
+
+
+## Host-alignment decisions
+
+The grant explicitly rewards small, working Arc mainnet experiments. The submission UI therefore avoids presenting Interminal as a broad institutional trading platform.
+
+- The primary navigation is Treasury → Execute → Receipts → Verify.
+- Mainnet is foregrounded; testnet is clearly optional and never presented as proof.
+- The route directory foregrounds registered Arc assets rather than a broad global market catalog.
+- Indicator analysis is read-only context and cannot create or pre-fill a trade.
+- The disabled v1 agent-mandate UI and browser-side DCA planner are removed from the submission runtime.
+- Landing-page copy explains why Arc is required: USDC-denominated gas, Chain 5042 settlement, and independently checkable transaction/event history.
+
+The remaining blocker is still empirical, not cosmetic: capture one real successful USDC → USYC settlement from an eligible Arc wallet before submitting.
