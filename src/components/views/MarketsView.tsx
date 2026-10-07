@@ -12,7 +12,6 @@ export const MarketsView: React.FC = () => {
     marketFeedStatus,
     pair,
     environmentMode,
-    setImportTokenOpen,
   } = useAppStore();
   const [filter, setFilter] = useState("arc");
   const [query, setQuery] = useState("");
@@ -23,10 +22,8 @@ export const MarketsView: React.FC = () => {
       .includes(query.toLowerCase());
     return (
       matches &&
-      (filter === "all" ||
-        (filter === "arc" && !!data.address && data.cat !== "imported") ||
-        (filter === "fx" && data.cat === "rwa_fx") ||
-        (filter === "imported" && data.cat === "imported"))
+      ((filter === "arc" && !!data.address && data.cat !== "imported") ||
+        (filter === "fx" && data.cat === "rwa_fx" && !!data.address))
     );
   });
   return (
@@ -35,42 +32,36 @@ export const MarketsView: React.FC = () => {
         <div>
           <p className="eyebrow mb-2">Route directory</p>
           <h1 className="font-display text-3xl font-bold tracking-tight">
-            Markets
+            Arc route directory
           </h1>
           <p className="text-sm text-sub mt-2">
-            Find an Arc route and inspect its price source before trading.
+            Inspect the registered Arc assets used by Interminal before the execution desk requests a fresh router quote.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            isLoading={syncing}
-            onClick={async () => {
-              setSyncing(true);
-              try {
-                await syncMarketData();
-              } finally {
-                setSyncing(false);
-              }
-            }}
-          >
-            Refresh active feed
-          </Button>
-          <Button onClick={() => setImportTokenOpen(true)}>Import token</Button>
-        </div>
+        <Button
+          isLoading={syncing}
+          onClick={async () => {
+            setSyncing(true);
+            try {
+              await syncMarketData();
+            } finally {
+              setSyncing(false);
+            }
+          }}
+        >
+          Refresh selected reference
+        </Button>
       </header>
       <div className="card-themed border border-themed rounded-xl p-4 text-sm text-sub leading-relaxed">
-        Only the selected market's feed refreshes. Other listed prices are
-        reference values, and imported tokens have no price feed. A registered
-        token address doesn't guarantee liquidity or issuer access. Mainnet
-        trade review fetches a separate router quote.
+        This directory is supporting evidence, not the product's execution layer.
+        A registered token address or reference price does not guarantee liquidity
+        or issuer access. Mainnet execution always requests a separate Arc router quote.
       </div>
       <div className="flex flex-col sm:flex-row justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           {[
-            { id: "arc", label: "Arc routes" },
-            { id: "fx", label: "FX & treasury" },
-            { id: "all", label: "All references" },
-            { id: "imported", label: "Imported" },
+            { id: "arc", label: "Registered Arc assets" },
+            { id: "fx", label: "Treasury assets" },
           ].map((f) => (
             <button
               key={f.id}
@@ -122,7 +113,7 @@ export const MarketsView: React.FC = () => {
                           ? "FX / treasury"
                           : data.cat === "imported"
                             ? "Imported ERC-20"
-                            : "Market reference"}
+                            : "Registered Arc asset"}
                       </small>
                     </td>
                     <td className="p-4 text-xs">
@@ -160,7 +151,7 @@ export const MarketsView: React.FC = () => {
                         }}
                       >
                         {environmentMode === "mainnet" && registered
-                          ? "Review route"
+                          ? "Open route"
                           : "Inspect"}
                       </Button>
                     </td>
