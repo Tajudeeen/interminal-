@@ -178,7 +178,7 @@ export const AgentMandateModal: React.FC = () => {
 
         {/* Safety Note */}
         <div className="p-3 rounded-card bg-themed-card/40 border border-themed/20 font-mono text-[11px] text-muted space-y-1">
-          <div className="text-themed font-semibold">Deterministic Policy Enforcer:</div>
+          <div className="text-themed font-semibold">Bounded Policy Model:</div>
           <div>
             Simulation and the hardened V2 policy model cap cumulative spend at ${spendUsd.toLocaleString()} USDC and bind execution to selected routes.
           </div>
