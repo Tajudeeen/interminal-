@@ -75,8 +75,16 @@ export const ProofRpcView: React.FC = () => {
         </div>
       </div>
 
-      <p className="text-sm text-sub border border-amber-500/40 rounded-card p-4">Source reproduction is unresolved: the maintained Solidity source does not match the live executable runtime with recorded settings. Infrastructure reads and event verification below are separate checks. The strict repository source gate currently fails.</p>
       <SettlementEvidencePanel />
+      <details className="group border border-themed/40 rounded-card bg-themed-card/30">
+        <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-3 text-xs font-mono text-muted hover:text-themed transition-colors">
+          <span>Verification scope and v1 provenance</span>
+          <span className="material-symbols-outlined text-[16px] transition-transform group-open:rotate-180">expand_more</span>
+        </summary>
+        <div className="px-4 pb-4 text-sm text-sub border-t border-themed/20 pt-3">
+          The deployed v1 runtime is queried directly on Arc, but its original compiler input and build settings were not recovered, so strict source reproduction is not claimed. The live bytecode, EIP-712 domain, RPC, receipt, and event checks below remain independently verifiable.
+        </div>
+      </details>
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card-themed border border-themed rounded-card p-4">
