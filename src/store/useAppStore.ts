@@ -8,7 +8,7 @@ import { ARC, TOKEN_ALLOW } from "../constants/arc";
 import { EnvironmentMode, NETWORKS } from "../constants/networks";
 import { PAIRS, assertPair } from "../constants/pairs";
 import { Candle, ChartMode, Indicators, MarketAnalysis, Timeframe } from "../types/market";
-import { DcaPlan, OrderType, TradeQuote, TradeSide } from "../types/trade";
+import { TradeQuote, TradeSide } from "../types/trade";
 import { AgentMandateDescriptor } from "../types/mandate";
 import { TradeReceipt } from "../types/receipt";
 import {
@@ -78,7 +78,6 @@ export interface AppState {
   timeframe: Timeframe;
   chartMode: ChartMode;
   side: TradeSide;
-  orderType: OrderType;
   amount: number;
   slippage: number;
   targetBufferUsd: number;
@@ -87,10 +86,6 @@ export interface AppState {
   indicators: Indicators | null;
   candleSource: CandleSource;
   analysis: MarketAnalysis | null;
-  dcaSpendTotal: number;
-  dcaSliceSize: number;
-  dcaFreqSec: number;
-  dcaOrders: DcaPlan[];
   activity: any[];
   mandates: AgentMandateDescriptor[];
   auditReceipts: TradeReceipt[];
@@ -134,14 +129,10 @@ export interface AppState {
   setTimeframe: (tf: Timeframe) => void;
   setChartMode: (mode: ChartMode) => void;
   setSide: (side: TradeSide) => void;
-  setOrderType: (ot: OrderType) => void;
   setAmount: (amt: number) => void;
   setSlippage: (slip: number) => void;
   setTargetBufferUsd: (amt: number) => void;
   setStressTestAmount: (amt: number) => void;
-  setDcaSpendTotal: (amt: number) => void;
-  setDcaSliceSize: (amt: number) => void;
-  setDcaFreqSec: (sec: number) => void;
   setSearchOpen: (open: boolean) => void;
   setSearchQuery: (q: string) => void;
   setGasTankModalOpen: (open: boolean) => void;
@@ -161,7 +152,6 @@ export interface AppState {
   disconnectWallet: () => void;
   syncMarketData: () => Promise<void>;
   runAiAnalysis: () => void;
-  startDcaPlan: () => void;
   prepareTradeReview: (exactInputTokens?: number) => Promise<void>;
   executeTrade: () => Promise<void>;
   refuelGasTank: (amountUsdc: number) => Promise<void>;
@@ -272,8 +262,8 @@ function getInitialActivity() {
     {
       ts: now - 3600000 * 18,
       type: "mandate",
-      label: "Simulated DCA Execution: 1 ETH @ $2,481.42",
-      detail: "Simulation only · DCA scheduling runs in the browser.",
+      label: "Simulated Receipt Review",
+      detail: "Simulation only · demonstrates the evidence flow without claiming Arc history.",
     },
   ];
 }
@@ -309,7 +299,6 @@ export const useAppStore = create<AppState>((set, get) => {
     timeframe: "4h",
     chartMode: "candles",
     side: "buy",
-    orderType: "market",
     amount: 500,
     slippage: 0.5,
     targetBufferUsd: 5000,
@@ -318,10 +307,6 @@ export const useAppStore = create<AppState>((set, get) => {
     indicators: null,
     candleSource: "unavailable",
     analysis: null,
-    dcaSpendTotal: 100,
-    dcaSliceSize: 20,
-    dcaFreqSec: 60,
-    dcaOrders: [],
     activity: getInitialActivity(),
     mandates: [],
     auditReceipts: getInitialAuditReceipts(),
@@ -429,8 +414,7 @@ export const useAppStore = create<AppState>((set, get) => {
         lastTx: null,
         auditReceipts: readArchive().filter(r => r.mode === "mainnet"),
         activity: [],
-        dcaOrders: [],
-        mandates: [],
+            mandates: [],
         judgeTourOpen: false,
         activeReceiptModal: null,
         view: "portfolio",
@@ -452,7 +436,7 @@ export const useAppStore = create<AppState>((set, get) => {
         judgeTourOpen: false,
         balances: {}, nativeGasBalance: 0, amount: 0, targetBufferUsd: 0, stressTestAmount: 0,
         pendingQuote: null, reviewOpen: false, activeReceiptModal: null, lastTx: null,
-        auditReceipts: [], activity: [], dcaOrders: [], mandates: [],
+        auditReceipts: [], activity: [], mandates: [],
         marketRequestId: get().marketRequestId + 1, analysis: null,
         testnetTaskComplete: false,
         testnetTxHash: null,
@@ -717,7 +701,6 @@ export const useAppStore = create<AppState>((set, get) => {
 
     setChartMode: (chartMode) => set({ chartMode }),
     setSide: (side) => { if (!get().executing) set({ side, pendingQuote: null, reviewOpen: false }); },
-    setOrderType: (orderType) => set({ orderType }),
     setAmount: (amount) => { if (!get().executing) set({ amount, pendingQuote: null, reviewOpen: false }); },
     setSlippage: (slippage) => { if (!get().executing) set({ slippage, pendingQuote: null, reviewOpen: false }); },
     setTargetBufferUsd: (targetBufferUsd) => {
@@ -727,9 +710,6 @@ export const useAppStore = create<AppState>((set, get) => {
       if (get().environmentMode === "mainnet" && address && !saveWalletReserve(address, targetBufferUsd)) get().addToast("Reserve saved for this session", "Device storage is unavailable. Recheck your reserve after reconnecting.", "warn");
     },
     setStressTestAmount: (stressTestAmount) => set({ stressTestAmount }),
-    setDcaSpendTotal: (dcaSpendTotal) => set({ dcaSpendTotal }),
-    setDcaSliceSize: (dcaSliceSize) => set({ dcaSliceSize }),
-    setDcaFreqSec: (dcaFreqSec) => set({ dcaFreqSec }),
     setSearchOpen: (searchOpen) => set({ searchOpen }),
     setSearchQuery: (searchQuery) => set({ searchQuery }),
     setGasTankModalOpen: (gasTankModalOpen) => set({ gasTankModalOpen }),
@@ -1017,7 +997,7 @@ export const useAppStore = create<AppState>((set, get) => {
         environmentMode: "demo",
         judgeTourOpen: false,
         pendingQuote: null, reviewOpen: false, activeReceiptModal: null, lastTx: null, walletError: "",
-        auditReceipts: [], activity: [], mandates: [], dcaOrders: [],
+        auditReceipts: [], activity: [], mandates: [], 
         testnetTaskComplete: false,
         testnetTxHash: null,
         connected: true,
@@ -1056,7 +1036,7 @@ export const useAppStore = create<AppState>((set, get) => {
       set({
         connected: false,
         balances: {}, nativeGasBalance: 0, pendingQuote: null, reviewOpen: false,
-        auditReceipts: [], activity: [], dcaOrders: [], mandates: [], activeReceiptModal: null, lastTx: null,
+        auditReceipts: [], activity: [], mandates: [], activeReceiptModal: null, lastTx: null,
         address: null,
         chainId: null,
         wrongNetwork: false,
@@ -1162,36 +1142,8 @@ export const useAppStore = create<AppState>((set, get) => {
       }
       set({ analysis, showLevels: true });
       get().addToast(
-        "Market signal analysis",
-        `${analysis.trend} regime · Support: $${analysis.support.toFixed(2)} / Resist: $${analysis.resistance.toFixed(2)}`,
-        "info"
-      );
-    },
-
-    startDcaPlan: () => {
-      const { pair, dcaSpendTotal, dcaSliceSize, dcaFreqSec } = get();
-      if (!Number.isFinite(dcaSpendTotal) || dcaSpendTotal <= 0 || !Number.isFinite(dcaSliceSize) || dcaSliceSize <= 0 || !Number.isFinite(dcaFreqSec) || dcaFreqSec <= 0) {
-        get().addToast("Invalid DCA Parameters", "Budget, slice size, and interval must be positive.", "err");
-        return;
-      }
-      const totalSlices = Math.max(1, Math.floor(dcaSpendTotal / dcaSliceSize));
-      const order: DcaPlan = {
-        id: "dca-" + Date.now(),
-        pair,
-        totalBudget: dcaSpendTotal,
-        sliceAmount: dcaSliceSize,
-        intervalSec: dcaFreqSec,
-        executedBudget: 0,
-        totalSlices,
-        completedSlices: 0,
-        status: "active",
-        createdAt: Date.now(),
-        nextRun: Date.now() + dcaFreqSec * 1000,
-      };
-      set((s) => ({ dcaOrders: [order, ...s.dcaOrders] }));
-      get().addToast(
-        "DCA Simulation Scheduled",
-        "Scheduled " + totalSlices + " simulated slices of " + pair + ". The browser does not run a background autonomous executor.",
+        "Market context refreshed",
+        `Observed ${analysis.trend.toLowerCase()} structure · support ${analysis.support.toFixed(2)} / resistance ${analysis.resistance.toFixed(2)}. Reference only.`,
         "info"
       );
     },
