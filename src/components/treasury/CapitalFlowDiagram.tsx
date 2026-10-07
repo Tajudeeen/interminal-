@@ -2,7 +2,7 @@ import { Icon } from "../ui/Icon";
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
 import { PAIRS } from "../../constants/pairs";
-import { ARC, USYC_APY } from "../../constants/arc";
+import { ARC } from "../../constants/arc";
 import { shortAddr } from "../../lib/arc/wallet";
 
 export const CapitalFlowDiagram: React.FC = () => {
@@ -45,18 +45,18 @@ export const CapitalFlowDiagram: React.FC = () => {
           </div>
         </div>
 
-        {/* Node 2: Yield Sweep Engine */}
+        {/* Node 2: Policy-eligible execution */}
         <div className="p-3.5 rounded-card bg-lime-500/5 border border-lime-500/30 relative group hover:border-lime-500/60 transition-colors">
           <div className="flex items-center justify-between text-lime-500 text-[10px] font-mono uppercase font-bold">
-            <span>Stage 2 · Sweep</span>
+            <span>Stage 2 · Review</span>
             <Icon name="trending_up" className="material-symbols-outlined text-[16px] text-lime-500 animate-pulse" />
           </div>
-          <div className="font-display font-bold text-sm text-lime-500 mt-1">{(USYC_APY * 100).toFixed(3)}% USYC reference</div>
+          <div className="font-display font-bold text-sm text-lime-500 mt-1">Only excess USDC is eligible</div>
           <div className="font-mono text-lg font-black text-pos mt-0.5 tnum">
             {usycBalance.toLocaleString()} USYC
           </div>
           <div className="font-mono text-[10px] text-lime-500 mt-1">
-            {excessCash > 0 ? `Ready to Sweep: $${excessCash.toLocaleString()}` : "Cash is within buffer"}
+            {excessCash > 0 ? `Reviewable: ${excessCash.toLocaleString()} USDC` : "No cash above reserve"}
           </div>
         </div>
 
@@ -66,7 +66,7 @@ export const CapitalFlowDiagram: React.FC = () => {
             <span>Stage 3 · Unwind</span>
             <Icon name="swap_calls" className="material-symbols-outlined text-[16px] text-amber-500" />
           </div>
-          <div className="font-display font-bold text-sm text-themed mt-1">USYC/USDC Rebalance</div>
+          <div className="font-display font-bold text-sm text-themed mt-1">Bounded USYC/USDC Execution</div>
           <div className="font-mono text-lg font-black text-themed mt-0.5 tnum">
             1 USYC ≈ ${PAIRS["USYC/USDC"].price.toFixed(6)} USDC
           </div>
