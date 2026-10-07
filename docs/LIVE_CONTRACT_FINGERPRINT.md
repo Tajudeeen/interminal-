@@ -2,6 +2,8 @@
 
 This page records the immutable identity of the Interminal settlement contract currently referenced by the live application.
 
+The final submission-hardening application commit is `14c4175f0d80f21254bcc5248c564533d62820ff`. GitHub Actions run `269` passed the Arc infrastructure verifier against the configured production constants before that commit was promoted to the production Vercel alias.
+
 - Network: Arc Mainnet
 - Chain ID: 5042
 - Settlement: 0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36
@@ -35,3 +37,12 @@ The full live runtime fingerprint and deployment identity remain independently c
 The repository preserves `contracts/deployed/InterminalSettlementV1.sol` as a historical repository snapshot, not verified deployed source. `contracts/InterminalSettlementV2.sol` remains an undeployed hardened successor. Do not present either as verified live source.
 
 A reproducible hardened successor package and strict deployment verification are now available via `npm run prepare:deployment` and `npm run verify:deployment`. The package is unsigned and does not change this live address. See [CLOSE_CHAIN_GAPS.md](CLOSE_CHAIN_GAPS.md) for the remaining wallet actions.
+
+
+## Relationship to the submission build
+
+The production application intentionally distinguishes deployment identity from source provenance. Judge-facing UI now labels these checks as deployment and infrastructure verification rather than "verified protocol" source claims.
+
+A successful `verify:arc` run means the configured Arc network, settlement fingerprint, domain, router, and token targets passed their read-only checks at the time of the run. It does not mean the maintained Solidity source reproduces deployed v1, and it does not prove a treasury trade occurred.
+
+The separate real-execution requirement is documented in [ARC_MICROGRANT_PROOF.md](ARC_MICROGRANT_PROOF.md).
