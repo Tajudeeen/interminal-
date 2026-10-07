@@ -138,10 +138,10 @@ export const LandingView: React.FC = () => {
           <div className="scenario-return">
             <div>
               <small>Protected operating cash</small>
-              <strong>$${liquid.toLocaleString(){"}"}</strong>
+              <strong>${liquid.toLocaleString()}</strong>
             </div>
             <span>
-              $${allocated.toLocaleString(){"}"}<small>Maximum reviewable amount</small>
+              ${allocated.toLocaleString()}<small>Maximum reviewable amount</small>
             </span>
           </div>
           <p className="text-xs text-muted leading-relaxed mt-3 mb-5">
