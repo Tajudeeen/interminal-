@@ -542,7 +542,7 @@ export const TreasuryCockpitView: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 font-mono">
           <div className="p-4 rounded-card bg-themed-card/50 border border-themed/30">
-            <div className="text-[10px] text-muted uppercase">USYC Net Reference Yield (3.225%)</div>
+            <div className="text-[10px] text-muted uppercase">USYC Net Reference Yield ({(USYC_APY * 100).toFixed(3)}%)</div>
             <div className="text-2xl font-black text-pos mt-1 font-display tnum">
               {mainnetReview ? "—" : "+$" + horizonYieldUsyc.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
