@@ -1,5 +1,8 @@
-import { FED_FUNDS_RATE, ECB_DEPOSIT_RATE } from "../../constants/arc";
 import { FxParityResult } from "../../types/treasury";
+
+// Deterministic scenario defaults for the FX model. These are not live policy rates.
+const FX_SCENARIO_FED_RATE = 0.0525;
+const FX_SCENARIO_ECB_RATE = 0.0350;
 
 export interface FxParityInput {
   eurcUsdcPrice?: number;
@@ -11,8 +14,8 @@ export interface FxParityInput {
 
 export function calculateFxParity(
   priceOrObj: number | FxParityInput,
-  fedRateArg: number = FED_FUNDS_RATE,
-  ecbRateArg: number = ECB_DEPOSIT_RATE
+  fedRateArg: number = FX_SCENARIO_FED_RATE,
+  ecbRateArg: number = FX_SCENARIO_ECB_RATE
 ): FxParityResult {
   let price: number;
   let fedRate: number;
@@ -21,8 +24,8 @@ export function calculateFxParity(
 
   if (typeof priceOrObj === "object" && priceOrObj !== null) {
     price = Number(priceOrObj.eurcUsdcPrice ?? priceOrObj.price);
-    fedRate = Number(priceOrObj.fedRate ?? FED_FUNDS_RATE);
-    ecbRate = Number(priceOrObj.ecbRate ?? ECB_DEPOSIT_RATE);
+    fedRate = Number(priceOrObj.fedRate ?? FX_SCENARIO_FED_RATE);
+    ecbRate = Number(priceOrObj.ecbRate ?? FX_SCENARIO_ECB_RATE);
     benchmark = Number(priceOrObj.benchmarkRate ?? 1.0840);
   } else {
     price = Number(priceOrObj);
@@ -58,7 +61,9 @@ export function calculateFxParity(
     pipsFromParity,
     longUsdCarryAnnual,
     longEurCarryAnnual,
-    carryDirection: "Long USD / Short EUR (+175 bps carry)",
+    carryDirection: carrySpreadBps >= 0
+      ? `Long USD / Short EUR (+${carrySpreadBps} bps carry)`
+      : `Long EUR / Short USD (+${Math.abs(carrySpreadBps)} bps carry)`,
     isWithinParityBand,
   };
 }
