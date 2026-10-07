@@ -5,7 +5,7 @@ import { ARC } from "../../constants/arc";
 import { shortAddr } from "../../lib/arc/wallet";
 import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
-import { NAV_ITEMS } from "./navigation";
+import { CORE_NAV_ITEMS, LAB_NAV_ITEMS } from "./navigation";
 
 export const Sidebar: React.FC = () => {
   const s = useAppStore();
@@ -19,16 +19,16 @@ export const Sidebar: React.FC = () => {
         <Logo size={32} />
         <span>
           <strong>INTERMINAL</strong>
-          <small>Treasury operations on Arc</small>
+          <small>USDC treasury proof on Arc</small>
         </span>
       </button>
       <button className="desk-search" onClick={() => s.setSearchOpen(true)}>
         <Icon name="search" className="material-symbols-outlined" />
-        Find a market<kbd>Ctrl K</kbd>
+        Find an Arc route<kbd>Ctrl K</kbd>
       </button>
       <nav aria-label="Main navigation" className="desk-navigation">
-        <p className="eyebrow">Workspace</p>
-        {NAV_ITEMS.slice(0, 5).map((item) => (
+        <p className="eyebrow">Mainnet proof</p>
+        {CORE_NAV_ITEMS.map((item) => (
           <button
             key={item.id}
             aria-current={s.view === item.id ? "page" : undefined}
@@ -39,8 +39,8 @@ export const Sidebar: React.FC = () => {
             {item.label}
           </button>
         ))}
-        <p className="eyebrow mt-7">Tools & evidence</p>
-        {NAV_ITEMS.slice(5).map((item) => (
+        <p className="eyebrow mt-7">Optional lab</p>
+        {LAB_NAV_ITEMS.map((item) => (
           <button
             key={item.id}
             aria-current={s.view === item.id ? "page" : undefined}
@@ -57,7 +57,7 @@ export const Sidebar: React.FC = () => {
       <div className="desk-sidebar-bottom">
         <button className="desk-tour" onClick={s.startJudgeTour}>
           <Icon name="play_circle" className="material-symbols-outlined" />
-          Walk through the demo
+          90-second reviewer path
           <Icon name="arrow_forward" className="material-symbols-outlined" />
         </button>
         <div className="desk-session">
