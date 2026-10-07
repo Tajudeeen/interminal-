@@ -26,7 +26,7 @@ The core reviewer path is **Treasury → Execute → Receipts → Verify**. Mark
 | Mainnet | Holdings read from an Arc wallet | Exact approval when needed, EIP-712 signature, settlement transaction, and a separate receipt-anchor transaction. |
 | Optional testnet rehearsal | Arc Testnet wallet | Wallet/network check only. It is not part of the grant proof and doesn't test the mainnet settlement contract. |
 
-Opening mainnet review doesn't connect a wallet or submit a transaction. Testnet is optional. A generic wallet connection targets mainnet unless the user explicitly opens the testnet lab.
+Opening mainnet review doesn't connect a wallet or submit a transaction. Testnet rehearsal is optional. A generic wallet connection targets mainnet unless the user explicitly opens the optional testnet tool.
 
 ## Operator workflow
 
