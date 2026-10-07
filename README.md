@@ -43,13 +43,13 @@ Desktop uses a persistent sidebar. Mobile includes quick navigation and a full w
 
 Charts never fall back to generated candles in the production data path.
 
-- WETH/USDC, cirBTC/USDC, and EURC/USDC candles use GeckoTerminal Arc pools through the same-origin `/api/market-data` Vercel function.
+- WETH/USDC, cirBTC/USDC, and EURC/USDC candles use GeckoTerminal Arc pools through the same-origin `/api/market-data` serverless endpoint.
 - USYC uses Hashnote NAV reports and a daily line chart. A NAV reference isn't an executable redemption quote.
 - Other supported chart references use Binance public klines and are labeled global references. They aren't Arc liquidity.
 - A failed feed shows an unavailable state. A selected feed doesn't make every row in the market directory live.
 - Directory reference prices and modeled trade previews aren't executable quotes. Mainnet review fetches a separate Arc router quote.
 - Registered token addresses don't guarantee issuer eligibility, a usable pool, or liquidity. Imported tokens remain view-only for live execution.
-- The USYC yield reference is 3.225%, dated 2026-10-04. Return estimates exclude fees, price changes, access restrictions, and execution costs. This isn't a guaranteed return.
+- The USYC net-yield reference is 3.225%, checked against the issuer product data on 2026-10-07. Return estimates exclude fees, price changes, access restrictions, and execution costs. This isn't a guaranteed return.
 
 TradingView Lightweight Charts provides rendering, not market data. Attribution remains enabled. The CSP permits the specific read-only feed hosts used by the app, including Hashnote and Binance.
 
@@ -94,7 +94,7 @@ npm ci
 npm run dev
 ```
 
-Vite serves the UI on port 5173. Vite alone doesn't run `api/market-data.ts`, so Arc candle requests will show unavailable locally unless the same-origin API is also hosted. The UI handles that state. Deploy the repository on Vercel to run the UI and market-data function together.
+Vite serves the UI on port 5173. Vite alone doesn't run the production serverless market-data endpoint, so Arc candle requests will show unavailable locally unless the same-origin API is also hosted. The UI handles that state. The repository is designed so the production host serves the UI and `/api/market-data` together.
 
 No private key is needed to build, browse, or run the demo. Wallet keys stay in the user's wallet. Contract deployment uses `PRIVATE_KEY` from the process environment through `scripts/deploy.mjs`. Never pass a private key in command arguments or commit it.
 

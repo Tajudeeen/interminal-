@@ -442,9 +442,9 @@ export const TerminalTradeView: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-pos" />
-                      Zero-Custody EIP-712
+                      Wallet-signed EIP-712
                     </span>
-                    <span>{livePortfolio ? "Est. gas: ~$0.0012 USDC" : mainnetReview ? "Connect wallet for live gas estimate" : "Gas: ~$0.0012 USDC"}</span>
+                    <span>{livePortfolio ? "Gas estimated by wallet at submission" : mainnetReview ? "Connect wallet for gas estimate" : "Simulation does not charge gas"}</span>
                   </div>
                   <div className="flex items-center justify-between text-muted/80">
                     <span>Arc Settlement:</span>

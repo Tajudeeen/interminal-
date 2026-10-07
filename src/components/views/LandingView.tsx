@@ -66,7 +66,7 @@ export const LandingView: React.FC = () => {
           <button onClick={startJudgeTour} className="welcome-walkthrough">
             <Icon name="play_circle" className="material-symbols-outlined" />
             See the workflow
-            <span className="text-muted">3 minute walkthrough</span>
+            <span className="text-muted">90-second reviewer walkthrough</span>
           </button>
         </div>
         <div className="welcome-scenario">
@@ -225,13 +225,27 @@ export const LandingView: React.FC = () => {
       </section>
       <footer className="welcome-footer">
         <span>USDC operations. Wallet-controlled execution.</span>
-        <a
-          href={`${ARC.explorer}/address/${ARC.settlement}`}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Inspect the deployed settlement ↗
-        </a>
+        <div className="flex flex-wrap items-center gap-4">
+          <button type="button" onClick={() => setView("proof")} className="hover:text-themed transition-colors">
+            Verify an Arc execution
+          </button>
+          <a
+            href="https://github.com/Tajudeeen/interminal-"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-themed transition-colors"
+          >
+            GitHub ↗
+          </a>
+          <a
+            href={`${ARC.explorer}/address/${ARC.settlement}`}
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-themed transition-colors"
+          >
+            Settlement ↗
+          </a>
+        </div>
       </footer>
     </div>
   );

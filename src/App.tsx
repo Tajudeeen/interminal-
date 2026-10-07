@@ -29,9 +29,23 @@ import { ImportTokenModal } from "./components/modals/ImportTokenModal";
 
 export const App: React.FC = () => {
   const { view, theme, setTheme, setSearchOpen, syncMarketData, environmentMode } = useAppStore();
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    if (new URLSearchParams(window.location.search).has("verify")) return false;
+    try {
+      return window.sessionStorage.getItem("interminal:splash-seen") !== "1";
+    } catch {
+      return true;
+    }
+  });
   const verificationOpened = useRef(false);
-  const finishSplash = useCallback(() => setShowSplash(false), []);
+  const finishSplash = useCallback(() => {
+    try {
+      window.sessionStorage.setItem("interminal:splash-seen", "1");
+    } catch {
+      // Session storage can be unavailable in hardened browser modes.
+    }
+    setShowSplash(false);
+  }, []);
 
   useEffect(() => {
     // Theme is applied independently of market refreshes.
@@ -132,10 +146,10 @@ export const App: React.FC = () => {
       {/* Arc Hackathon Judge Showcase Tour Floating HUD */}
       <JudgeTourBar />
 
-      {/* 2-Second Initial Splashscreen */}
+      {/* Short brand splash, once per browser session. Verification deep links skip it. */}
       {showSplash && (
         <SplashScreen
-          durationMs={2000}
+          durationMs={1400}
           onComplete={finishSplash}
         />
       )}

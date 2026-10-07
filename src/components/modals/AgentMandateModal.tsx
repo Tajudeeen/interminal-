@@ -57,8 +57,8 @@ export const AgentMandateModal: React.FC = () => {
     <GlassModalWrapper
       isOpen={mandateModalOpen}
       onClose={() => setMandateModalOpen(false)}
-      title="Create Bounded Agent Mandate"
-      subtitle="EIP-712 Scoped Delegation · Zero Custodial Risk"
+      title="Explore Bounded Agent Mandate"
+      subtitle="Scoped delegation model · live signing disabled on v1"
       maxWidth="max-w-lg"
     >
       <div className="space-y-4">
@@ -178,11 +178,11 @@ export const AgentMandateModal: React.FC = () => {
 
         {/* Safety Note */}
         <div className="p-3 rounded-card bg-themed-card/40 border border-themed/20 font-mono text-[11px] text-muted space-y-1">
-          <div className="text-themed font-semibold">Deterministic Policy Enforcer:</div>
+          <div className="text-themed font-semibold">Bounded Policy Model:</div>
           <div>
-            Agent cannot exceed ${spendUsd.toLocaleString()} ${livePortfolio ? "of your current liquid USDC" : "in simulation"} or trade outside selected pairs.
+            Simulation and the hardened V2 policy model cap cumulative spend at ${spendUsd.toLocaleString()} USDC and bind execution to selected routes.
           </div>
-          <div>Revocation is enforced on-chain through the deployed mandate revocation function.</div>
+          <div>Deployed v1 exposes on-chain revocation, but live mandate signing stays disabled because v1 route binding is not strong enough for unattended execution.</div>
         </div>
 
         {/* CTA */}
@@ -194,7 +194,7 @@ export const AgentMandateModal: React.FC = () => {
           disabled={environmentMode === "mainnet"}
           leftIcon={<Icon name="verified_user" className="material-symbols-outlined text-[18px]" />}
         >
-          Authorize Scoped EIP-712 Mandate
+          {environmentMode === "mainnet" ? "Live Mandate Disabled on v1" : "Create Simulated Scoped Mandate"}
         </Button>
       </div>
     </GlassModalWrapper>

@@ -289,7 +289,7 @@ export const TreasuryCockpitView: React.FC = () => {
             {mainnetReview ? "—" : "$" + usycNavUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="mt-1 font-mono text-[10px] text-pos font-semibold">
-            {mainnetReview ? "Live USYC NAV loads after connect" : "+3.225% reference yield ($" + (usycNavUsd * USYC_APY).toFixed(2) + "/yr)"}
+            {mainnetReview ? "Live USYC NAV loads after connect" : "+" + (USYC_APY * 100).toFixed(3) + "% reference yield ($" + (usycNavUsd * USYC_APY).toFixed(2) + "/yr)"}
           </div>
         </div>
 
@@ -401,7 +401,7 @@ export const TreasuryCockpitView: React.FC = () => {
                 leftIcon={<Icon name="bolt" className="material-symbols-outlined text-[16px]" />}
               >
                 {sweep.recommended
-                  ? `Sweep $${sweep.sweepAmount.toLocaleString()} USDC → USYC T-Bills${livePortfolio ? " (On-Chain)" : " (Sim)"}`
+                  ? `Sweep $${sweep.sweepAmount.toLocaleString()} USDC → USYC${livePortfolio ? " (On-Chain)" : " (Sim)"}`
                   : "Cash Buffer Fully Balanced"}
               </Button>
             </div>
@@ -542,7 +542,7 @@ export const TreasuryCockpitView: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 font-mono">
           <div className="p-4 rounded-card bg-themed-card/50 border border-themed/30">
-            <div className="text-[10px] text-muted uppercase">USYC Net Reference Yield (3.225%)</div>
+            <div className="text-[10px] text-muted uppercase">USYC Net Reference Yield ({(USYC_APY * 100).toFixed(3)}%)</div>
             <div className="text-2xl font-black text-pos mt-1 font-display tnum">
               {mainnetReview ? "—" : "+$" + horizonYieldUsyc.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
@@ -636,8 +636,8 @@ export const TreasuryCockpitView: React.FC = () => {
               Minimum output is derived from the live Arc AMM quote
             </div>
             <div className="text-[11px] text-muted space-y-1">
-              <div>• Oracle Price: $1.0000 USYC NAV</div>
-              <div>• Execution Cost: $0.00 (Zero Curve Impact)</div>
+              <div>• Reference NAV: ${PAIRS["USYC/USDC"].price.toFixed(6)} per USYC</div>
+              <div>• Execution Cost: Determined by the live router quote and wallet gas estimate</div>
               <div>• Fallback Gate: Fail-Closed when live quoted output is zero or unavailable</div>
             </div>
           </div>
@@ -647,7 +647,7 @@ export const TreasuryCockpitView: React.FC = () => {
       {/* Asset Allocation Breakdown Table */}
       <div className="card-themed border border-themed rounded-card p-5">
         <h3 className="font-display font-bold text-sm text-themed mb-3">
-          On-Chain Balance Sheet Holdings
+          {livePortfolio ? "On-Chain Balance Sheet Holdings" : mainnetReview ? "Mainnet holdings load after wallet connect" : "Simulated Balance Sheet Holdings"}
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left font-mono text-xs">
@@ -690,14 +690,14 @@ export const TreasuryCockpitView: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-themed/30 pb-3">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-wider text-pos font-bold">
-              Arc Mainnet Verified Protocol
+              Arc Mainnet Deployment & Infrastructure
             </div>
             <h3 className="font-display font-bold text-sm text-themed mt-0.5">
               Deployed Contracts & Settlement Layer (Chain ID: 5042)
             </h3>
           </div>
           <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-pos/10 border border-pos/30 text-pos font-bold">
-            Protocol verification available in the repo test suite
+            Deployment and infrastructure checks available in the repo test suite
           </span>
         </div>
 
