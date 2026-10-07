@@ -78,7 +78,7 @@ export const Header: React.FC = () => {
             <button
               key={item.id}
               onClick={() => {
-                item.id === "testnet" ? s.launchTestnet() : s.setView(item.id);
+                s.setView(item.id);
                 setMenuOpen(false);
               }}
               aria-current={s.view === item.id ? "page" : undefined}
