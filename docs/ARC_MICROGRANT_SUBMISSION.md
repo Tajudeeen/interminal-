@@ -9,13 +9,13 @@
 
 ## Short description
 
-Interminal is a reserve-aware USDC treasury proof on Arc Mainnet. An operator keeps an explicit USDC operating reserve, reviews a USDC → USYC router quote, signs a bounded EIP-712 trade ticket, and exports a receipt that anyone can verify against the confirmed Arc transaction without connecting a wallet.
+Interminal is a reserve-aware treasury execution layer on Arc Mainnet. An operator protects operating USDC first, reviews only policy-eligible capital, signs explicit EIP-712 execution bounds, and exports a receipt that anyone can independently verify against the confirmed Arc transaction. USYC is the current demonstration asset.
 
 ## What Interminal uses Arc for
 
 - Arc Mainnet chain 5042 is the live settlement network.
 - USDC is used as Arc's gas asset, so the treasury's dollar-denominated operating asset also pays network fees.
-- Interminal reads registered Arc USDC/USYC assets and requests a fresh Arc router quote before live review.
+- Interminal calculates the amount of USDC that is eligible after the protected reserve, then requests a fresh Arc router quote before live review.
 - The wallet signs an EIP-712 trade ticket that is submitted to the deployed Arc settlement contract.
 - The verifier checks the actual Arc transaction and exact `TradeSettled` event, including route, trader, raw amounts, block, and output.
 
@@ -52,4 +52,18 @@ This submission is intentionally not presented as a full trading platform.
 
 ## Submission sentence
 
-A small Arc-native treasury experiment: protect an operating USDC reserve, move only reviewed excess cash into USYC through a bounded wallet-signed settlement, and make the resulting Arc execution independently verifiable.
+A small Arc-native execution-control experiment: protect operating USDC first, move only policy-eligible capital through explicit wallet-signed bounds, and make the resulting settlement independently verifiable. USYC is the current demonstration route.
+
+
+## Why this is not another USYC yield app
+
+The novelty claim is not access to USYC or treasury yield. Existing Arc products already cover that category.
+
+Interminal focuses on the layer around the move:
+- reserve policy before execution;
+- human review before signing;
+- explicit input/output bounds;
+- Arc-native settlement;
+- independently reconstructable execution evidence.
+
+The reviewer should judge that control-and-proof loop, not a projected return.

@@ -1,6 +1,6 @@
 # Interminal
 
-Interminal is a reserve-aware USDC treasury proof on Arc Mainnet. An operator keeps an explicit USDC operating reserve, reviews a USDC → USYC router quote, signs a bounded EIP-712 trade ticket, and exports a receipt that another person can verify against Arc without connecting a wallet.
+Interminal is a reserve-aware treasury execution layer on Arc Mainnet. An operator protects an explicit USDC operating reserve, reviews only policy-eligible capital, signs bounded EIP-712 execution terms, and exports a receipt that another person can verify against Arc without connecting a wallet. USYC is the current demonstration asset, not the product's core claim.
 
 [Open the app](https://useinterminal.vercel.app/) · [Settlement contract](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36) · [Builder profile](https://x.com/Deeen_Codes) · [Submission pack](docs/ARC_MICROGRANT_SUBMISSION.md) · [Security notes](SECURITY.md)
 
@@ -12,7 +12,7 @@ The submission is intentionally scoped as a working Arc-native proof, not a broa
 | --- | --- |
 | Live deployment on Arc mainnet | Production app points to Arc Mainnet chain `5042` and the deployed settlement contract below |
 | Public repository | This repository is public and contains the application, contract references, verification scripts, tests, and evidence docs |
-| Short explanation of what Arc is used for | Arc provides USDC-denominated gas, the live settlement layer, registered USDC/USYC assets, and the transaction/event history used by the verifier |
+| Short explanation of what Arc is used for | Arc provides USDC-denominated gas, the live settlement layer, and the transaction/event history used to prove what actually settled |
 | Public builder profile | [@Deeen_Codes](https://x.com/Deeen_Codes) |
 | Not testnet-only | Mainnet is the primary workflow; testnet is an optional developer rehearsal and is never presented as submission proof |
 
@@ -45,7 +45,7 @@ The deployed trade path spends liquid USDC. It doesn't automatically unwind a US
 ### Core submission path
 
 - **Home:** states the Arc mainnet use case, links the live contract/repo/builder profile, and offers a clearly marked simulation.
-- **Treasury:** reserve policy, real wallet holdings in mainnet mode, USYC position, sweep/unwind review, and deployed Arc infrastructure references.
+- **Treasury:** reserve policy, policy-eligible USDC, real wallet holdings in mainnet mode, reviewed USYC move/unwind, and deployed Arc infrastructure references.
 - **Execute:** chart/reference context plus the fresh Arc router quote, bounded review, explicit wallet signing, and settlement submission.
 - **Receipts:** confirmed execution records, pending-transaction recovery, explorer links, JSON export, and independent evidence entry point.
 - **Verify:** wallet-free transaction/event/certificate verification and live Arc infrastructure reads.
@@ -67,7 +67,7 @@ Charts never fall back to generated candles in the production data path.
 - A failed feed shows an unavailable state. A selected feed doesn't make every row in the market directory live.
 - Directory reference prices and modeled trade previews aren't executable quotes. Mainnet review fetches a separate Arc router quote.
 - Registered token addresses don't guarantee issuer eligibility, a usable pool, or liquidity. The submission route directory foregrounds registered Arc assets only.
-- The USYC net-yield reference is 3.225%, checked against the issuer product data on 2026-10-07. Return estimates exclude fees, price changes, access restrictions, and execution costs. This isn't a guaranteed return.
+- USYC is the current demonstration asset. Its NAV/yield reference may be shown as supporting context, but Interminal does not present projected return as the reason to execute. Eligibility, liquidity, price changes, fees, and execution costs remain external constraints.
 
 TradingView Lightweight Charts provides rendering, not market data. Attribution remains enabled. The CSP permits the specific read-only feed hosts used by the app, including Hashnote and Binance.
 
@@ -105,7 +105,7 @@ See [the live contract fingerprint](docs/LIVE_CONTRACT_FINGERPRINT.md), [Arc sub
 
 ## Submission readiness
 
-The previous final-hardening baseline passed the full CI and production deployment checks. This host-alignment pass narrows the public product around the Arc-native proof path and removes non-core automation/advisory UI from the submission experience. One material proof item still remains before submission: execute one small successful USDC-to-USYC settlement from an eligible Arc mainnet wallet, export its receipt, verify it independently, and replace the documented transaction placeholder with the observed hash and permanent `?verify=0x...` reviewer link.
+The current positioning pass narrows the product further around the part that is most defensible against existing Arc treasury/yield products: reserve-aware, human-bounded, independently verifiable execution. Yield optimization is supporting context, not the headline. One material proof item still remains before submission: execute one small successful USDC-to-USYC settlement from an eligible Arc mainnet wallet, export its receipt, verify it independently, and replace the documented transaction placeholder with the observed hash and permanent `?verify=0x...` reviewer link.
 
 ## Run locally
 
@@ -144,3 +144,17 @@ Built by [@Deeen_Codes](https://x.com/Deeen_Codes).
 ### Reproducible successor deployment
 
 `npm run prepare:deployment` creates the hardened successor artifact and an unsigned deployment transaction without a key. `npm run deploy` uses a securely provided environment key and refuses to accept altered builds or a mismatching on-chain runtime. `npm run verify:deployment` independently checks the creation transaction and full runtime and can resume an interrupted deployment. None of these commands changes the live app address. See [the remaining chain steps](docs/CLOSE_CHAIN_GAPS.md). `npm run verify:treasury-history` checks the complete settlement event history in bounded RPC ranges.
+
+
+## Product differentiation
+
+Interminal is not claiming that moving USDC into USYC is new. Arc already has treasury, yield, and RWA products.
+
+The product claim is narrower:
+
+1. protect operating cash before optimization;
+2. allow only policy-eligible USDC into the reviewed execution path;
+3. bind the live move to explicit wallet-signed limits;
+4. reconstruct and verify the resulting Arc settlement independently of the original session.
+
+That control-and-evidence layer is the product. USYC is the current route used to demonstrate it.

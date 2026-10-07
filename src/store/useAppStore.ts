@@ -250,8 +250,8 @@ function getInitialActivity() {
     {
       ts: now - 3600000 * 2,
       type: "sweep",
-      label: "Simulated Yield Sweep: $12,500 USDC -> USYC",
-      detail: "Simulation only · reference USYC yield is used for the demo model.",
+      label: "Simulated Reserve-Bounded Move: $12,500 USDC -> USYC",
+      detail: "Simulation only · demonstrates reserve-aware execution without claiming Arc history.",
     },
     {
       ts: now - 3600000 * 7,
@@ -1671,7 +1671,7 @@ export const useAppStore = create<AppState>((set, get) => {
               {
                 ts: Date.now(),
                 type: "sweep",
-                label: "Simulated Yield Sweep: $" + sweepAmountUsdc.toLocaleString() + " USDC → USYC",
+                label: "Simulated Reserve-Bounded Move: $" + sweepAmountUsdc.toLocaleString() + " USDC → USYC",
                 detail: "Simulation only · no Arc transaction was broadcast.",
                 hash: receipt.signature,
                 receiptId: receipt.receiptId,
@@ -1680,7 +1680,7 @@ export const useAppStore = create<AppState>((set, get) => {
               ...s.activity,
             ],
           }));
-          get().addToast("Simulation Sweep Complete", "No Arc transaction was broadcast.", "info");
+          get().addToast("Simulation Review Complete", "No Arc transaction was broadcast.", "info");
         } else {
           const receipt = generateTradeReceipt({
             quote: {

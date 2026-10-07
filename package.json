@@ -1,7 +1,7 @@
 {
   "name": "interminal",
   "version": "1.0.0",
-  "description": "Reserve-aware USDC treasury proof on Arc Mainnet with bounded wallet-signed execution and independently verifiable receipts.",
+  "description": "Reserve-aware, wallet-bounded treasury execution on Arc Mainnet with independently verifiable settlement receipts.",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -18,8 +18,15 @@
     "verify:deployment": "node scripts/verifyDeployment.mjs",
     "verify:treasury-history": "node scripts/scanTreasuryHistory.mjs"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "arc",
+    "usdc",
+    "treasury",
+    "eip-712",
+    "verification",
+    "stablecoin"
+  ],
+  "author": "Tajudeen Owoeteniyan",
   "license": "MIT",
   "type": "module",
   "devDependencies": {

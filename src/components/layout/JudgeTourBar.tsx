@@ -26,10 +26,10 @@ export const JudgeTourBar: React.FC = () => {
   const liquidUsdc = balances.USDC || 0;
   const excessCash = Math.max(0, liquidUsdc - targetBufferUsd);
 
-  // Step 1: Execute Sweep
+  // Step 1: Review policy-eligible capital
   const handleStep1Sweep = () => {
     if (excessCash <= 0) {
-      addToast("Cash Already Optimized", "Idle cash is already swept into USYC.", "info");
+      addToast("No Eligible Excess", "All liquid USDC is already inside the protected operating reserve.", "info");
       return;
     }
     void useAppStore.getState().executeSweepOnchain(excessCash, "sweep");
@@ -92,7 +92,7 @@ export const JudgeTourBar: React.FC = () => {
         {/* Step Indicator Tabs */}
         <div className="grid grid-cols-3 gap-1.5 font-mono text-[11px]">
           {[
-            { step: 1, label: "1. Policy Sweep" },
+            { step: 1, label: "1. Reserve Policy" },
             { step: 2, label: "2. Liquidity" },
             { step: 3, label: "3. Arc Audit" },
           ].map((item) => (
@@ -114,8 +114,8 @@ export const JudgeTourBar: React.FC = () => {
         {judgeTourStep === 1 && (
           <div className="space-y-3">
             <div className="font-mono text-xs text-themed leading-relaxed">
-              <span className="font-bold">Step 1: Preserve an operating cash reserve.</span> Operating cash buffer retains liquid USDC for operations; detects{" "}
-              <span className="text-pos font-bold">${excessCash.toLocaleString()} USDC</span> excess cash and routes it to USYC in simulation mode.
+              <span className="font-bold">Step 1: Preserve an operating cash reserve.</span> Operating cash buffer retains liquid USDC for operations; identifies{" "}
+              <span className="text-pos font-bold">${excessCash.toLocaleString()} USDC</span> USDC above the reserve as eligible for a reviewed USYC move in simulation mode.
             </div>
             <div className="flex flex-col sm:flex-row items-stretch gap-2">
               <Button
@@ -125,7 +125,7 @@ export const JudgeTourBar: React.FC = () => {
                 onClick={handleStep1Sweep}
                 leftIcon={<Icon name="bolt" className="material-symbols-outlined text-[16px]" />}
               >
-                1-Click Sweep ${excessCash.toLocaleString()} to USYC
+                Review ${excessCash.toLocaleString()} USDC → USYC
               </Button>
               <Button
                 variant="secondary"
