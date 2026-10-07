@@ -56,7 +56,7 @@ export const CapitalFlowDiagram: React.FC = () => {
             {usycBalance.toLocaleString()} USYC
           </div>
           <div className="font-mono text-[10px] text-lime-500 mt-1">
-            {excessCash > 0 ? `Reviewable: ${excessCash.toLocaleString()} USDC` : "No cash above reserve"}
+            {excessCash > 0 ? `Reviewable: $${excessCash.toLocaleString()} USDC` : "No cash above reserve"}
           </div>
         </div>
 
