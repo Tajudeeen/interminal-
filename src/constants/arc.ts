@@ -58,5 +58,3 @@ export const TOKEN_ALLOW = new Set<string>([
 
 export const USYC_APY = 0.03225; // Current USYC net-yield reference observed 2026-10-07. Update before submission if the issuer's published rate changes.
 export const USYC_YIELD_AS_OF = "2026-10-07";
-export const FED_FUNDS_RATE = 0.0525; // 5.25%
-export const ECB_DEPOSIT_RATE = 0.0350; // 3.50%
