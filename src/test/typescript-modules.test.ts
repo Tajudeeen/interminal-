@@ -290,7 +290,7 @@ describe("React TypeScript Modular Engine", () => {
     store.setSide("sell");
     expect(useAppStore.getState().side).toBe("sell");
 
-    store.setOrderType("dca");
-    expect(useAppStore.getState().orderType).toBe("dca");
+    store.setAmount(750);
+    expect(useAppStore.getState().amount).toBe(750);
   });
 });
