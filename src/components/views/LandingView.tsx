@@ -1,7 +1,7 @@
 import { Icon } from "../ui/Icon";
 import React, { useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
-import { USYC_APY, USYC_YIELD_AS_OF, ARC } from "../../constants/arc";
+import { ARC } from "../../constants/arc";
 import { Button } from "../ui/Button";
 
 export const LandingView: React.FC = () => {
@@ -11,7 +11,6 @@ export const LandingView: React.FC = () => {
   const [buffer, setBuffer] = useState(2500);
   const liquid = Math.min(capital, buffer);
   const allocated = capital - liquid;
-  const modeledYield = allocated * USYC_APY;
   const startScenario = () => {
     launchDemo();
     useAppStore.setState({
@@ -31,16 +30,16 @@ export const LandingView: React.FC = () => {
             Live on Arc Mainnet · Chain 5042
           </div>
           <h1>
-            Keep USDC ready.
+            Protect operating cash.
             <br />
-            Put the rest to work.
+            Review every move.
             <br />
-            <span>Prove every move.</span>
+            <span>Prove what settled.</span>
           </h1>
           <p className="welcome-description">
-            A focused Arc mainnet treasury proof. Keep an operating USDC reserve,
-            review a USDC → USYC router quote, sign it in your wallet, and verify
-            the confirmed settlement without trusting this interface.
+            A focused Arc mainnet treasury execution layer. Set the USDC reserve first,
+            move only policy-eligible cash, sign explicit bounds in your wallet, and
+            let anyone verify the confirmed settlement without trusting Interminal.
           </p>
           <div className="flex flex-wrap gap-3 mt-8">
             <Button
@@ -71,7 +70,7 @@ export const LandingView: React.FC = () => {
         </div>
         <div className="welcome-scenario">
           <div className="flex justify-between items-center mb-7">
-            <span className="eyebrow">Small treasury scenario</span>
+            <span className="eyebrow">Reserve-first policy scenario</span>
             <span className="scenario-tag">Scenario</span>
           </div>
           <label className="text-sub text-sm block" htmlFor="scenario-capital">
@@ -132,28 +131,21 @@ export const LandingView: React.FC = () => {
               <strong>${liquid.toLocaleString()}</strong>
             </div>
             <div>
-              <small>Potential USYC move</small>
+              <small>Policy-eligible for review</small>
               <strong>${allocated.toLocaleString()}</strong>
             </div>
           </div>
           <div className="scenario-return">
             <div>
-              <small>Reference yield estimate</small>
-              <strong>
-                +$
-                {modeledYield.toLocaleString("en-US", {
-                  maximumFractionDigits: 0,
-                })}
-              </strong>
+              <small>Protected operating cash</small>
+              <strong>$${liquid.toLocaleString(){"}"}</strong>
             </div>
             <span>
-              {(USYC_APY * 100).toFixed(3)}%<small>Reference yield</small>
+              $${allocated.toLocaleString(){"}"}<small>Maximum reviewable amount</small>
             </span>
           </div>
           <p className="text-xs text-muted leading-relaxed mt-3 mb-5">
-            Illustrative estimate using the {USYC_YIELD_AS_OF} yield reference.
-            Fees, access restrictions, price changes, and execution costs aren't
-            included.
+            This is a policy boundary, not a return forecast. USYC is the current demonstration asset; live execution still depends on issuer access and router liquidity.
           </p>
           <Button
             fullWidth
@@ -166,7 +158,7 @@ export const LandingView: React.FC = () => {
               />
             }
           >
-            Try this cash policy in the demo
+            Test this reserve policy in the demo
           </Button>
         </div>
       </section>
@@ -256,7 +248,7 @@ export const LandingView: React.FC = () => {
         </div>
       </section>
       <footer className="welcome-footer">
-        <span>USDC operations. Wallet-controlled execution.</span>
+        <span>Reserve first. Bound the execution. Verify the settlement.</span>
         <div className="flex flex-wrap items-center gap-4">
           <button type="button" onClick={() => setView("proof")} className="hover:text-themed transition-colors">
             Verify an Arc execution
