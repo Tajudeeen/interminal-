@@ -1,11 +1,10 @@
 import { Icon } from "../ui/Icon";
-import React, { useState } from "react";
+import React from "react";
 import { useAppStore } from "../../store/useAppStore";
-import { USYC_APY, ARC } from "../../constants/arc";
+import { ARC } from "../../constants/arc";
 import { PAIRS } from "../../constants/pairs";
 import {
   calculateJitUnwind,
-  calculateOpportunityCost,
   calculateYieldSweep,
 } from "../../lib/math/treasury";
 import { portfolioSnapshot } from "../../lib/math/risk";
@@ -33,14 +32,10 @@ export const TreasuryCockpitView: React.FC = () => {
     environmentMode,
   } = useAppStore();
 
-  const [simHorizonDays, setSimHorizonDays] = useState<number>(365);
-
   const mainnetReview = environmentMode === "mainnet" && !livePortfolio;
   const liquidUsdc = balances.USDC || 0;
   const usycBalance = balances.USYC || 0;
 
-  const idleCash = Math.max(0, liquidUsdc - targetBufferUsd);
-  const cost = calculateOpportunityCost(idleCash, USYC_APY);
   const sweep = calculateYieldSweep(liquidUsdc, targetBufferUsd);
   // Mainnet review intentionally starts with empty balances and zero stress-test sizing
   // until the wallet is connected. Keep the render path safe instead of passing an
@@ -132,11 +127,6 @@ export const TreasuryCockpitView: React.FC = () => {
       "ok"
     );
   };
-
-  // Yield over selected horizon
-  const horizonYieldUsyc = usycNavUsd * (USYC_APY * (simHorizonDays / 365));
-  const horizonYieldBank = 0;
-  const horizonAlphaDelta = horizonYieldUsyc - horizonYieldBank;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
@@ -289,21 +279,21 @@ export const TreasuryCockpitView: React.FC = () => {
             {mainnetReview ? "—" : "$" + usycNavUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="mt-1 font-mono text-[10px] text-pos font-semibold">
-            {mainnetReview ? "Live USYC NAV loads after connect" : "+" + (USYC_APY * 100).toFixed(3) + "% reference yield ($" + (usycNavUsd * USYC_APY).toFixed(2) + "/yr)"}
+            {mainnetReview ? "Live USYC NAV loads after connect" : "Current demonstration asset · reference NAV, not an execution quote"}
           </div>
         </div>
 
-        {/* Idle Cash Drag */}
+        {/* Policy-eligible cash */}
         <div className="card-themed border border-themed rounded-card p-4">
           <div className="flex justify-between items-center text-muted font-mono text-[10px] uppercase">
-            <span>Idle Opportunity Drag</span>
-            <Icon name="warning" className="material-symbols-outlined text-[16px] text-amber-500" />
+            <span>Policy-Eligible USDC</span>
+            <Icon name="policy" className="material-symbols-outlined text-[16px] text-lime-500" />
           </div>
-          <div className="mt-2 font-display font-extrabold text-2xl text-amber-500 tnum">
-            {mainnetReview ? "—" : "$" + cost.annualYieldUsd.toFixed(2) + "/yr"}
+          <div className="mt-2 font-display font-extrabold text-2xl text-lime-500 tnum">
+            {mainnetReview ? "—" : "$" + Math.max(0, liquidUsdc - targetBufferUsd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="mt-1 font-mono text-[10px] text-muted">
-            {mainnetReview ? "Live cost requires a wallet valuation" : "Forfeiting $" + cost.dailyYieldUsd.toFixed(3) + "/day"}
+            {mainnetReview ? "Connect wallet to calculate eligibility" : "Maximum USDC this app will allow into a reviewed buy"}
           </div>
         </div>
       </div>
@@ -311,7 +301,7 @@ export const TreasuryCockpitView: React.FC = () => {
       {/* Treasury Capital Flow Topography Diagram */}
       <CapitalFlowDiagram />
 
-      {/* Main Interactive Controls: Target Operating Buffer & Yield Sweep */}
+      {/* Main Interactive Controls: reserve policy and reviewed treasury move */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Module 1: Target Operating Cash Buffer Selector */}
         <div className="card-themed border border-themed rounded-card p-5 space-y-4">
@@ -321,7 +311,7 @@ export const TreasuryCockpitView: React.FC = () => {
                 Target Operating Cash Buffer
               </h2>
               <p className="font-mono text-xs text-muted mt-1 leading-relaxed">
-                Retain liquid USDC for operations, then sweep excess into the configured treasury asset.
+                Set the amount that must remain liquid. Only USDC above this boundary is eligible for a reviewed treasury move.
               </p>
               {livePortfolio && (
                 <p className="font-mono text-[10px] text-cyan mt-2">
@@ -379,15 +369,15 @@ export const TreasuryCockpitView: React.FC = () => {
           {/* Sweep Status Card */}
           <div className="p-3.5 rounded-card bg-themed-card/50 border border-themed/30 space-y-2 font-mono text-xs">
             <div className="flex justify-between">
-              <span className="text-muted">Excess Idle Cash:</span>
+              <span className="text-muted">Policy-Eligible Cash:</span>
               <span className="text-themed font-bold tnum">
                 {mainnetReview ? "—" : "$" + Math.max(0, liquidUsdc - targetBufferUsd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " USDC"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted">Projected Extra Yield:</span>
+              <span className="text-muted">Reserve after max move:</span>
               <span className="text-pos font-bold tnum">
-                {mainnetReview ? "—" : "+$" + sweep.annualExtraYield.toFixed(2) + "/yr"}
+                {mainnetReview ? "—" : "$" + Math.min(liquidUsdc, targetBufferUsd).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " USDC"}
               </span>
             </div>
             <div className="pt-2 border-t border-themed/20">
@@ -401,8 +391,8 @@ export const TreasuryCockpitView: React.FC = () => {
                 leftIcon={<Icon name="bolt" className="material-symbols-outlined text-[16px]" />}
               >
                 {sweep.recommended
-                  ? `Sweep $${sweep.sweepAmount.toLocaleString()} USDC → USYC${livePortfolio ? " (On-Chain)" : " (Sim)"}`
-                  : "Cash Buffer Fully Balanced"}
+                  ? `Review ${sweep.sweepAmount.toLocaleString()} USDC → USYC${livePortfolio ? " (On-Chain)" : " (Sim)"}`
+                  : "No USDC above reserve"}
               </Button>
             </div>
           </div>
