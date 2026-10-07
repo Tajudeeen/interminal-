@@ -1,44 +1,49 @@
-export const NAV_ITEMS = [
+export const CORE_NAV_ITEMS = [
   {
     id: "portfolio",
     label: "Treasury",
     icon: "savings",
-    detail: "Balances and cash policy",
+    detail: "Set the USDC operating reserve",
   },
   {
     id: "terminal",
-    label: "Trade desk",
-    icon: "candlestick_chart",
-    detail: "Review and settle a trade",
-  },
-  {
-    id: "markets",
-    label: "Markets",
-    icon: "query_stats",
-    detail: "Routes and price sources",
-  },
-  {
-    id: "ai",
-    label: "Analysis",
-    icon: "psychology",
-    detail: "Rule-based market signals",
+    label: "Execute",
+    icon: "swap_horiz",
+    detail: "Review an Arc quote and sign",
   },
   {
     id: "ledger",
-    label: "Activity & receipts",
+    label: "Receipts",
     icon: "receipt_long",
-    detail: "Inspect execution evidence",
+    detail: "Inspect saved execution evidence",
   },
   {
     id: "proof",
-    label: "Verification",
+    label: "Verify",
     icon: "verified_user",
-    detail: "Check contracts and RPC",
+    detail: "Verify settlement without a wallet",
+  },
+] as const;
+
+export const LAB_NAV_ITEMS = [
+  {
+    id: "markets",
+    label: "Arc routes",
+    icon: "route",
+    detail: "Registered assets and price sources",
+  },
+  {
+    id: "ai",
+    label: "Market context",
+    icon: "query_stats",
+    detail: "Read-only deterministic indicators",
   },
   {
     id: "testnet",
-    label: "Testnet lab",
+    label: "Testnet rehearsal",
     icon: "science",
-    detail: "Optional wallet rehearsal",
+    detail: "Optional wallet/network check",
   },
 ] as const;
+
+export const NAV_ITEMS = [...CORE_NAV_ITEMS, ...LAB_NAV_ITEMS] as const;
