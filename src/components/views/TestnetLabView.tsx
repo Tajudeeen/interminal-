@@ -50,10 +50,10 @@ testnetTaskComplete,
         <div className="relative">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan">Testnet execution lab</div>
-              <h1 className="font-display text-3xl sm:text-4xl font-black text-themed mt-2">Rehearse it before mainnet.</h1>
+              <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan">Optional testnet rehearsal</div>
+              <h1 className="font-display text-3xl sm:text-4xl font-black text-themed mt-2">Check wallet plumbing, not the grant proof.</h1>
               <p className="font-mono text-sm text-sub mt-2 max-w-2xl leading-relaxed">
-                Use Arc Testnet only when you want a wallet rehearsal. Mainnet review and execution are available directly.
+                Use Arc Testnet only for an optional wallet/network rehearsal. The Arc Microgrant proof is the mainnet settlement path, available directly.
               </p>
             </div>
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-pill bg-cyan/10 border border-cyan/30 text-cyan font-mono text-[10px] uppercase">
