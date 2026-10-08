@@ -101,6 +101,25 @@ npm run verify:execution -- --receipt exported-receipt.json
 
 The CLI verifies the event independently with ethers and requires exact raw amounts for certificate matching. Old receipts missing raw amounts can still be inspected in the app; regenerate event evidence from their transaction for current CLI checks.
 
+### Generate the final submission proof bundle
+
+After one real confirmed USDC → USYC mainnet execution, export the receipt into the gitignored `private-evidence/` folder and run:
+
+```sh
+npm run proof:submission -- --receipt private-evidence/receipt.json
+npm run verify:submission
+npm run verify:treasury-history
+```
+
+`proof:submission` is fail-closed. It refuses simulation receipts, non-USDC/USYC routes, receipts that do not match the exact `TradeSettled` event, the wrong Arc chain, or a changed settlement runtime fingerprint. When every check passes it writes:
+
+- `artifacts/submission-evidence.json`: a public, signature-free machine-readable evidence bundle;
+- `docs/FINAL_MAINNET_EVIDENCE.md`: a reviewer-facing record with the observed Arc transaction and permanent wallet-free verification link.
+
+CI automatically re-verifies `artifacts/submission-evidence.json` against Arc whenever that artifact is committed. The original exported receipt remains local so its wallet signature does not need to be published.
+
+See [the provable submission workflow](docs/PROVABLE_SUBMISSION_WORKFLOW.md).
+
 See [the live contract fingerprint](docs/LIVE_CONTRACT_FINGERPRINT.md), [Arc submission evidence](docs/ARC_MICROGRANT_PROOF.md), [the rework review](docs/REWORK_REVIEW.md), and [the remaining chain-evidence steps](docs/CLOSE_CHAIN_GAPS.md).
 
 ## Submission readiness

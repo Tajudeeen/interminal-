@@ -32,3 +32,11 @@ jobs:
 
       - name: Arc mainnet verification
         run: npm run verify:arc
+
+      - name: Verify committed submission evidence when present
+        run: |
+          if [ -f artifacts/submission-evidence.json ]; then
+            npm run verify:submission
+          else
+            echo "::notice::No real mainnet submission evidence has been committed yet."
+          fi

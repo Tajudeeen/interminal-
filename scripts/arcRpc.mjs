@@ -13,6 +13,19 @@ export async function arcRpc(method, params = []) {
   return data.result;
 }
 
+export async function arcRpcRetry(method, params = [], { attempts = 4, delayMs = 1200 } = {}) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await arcRpc(method, params);
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+    }
+  }
+  throw lastError;
+}
+
 // Use Node's fetch transport so the verifier uses the same HTTP path as the app.
 export class ArcReadProvider extends ethers.JsonRpcProvider {
   async _send(payload) {

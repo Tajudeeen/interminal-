@@ -47,8 +47,24 @@ This submission is intentionally not presented as a full trading platform.
 - [x] Arc Mainnet contract/infrastructure
 - [x] Mainnet is the primary product path, not testnet
 - [x] Short Arc-specific project description
+- [x] Fail-closed code pipeline for generating and continuously re-verifying the final proof bundle
 - [ ] Add one real successful USDC → USYC mainnet settlement and verification deep link before submitting
 - [ ] Builder should confirm the project has not already been funded by a Circle or Arc program
+
+## Final proof automation
+
+After the real transaction confirms, export its mainnet receipt locally and run:
+
+```sh
+npm run verify:execution -- --receipt private-evidence/receipt.json
+npm run proof:submission -- --receipt private-evidence/receipt.json
+npm run verify:submission
+npm run verify:treasury-history
+```
+
+The generator refuses simulations, wrong routes, mismatching certificates, the wrong chain, or a changed live settlement fingerprint. On success it creates the public machine-readable `artifacts/submission-evidence.json` and reviewer-facing `docs/FINAL_MAINNET_EVIDENCE.md`. The original receipt stays in the gitignored `private-evidence/` directory. Once the public artifact is committed, CI re-queries Arc with `npm run verify:submission` on every build.
+
+See [PROVABLE_SUBMISSION_WORKFLOW.md](PROVABLE_SUBMISSION_WORKFLOW.md).
 
 ## Submission sentence
 
