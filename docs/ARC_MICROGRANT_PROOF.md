@@ -100,6 +100,8 @@ The grant explicitly rewards small, working Arc mainnet experiments. The submiss
 
 The remaining blocker is still empirical, not cosmetic: capture one real successful USDC → USYC settlement from an eligible Arc wallet before submitting.
 
+The code-side proof pipeline is now prepared in advance. After that wallet action, `npm run proof:submission -- --receipt private-evidence/receipt.json` independently validates the confirmed transaction, exact `TradeSettled` event, USDC/USYC route, certificate digest and raw amounts, then writes a signature-free public evidence artifact plus reviewer-facing Markdown. `npm run verify:submission` re-queries Arc from the committed artifact, and CI runs that verification automatically whenever the artifact exists. See [PROVABLE_SUBMISSION_WORKFLOW.md](PROVABLE_SUBMISSION_WORKFLOW.md).
+
 
 ## Differentiation after ecosystem review
 
