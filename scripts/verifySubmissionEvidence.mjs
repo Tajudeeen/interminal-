@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { ethers } from "ethers";
-import { arcRpc } from "./arcRpc.mjs";
+import { arcRpc, arcRpcRetry } from "./arcRpc.mjs";
 import { verifyExecution } from "./verifyExecution.mjs";
 import {
   SUBMISSION,
@@ -26,10 +26,10 @@ async function main() {
   assertSubmissionEvidenceRecord(evidence);
 
   const [chainHex, headHex, code, deployment, execution] = await Promise.all([
-    arcRpc("eth_chainId"),
-    arcRpc("eth_blockNumber"),
-    arcRpc("eth_getCode", [SUBMISSION.settlement, "latest"]),
-    arcRpc("eth_getTransactionReceipt", [SUBMISSION.deploymentTx]),
+    arcRpcRetry("eth_chainId"),
+    arcRpcRetry("eth_blockNumber"),
+    arcRpcRetry("eth_getCode", [SUBMISSION.settlement, "latest"]),
+    arcRpcRetry("eth_getTransactionReceipt", [SUBMISSION.deploymentTx]),
     verifyExecution({ transactionHash: evidence.execution.transactionHash }),
   ]);
 
