@@ -19,6 +19,15 @@ function ok(label, value) {
   console.log("PASS", label);
 }
 
+async function getReceiptWithRetry(provider, txHash, attempts = 4) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const receipt = await provider.getTransactionReceipt(txHash);
+    if (receipt) return receipt;
+    if (attempt < attempts) await new Promise(resolve => setTimeout(resolve, 1200 * attempt));
+  }
+  return null;
+}
+
 function stripSolidityMetadata(bytecode) {
   const hex = String(bytecode || "").replace(/^0x/i, "");
   if (hex.length < 4) return "0x" + hex;
@@ -61,7 +70,7 @@ async function main() {
   const block = await provider.getBlockNumber();
   ok("Arc mainnet is producing blocks", block >= EXPECTED_DEPLOYMENT_BLOCK);
 
-  const deploymentReceipt = await provider.getTransactionReceipt(EXPECTED_DEPLOYMENT_TX);
+  const deploymentReceipt = await getReceiptWithRetry(provider, EXPECTED_DEPLOYMENT_TX);
   ok("deployment transaction exists", !!deploymentReceipt);
   ok("deployment transaction succeeded", deploymentReceipt?.status === 1);
   ok(
