@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 import { ethers } from "ethers";
-import { arcRpc, ARC_RPC } from "./arcRpc.mjs";
+import { arcRpc, arcRpcRetry, ARC_RPC } from "./arcRpc.mjs";
 
 const SETTLEMENT = "0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36";
 const USDC = "0x3600000000000000000000000000000000000000";
@@ -32,8 +32,8 @@ export async function verifyExecution({ transactionHash, certificate } = {}) {
   }
 
   const [chain, tx] = await Promise.all([
-    arcRpc("eth_chainId"),
-    arcRpc("eth_getTransactionReceipt", [txHash]),
+    arcRpcRetry("eth_chainId"),
+    arcRpcRetry("eth_getTransactionReceipt", [txHash]),
   ]);
 
   requireMatch(Number(BigInt(chain)) === 5042, "Wrong Arc chain");
