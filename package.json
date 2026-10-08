@@ -16,7 +16,10 @@
     "verify:source": "node scripts/verifyArc.mjs --require-source-match",
     "prepare:deployment": "node scripts/compile.mjs --successor && node scripts/deploy.mjs",
     "verify:deployment": "node scripts/verifyDeployment.mjs",
-    "verify:treasury-history": "node scripts/scanTreasuryHistory.mjs"
+    "verify:treasury-history": "node scripts/scanTreasuryHistory.mjs",
+    "proof:submission": "node scripts/buildSubmissionEvidence.mjs",
+    "verify:submission": "node scripts/verifySubmissionEvidence.mjs",
+    "check:submission": "node scripts/checkSubmissionReadiness.mjs"
   },
   "keywords": [
     "arc",
