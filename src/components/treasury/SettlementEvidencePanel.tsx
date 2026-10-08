@@ -38,6 +38,17 @@ export const SettlementEvidencePanel: React.FC = () => {
     const url = URL.createObjectURL(blob); const a = document.createElement("a");
     a.href = url; a.download = `interminal-evidence-${report.transactionHash}.json`; a.click(); URL.revokeObjectURL(url);
   };
+  const submissionGrade = !!report && report.isTreasuryFlow && report.certificateMatched === true;
+  const copyReviewerLink = () => {
+    if (!report) return;
+    const link = new URL(window.location.origin);
+    link.searchParams.set("verify", report.transactionHash);
+    void navigator.clipboard.writeText(link.toString());
+  };
+  const copyCliCommand = () => {
+    if (!report) return;
+    void navigator.clipboard.writeText(`npm run verify:execution -- ${report.transactionHash}`);
+  };
   return <section className="card-themed border border-themed rounded-card p-5 space-y-4">
     <div><h2 className="text-lg font-bold text-themed">Verify a mainnet execution</h2>
       <p className="text-sm text-sub mt-1">No wallet required. Paste a settlement transaction or import an exported receipt. We query Arc and compare the actual event, token route, amounts, and block.</p></div>
@@ -54,14 +65,32 @@ export const SettlementEvidencePanel: React.FC = () => {
     {certificate ? <p className="text-xs text-sub">Certificate digest matches locally. Its execution has not been verified until you run the check.</p> : null}
     {error ? <p role="alert" className="text-sm text-neg break-words">{error}</p> : null}
     <div aria-live="polite">
-      {report ? <div className="space-y-3 text-sm">
-        <p className="text-pos font-bold">Settlement event verified on Arc Mainnet</p>
-        <p className="text-themed">{report.amountIn.toLocaleString(undefined, { maximumFractionDigits: 8 })} {report.inputSymbol} → {report.amountOut.toLocaleString(undefined, { maximumFractionDigits: 8 })} {report.outputSymbol}</p>
-        <p className="text-sub">Block {report.blockNumber.toLocaleString()} · {report.isTreasuryFlow ? "USDC/USYC treasury flow" : "Token trade, does not prove the USYC treasury flow"}</p>
-        <p className="text-sub">Certificate {report.certificateMatched ? "matches the event" : "not provided"} · Digest anchor {report.certificateAnchored === null ? report.anchorError ? "query unavailable" : "not checked" : report.certificateAnchored ? "found" : "not found"}</p>
+      {report ? <div className="space-y-4 text-sm">
+        <div className={`rounded-card border p-3 ${submissionGrade ? "border-pos/40 bg-pos/5" : "border-themed bg-themed-card/40"}`}>
+          <p className="text-pos font-bold">Settlement event verified on Arc Mainnet</p>
+          <p className="text-themed mt-1">{report.amountIn.toLocaleString(undefined, { maximumFractionDigits: 8 })} {report.inputSymbol} → {report.amountOut.toLocaleString(undefined, { maximumFractionDigits: 8 })} {report.outputSymbol}</p>
+          <p className="text-sub mt-1">Block {report.blockNumber.toLocaleString()}</p>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 font-mono text-[11px]">
+          <div className="rounded-card border border-pos/30 bg-pos/5 p-2"><div className="text-muted">Transaction</div><div className="text-pos font-bold mt-1">PASS</div></div>
+          <div className="rounded-card border border-pos/30 bg-pos/5 p-2"><div className="text-muted">TradeSettled event</div><div className="text-pos font-bold mt-1">PASS</div></div>
+          <div className={`rounded-card border p-2 ${report.isTreasuryFlow ? "border-pos/30 bg-pos/5" : "border-neg/30 bg-neg/5"}`}><div className="text-muted">USDC / USYC route</div><div className={`font-bold mt-1 ${report.isTreasuryFlow ? "text-pos" : "text-neg"}`}>{report.isTreasuryFlow ? "PASS" : "FAIL"}</div></div>
+          <div className={`rounded-card border p-2 ${report.certificateMatched ? "border-pos/30 bg-pos/5" : "border-themed bg-themed-card/40"}`}><div className="text-muted">Certificate</div><div className={`font-bold mt-1 ${report.certificateMatched ? "text-pos" : "text-muted"}`}>{report.certificateMatched ? "MATCHED" : "NOT PROVIDED"}</div></div>
+        </div>
+        <p className={submissionGrade ? "text-pos font-semibold" : "text-sub"}>
+          {submissionGrade
+            ? "Submission-grade proof: the USDC/USYC settlement and exported mainnet certificate independently match."
+            : report.isTreasuryFlow
+              ? "The on-chain treasury settlement is verified. Import the exported mainnet receipt and run the check again to prove the certificate matches."
+              : "This transaction is valid, but it does not prove the USDC/USYC treasury workflow."}
+        </p>
+        <p className="text-sub">Digest anchor {report.certificateAnchored === null ? report.anchorError ? "query unavailable" : "not checked" : report.certificateAnchored ? "found" : "not found"} · Anchoring is reported separately from settlement proof.</p>
         <a className="text-cyan underline break-all" href={`${ARC.explorer}/tx/${report.transactionHash}`} target="_blank" rel="noreferrer">Open transaction on Arc Explorer</a>
-        <div className="flex flex-wrap gap-3"><Button variant="secondary" onClick={download}>Download evidence</Button>
-          <Button variant="secondary" onClick={() => { const link = new URL(window.location.origin); link.searchParams.set("verify", report.transactionHash); void navigator.clipboard.writeText(link.toString()); }}>Copy verification link</Button></div>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="secondary" onClick={download}>Download evidence</Button>
+          <Button variant="secondary" onClick={copyReviewerLink}>Copy verification link</Button>
+          <Button variant="secondary" onClick={copyCliCommand}>Copy CLI check</Button>
+        </div>
       </div> : <p className="text-xs text-muted">An on-chain digest alone does not prove execution. Reports are based on the configured public Arc RPC and can be checked again independently.</p>}
     </div>
   </section>;
