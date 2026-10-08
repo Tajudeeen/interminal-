@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { ethers } from "ethers";
-import { arcRpc } from "./arcRpc.mjs";
+import { arcRpc, arcRpcRetry } from "./arcRpc.mjs";
 import { SUBMISSION, assertSubmissionEvidenceRecord } from "./submissionEvidenceLib.mjs";
 
 async function main() {
@@ -8,10 +8,10 @@ async function main() {
   const add = (id, ok, detail) => checks.push({ id, ok, detail });
 
   const [chainHex, headHex, code, deployment] = await Promise.all([
-    arcRpc("eth_chainId"),
-    arcRpc("eth_blockNumber"),
-    arcRpc("eth_getCode", [SUBMISSION.settlement, "latest"]),
-    arcRpc("eth_getTransactionReceipt", [SUBMISSION.deploymentTx]),
+    arcRpcRetry("eth_chainId"),
+    arcRpcRetry("eth_blockNumber"),
+    arcRpcRetry("eth_getCode", [SUBMISSION.settlement, "latest"]),
+    arcRpcRetry("eth_getTransactionReceipt", [SUBMISSION.deploymentTx]),
   ]);
 
   const chainId = Number(BigInt(chainHex));
