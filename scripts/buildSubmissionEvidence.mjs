@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ethers } from "ethers";
-import { arcRpc } from "./arcRpc.mjs";
+import { arcRpc, arcRpcRetry } from "./arcRpc.mjs";
 import { loadReceiptCertificate, verifyExecution } from "./verifyExecution.mjs";
 import {
   SUBMISSION,
@@ -32,10 +32,10 @@ async function main() {
 
   const execution = await verifyExecution({ certificate });
   const [chainHex, headHex, code, deployment] = await Promise.all([
-    arcRpc("eth_chainId"),
-    arcRpc("eth_blockNumber"),
-    arcRpc("eth_getCode", [SUBMISSION.settlement, "latest"]),
-    arcRpc("eth_getTransactionReceipt", [SUBMISSION.deploymentTx]),
+    arcRpcRetry("eth_chainId"),
+    arcRpcRetry("eth_blockNumber"),
+    arcRpcRetry("eth_getCode", [SUBMISSION.settlement, "latest"]),
+    arcRpcRetry("eth_getTransactionReceipt", [SUBMISSION.deploymentTx]),
   ]);
 
   const chainId = Number(BigInt(chainHex));
