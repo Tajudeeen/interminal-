@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ARC } from "../../constants/arc";
 import { useAppStore } from "../../store/useAppStore";
 import { parseReceiptFile } from "../../lib/evidence/archive";
@@ -13,15 +13,22 @@ export const SettlementEvidencePanel: React.FC = () => {
   const [report, setReport] = useState<SettlementEvidence | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const verify = async () => {
+  const verify = async (transactionHash = tx.trim()) => {
     setBusy(true); setError(""); setReport(null);
     try {
-      const evidence = await verifySettlement(tx.trim(), certificate);
+      const evidence = await verifySettlement(transactionHash.trim(), certificate);
       setReport(evidence);
       importReceipt(certificate ? { ...certificate, status: "confirmed", onchainAnchored: evidence.certificateAnchored === true } : reconstructReceiptFromEvent(evidence));
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
   };
+  useEffect(() => {
+    const deepLinkHash = new URLSearchParams(window.location.search).get("verify");
+    if (deepLinkHash) void verify(deepLinkHash);
+    // The deep link is intentionally verified once on mount; later checks remain user-triggered.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const upload = async (file?: File) => {
     setReport(null); setCertificate(undefined); setError("");
     if (!file) return;
