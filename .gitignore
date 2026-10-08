@@ -13,3 +13,6 @@ contractArtifact.js
 .env
 .env.*
 !.env.example
+
+# Local exported receipts can contain wallet signatures. Keep originals private.
+private-evidence/
