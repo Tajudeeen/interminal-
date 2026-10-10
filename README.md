@@ -2,7 +2,7 @@
 
 Interminal is a reserve-aware treasury execution layer on Arc Mainnet. An operator protects an explicit USDC operating reserve, reviews only policy-eligible capital, signs bounded EIP-712 execution terms, and exports a receipt that another person can verify against Arc without connecting a wallet. USYC is the current demonstration asset, not the product's core claim.
 
-[Open the app](https://useinterminal.vercel.app/) · [Settlement contract](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36) · [Builder profile](https://x.com/Deeen_Codes) · [Submission pack](docs/ARC_MICROGRANT_SUBMISSION.md) · [Security notes](SECURITY.md)
+[Open the app](https://useinterminal.vercel.app/) · [Public repo](https://github.com/Tajudeeen/interminal-) · [Settlement contract](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36) · [Builder profile](https://x.com/Deeen_Codes) · [Submission pack](docs/ARC_MICROGRANT_SUBMISSION.md) · [Recording guide](docs/DEMO_RECORDING_GUIDE.md) · [Security notes](SECURITY.md)
 
 ## Arc Microgrant fit
 

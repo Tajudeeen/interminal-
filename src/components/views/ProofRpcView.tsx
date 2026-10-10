@@ -17,6 +17,7 @@ export const ProofRpcView: React.FC = () => {
     latencyMs: number;
   } | null>(null);
   const [probing, setProbing] = useState(false);
+  const [probeError, setProbeError] = useState("");
 
   useEffect(() => {
     if (!proof.local) {
@@ -27,11 +28,13 @@ export const ProofRpcView: React.FC = () => {
 
   const handleProbeSettlement = async () => {
     setProbing(true);
+    setProbeError("");
+    setSettlementDetails(null);
     try {
       const res = await querySettlementDetails();
       setSettlementDetails(res);
     } catch (err) {
-      console.error("Failed to query settlement details", err);
+      setProbeError(err instanceof Error ? err.message : String(err));
     } finally {
       setProbing(false);
     }
@@ -139,6 +142,7 @@ export const ProofRpcView: React.FC = () => {
           </div>
         </div>
 
+        {probeError ? <p role="alert" className="text-sm text-neg">Arc RPC check unavailable: {probeError}. Use Probe Settlement RPC to retry.</p> : null}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
           <div className="p-3 rounded-card bg-themed-card/50 border border-themed/20 space-y-1">
             <div className="text-[10px] text-muted uppercase">Contract Address</div>
@@ -151,7 +155,7 @@ export const ProofRpcView: React.FC = () => {
           <div className="p-3 rounded-card bg-themed-card/50 border border-themed/20 space-y-1">
             <div className="text-[10px] text-muted uppercase">Bytecode Payload</div>
             <div className="font-bold text-themed tnum">
-              {settlementDetails ? `${settlementDetails.bytecodeBytes.toLocaleString()} bytes` : "Querying..."}
+              {settlementDetails ? `${settlementDetails.bytecodeBytes.toLocaleString()} bytes` : probing ? "Querying..." : "Unavailable"}
             </div>
             <div className="text-[11px] text-pos">
               Deployed Block #{ARC.deployBlock.toLocaleString()}
@@ -161,7 +165,7 @@ export const ProofRpcView: React.FC = () => {
           <div className="p-3 rounded-card bg-themed-card/50 border border-themed/20 space-y-1">
             <div className="text-[10px] text-muted uppercase">EIP-712 DOMAIN_SEPARATOR</div>
             <div className="font-bold text-themed truncate" title={settlementDetails?.domainSeparator}>
-              {settlementDetails?.domainSeparator ? settlementDetails.domainSeparator.slice(0, 18) + "..." : "Querying..."}
+              {settlementDetails?.domainSeparator ? settlementDetails.domainSeparator.slice(0, 18) + "..." : probing ? "Querying..." : "Unavailable"}
             </div>
             <div className="text-[11px] text-pos">
               {settlementDetails?.isDomainMatch ? "Matched Interminal Domain" : "Awaiting RPC"}

@@ -84,7 +84,7 @@ export const ReviewTradeModal: React.FC = () => {
           </div>
           <div className="flex justify-between">
             <span className="text-muted">Gas estimate:</span>
-            <span className="text-pos">Estimated by wallet at submission</span>
+            <span className="text-pos">{live ? "Estimated by wallet at submission" : "No network fee in simulation"}</span>
           </div>
         </div>
 
@@ -93,9 +93,9 @@ export const ReviewTradeModal: React.FC = () => {
           <div className="flex items-center justify-between text-themed font-semibold border-b border-themed/20 pb-1.5">
             <span className="flex items-center gap-1.5 text-pos">
               <Icon name="verified" className="material-symbols-outlined text-[15px]" />
-              <span>Cryptographic Verification</span>
+              <span>{live ? "Wallet signing domain" : "Simulation receipt integrity"}</span>
             </span>
-            <span className="text-[10px] text-muted">EIP-712 Standard</span>
+            <span className="text-[10px] text-muted">{live ? "EIP-712 Standard" : "SHA-256 certificate"}</span>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-muted">
@@ -125,7 +125,7 @@ export const ReviewTradeModal: React.FC = () => {
 
         <div role="status" className="text-xs text-sub leading-relaxed">
           {expired ? "Quote expired. Close this dialog and review again." : `Quote expires in ${Math.max(0, Math.ceil((pendingQuote.expiresAt - now) / 1000))}s.`}
-          {live && <p className="mt-2">An exact token approval may be required. Your wallet signs the reviewed input and minimum output. Receipt anchoring is a separate transaction after settlement.</p>}
+          <p className="mt-2">{live ? "An exact token approval may be required. Your wallet signs the reviewed input and minimum output. Receipt anchoring is a separate transaction after settlement." : "Balances and output are modeled. Confirmation creates a local simulated receipt. No wallet signature or Arc transaction is requested."}</p>
         </div>
         {/* Sign Button */}
         <Button

@@ -465,11 +465,11 @@ export const TreasuryCockpitView: React.FC = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-muted">USYC Amount to Rebalance:</span>
-              <span className="text-pos font-bold tnum">${jit.usycToRedeem.toLocaleString()}</span>
+              <span className="text-pos font-bold tnum">{mainnetReview ? "—" : jit.usycToRedeem.toLocaleString(undefined, { maximumFractionDigits: 6 }) + " USYC"}</span>
             </div>
             <div className="flex justify-between pt-1 border-t border-themed/20">
               <span className="text-muted">Remaining USYC Treasury:</span>
-              <span className="text-themed font-medium tnum">{mainnetReview ? "—" : "$" + jit.remainingUsyc.toLocaleString()}</span>
+              <span className="text-themed font-medium tnum">{mainnetReview ? "—" : jit.remainingUsyc.toLocaleString(undefined, { maximumFractionDigits: 6 }) + " USYC"}</span>
             </div>
           </div>
 
