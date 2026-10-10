@@ -259,6 +259,8 @@ describe("treasury readiness regressions", () => {
     expect(state.balances.USDC).toBe(900);
     expect(state.auditReceipts[0].mode).toBe("simulation");
     expect(state.auditReceipts[0].amountUsd).toBe(100);
+    expect(state.auditReceipts[0].gasUsd).toBe(0);
+    expect(state.auditReceipts[0].mandateId).toBe("NONE (Unsigned Simulation)");
     expect(walletRpc).not.toHaveBeenCalled();
   });
   it("preserves exact demo unwind units through review and confirmation", async () => {
