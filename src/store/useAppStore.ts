@@ -1647,7 +1647,7 @@ export const useAppStore = create<AppState>((set, get) => {
       }
 
       // Treasury actions in every workspace require an explicit bounded review.
-      get().setPair("USYC/USDC");
+      if (get().pair !== "USYC/USDC") get().setPair("USYC/USDC");
       get().setSide(direction === "sweep" ? "buy" : "sell");
       get().setAmount(direction === "sweep" ? sweepAmountUsdc : sweepAmountUsdc * PAIRS["USYC/USDC"].price);
       await get().prepareTradeReview(direction === "unwind" ? sweepAmountUsdc : undefined);

@@ -298,10 +298,10 @@ function firstTimestamp(row: UnknownRecord): number | null {
 }
 
 async function fetchHashnoteUsycCandles(count = 120): Promise<CandleResult> {
-  const [current, reports] = await Promise.all([
-    fetchJson(HASHNOTE_PRICE),
-    fetchJson(HASHNOTE_REPORTS),
-  ]);
+  const [current, reports] = typeof window !== "undefined"
+    ? await fetchJson("/api/market-data?pair=USYC%2FUSDC&timeframe=1D&count=" + Math.min(count, 500))
+        .then(payload => [payload.current, payload.reports])
+    : await Promise.all([fetchJson(HASHNOTE_PRICE), fetchJson(HASHNOTE_REPORTS)]);
 
   const rows = [...collectRecords(reports), ...collectRecords(current)];
   const seen = new Set<string>();

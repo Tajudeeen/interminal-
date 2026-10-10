@@ -230,12 +230,12 @@ export const TerminalTradeView: React.FC = () => {
           <div className="pt-2 text-[10px] font-mono text-muted flex items-center justify-between gap-3">
             <span>{marketFeedStatus.live ? "LIVE" : "OFFLINE"} · {marketFeedStatus.source}</span>
             <a
-              href="https://www.geckoterminal.com/arc"
+              href={pairKey === "USYC/USDC" ? "https://usyc.hashnote.com" : "https://www.geckoterminal.com/arc"}
               target="_blank"
               rel="noreferrer"
               className="text-cyan hover:underline"
             >
-              Market data by GeckoTerminal
+              {pairKey === "USYC/USDC" ? "Published NAV by Hashnote" : "Market data by GeckoTerminal"}
             </a>
           </div>
         </div>
@@ -379,7 +379,7 @@ export const TerminalTradeView: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted">Gas estimate:</span>
-                  <span className="text-pos font-medium">Wallet estimates at submission</span>
+                  <span className="text-pos font-medium">{environmentMode === "demo" ? "No network fee in simulation" : "Wallet estimates at submission"}</span>
                 </div>
               </div>
 
@@ -402,13 +402,13 @@ export const TerminalTradeView: React.FC = () => {
                   disabled={!amount || amount <= 0}
                   leftIcon={<Icon name={livePortfolio ? "verified" : "science"} className="material-symbols-outlined text-[18px]" />}
                 >
-                  {livePortfolio ? "Get router quote & review" : mainnetReview ? "Connect Wallet to Trade" : "Simulate Trade"}
+                  {livePortfolio ? "Get router quote & review" : mainnetReview ? "Connect Wallet to Trade" : "Review simulated trade"}
                 </Button>
                 <div className="flex flex-col gap-1 px-1 text-[10px] font-mono text-muted pt-1 border-t border-themed/20">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-pos" />
-                      Wallet-signed EIP-712
+                      {environmentMode === "demo" ? "Local simulated receipt" : "Wallet-signed EIP-712"}
                     </span>
                     <span>{livePortfolio ? "Gas estimated by wallet at submission" : mainnetReview ? "Connect wallet for gas estimate" : "Simulation does not charge gas"}</span>
                   </div>

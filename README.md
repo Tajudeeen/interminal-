@@ -63,7 +63,7 @@ Desktop and mobile both prioritize the four-step mainnet proof path. Experimenta
 Charts never fall back to generated candles in the production data path.
 
 - WETH/USDC, cirBTC/USDC, and EURC/USDC candles use GeckoTerminal Arc pools through the same-origin `/api/market-data` serverless endpoint.
-- USYC uses Hashnote NAV reports and a daily line chart. A NAV reference isn't an executable redemption quote.
+- USYC uses Hashnote NAV reports through the same-origin market-data endpoint and a daily line chart. A NAV reference isn't an executable redemption quote.
 - A failed feed shows an unavailable state. A selected feed doesn't make every row in the market directory live.
 - Directory reference prices and modeled trade previews aren't executable quotes. Mainnet review fetches a separate Arc router quote.
 - Registered token addresses don't guarantee issuer eligibility, a usable pool, or liquidity. The submission route directory foregrounds registered Arc assets only.

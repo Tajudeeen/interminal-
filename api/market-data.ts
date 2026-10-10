@@ -59,6 +59,31 @@ export default async function handler(req, res) {
   const requestedCount = req.query?.count === undefined ? 120 : Number(req.query.count);
   const count = Number.isInteger(requestedCount) ? Math.min(Math.max(requestedCount, 2), 500) : 120;
 
+  // Keep issuer NAV reads same-origin too. They are reference data, never router quotes.
+  if (pair === "USYC/USDC") {
+    if (timeframe !== "1D") return json(res, 400, { error: "USYC NAV supports daily reports only" });
+    try {
+      const [current, reports] = await Promise.all(["price", "price-reports"].map(async endpoint => {
+        const upstream = await fetch("https://usyc.hashnote.com/api/" + endpoint, {
+          headers: { Accept: "application/json" },
+          signal: AbortSignal.timeout(9000),
+        });
+        if (!upstream.ok) throw new Error("Hashnote HTTP " + upstream.status);
+        return upstream.json();
+      }));
+      if (!current?.data || !Array.isArray(reports?.data) || reports.data.length < 2) {
+        throw new Error("Hashnote returned insufficient NAV reports");
+      }
+      return json(res, 200, {
+        pair, timeframe, source: "USYC NAV · Hashnote", attribution: "Published USYC NAV by Hashnote",
+        current, reports: { ...reports, data: reports.data.slice(0, count) },
+        fetchedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      return json(res, 502, { error: "Unable to load published USYC NAV", detail: error instanceof Error ? error.message : String(error) });
+    }
+  }
+
   const pool = POOLS[pair];
   const resolution = RESOLUTION[timeframe];
 
