@@ -2,8 +2,8 @@
   "chainId": 5042,
   "settlement": "0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36",
   "fromBlock": 23367508,
-  "toBlock": 24448374,
-  "completedThrough": 24448374,
+  "toBlock": 25268582,
+  "completedThrough": 25268582,
   "complete": true,
   "events": []
 }
