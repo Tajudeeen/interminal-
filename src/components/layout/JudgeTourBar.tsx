@@ -22,7 +22,7 @@ export const JudgeTourBar: React.FC = () => {
     if (step === 1) setView("portfolio");
     if (step === 2) {
       const store = useAppStore.getState();
-      store.setPair("USYC/USDC");
+      if (store.pair !== "USYC/USDC") store.setPair("USYC/USDC");
       store.setSide("buy");
       store.setAmount(Math.min(500, eligible));
       setView("terminal");
@@ -45,7 +45,7 @@ export const JudgeTourBar: React.FC = () => {
         </div>
         <div className="grid grid-cols-4 gap-1 font-mono text-[10px]">
           {steps.map((label, index) => (
-            <button key={label} aria-current={judgeTourStep === index + 1 ? "step" : undefined} onClick={() => goToStep(index + 1)} className={`py-2 px-1 rounded-lg ${judgeTourStep === index + 1 ? "bg-lime-500 text-black font-bold" : "bg-themed-card/50 text-sub border border-themed/30"}`}>
+            <button key={label} disabled={executing} aria-current={judgeTourStep === index + 1 ? "step" : undefined} onClick={() => goToStep(index + 1)} className={`py-2 px-1 rounded-lg ${judgeTourStep === index + 1 ? "bg-lime-500 text-black font-bold" : "bg-themed-card/50 text-sub border border-themed/30"}`}>
               {index + 1}. {label}
             </button>
           ))}
