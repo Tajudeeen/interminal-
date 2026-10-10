@@ -83,12 +83,12 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
 
         {/* Tagline */}
         <p className="font-display text-sm sm:text-base text-neutral-300 font-medium max-w-xs leading-snug">
-          The wallet-controlled treasury desk for <span className="text-shimmer font-semibold">Arc</span>.
+          Reserve-aware treasury execution on <span className="text-shimmer font-semibold">Arc</span>.
         </p>
 
         {/* Sub-tagline */}
         <p className="font-mono text-[10px] text-neutral-400 tracking-widest uppercase mt-2">
-          Continuous Cash Sweeps · EIP-712 Mandates
+          Protect cash · Review bounds · Verify settlement
         </p>
 
         {/* Glassmorphic Progress Bar & Telemetry */}

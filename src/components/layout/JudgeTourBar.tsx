@@ -1,202 +1,78 @@
-import { Icon } from "../ui/Icon";
 import React from "react";
-import { useAppStore } from "../../store/useAppStore";
-import { ARC } from "../../constants/arc";
-import { shortAddr } from "../../lib/arc/wallet";
+import { Icon } from "../ui/Icon";
 import { Button } from "../ui/Button";
+import { useAppStore } from "../../store/useAppStore";
+
+const steps = ["Reserve", "Review", "Receipts", "Verify"];
 
 export const JudgeTourBar: React.FC = () => {
   const {
-    judgeTourOpen,
-    judgeTourStep,
-    setJudgeTourOpen,
-    setJudgeTourStep,
-    setView,
-    setSide,
-    setAmount,
-    balances,
-    targetBufferUsd,
-    setActiveReceiptModal,
-    auditReceipts,
-    addToast,
+    judgeTourOpen, judgeTourStep, setJudgeTourOpen, setJudgeTourStep,
+    setView, balances, targetBufferUsd, auditReceipts, setActiveReceiptModal,
+    reviewOpen, activeReceiptModal, environmentMode, executing,
   } = useAppStore();
 
-  if (!judgeTourOpen) return null;
+  // Let the review and certificate dialogs take focus without covering them.
+  if (!judgeTourOpen || environmentMode !== "demo" || reviewOpen || activeReceiptModal) return null;
 
-  const liquidUsdc = balances.USDC || 0;
-  const excessCash = Math.max(0, liquidUsdc - targetBufferUsd);
-
-  // Step 1: Review policy-eligible capital
-  const handleStep1Sweep = () => {
-    if (excessCash <= 0) {
-      addToast("No Eligible Excess", "All liquid USDC is already inside the protected operating reserve.", "info");
-      return;
-    }
-    void useAppStore.getState().executeSweepOnchain(excessCash, "sweep");
-  };
-
-  // Step 2: Load a $25,000 JIT scenario without pretending a transaction happened.
-  const handleStep2SimulateTrade = () => {
-    setView("terminal");
-    setSide("buy");
-    setAmount(25000);
-    addToast(
-      "JIT Scenario Loaded",
-      "The terminal now shows the USYC shortfall and live quote controls. No transaction was broadcast.",
-      "info",
-    );
-  };
-
-  // Step 3: Inspect latest receipt
-  const handleStep3InspectReceipt = () => {
-    setView("ledger");
-    if (auditReceipts.length > 0) {
-      setActiveReceiptModal(auditReceipts[0]);
-    }
-  };
-
+  const eligible = Math.max(0, (balances.USDC || 0) - targetBufferUsd);
   const goToStep = (step: number) => {
+    if (executing) return;
     setJudgeTourStep(step);
     if (step === 1) setView("portfolio");
     if (step === 2) {
+      const store = useAppStore.getState();
+      store.setPair("USYC/USDC");
+      store.setSide("buy");
+      store.setAmount(Math.min(500, eligible));
       setView("terminal");
-      setSide("buy");
-      setAmount(25000);
     }
     if (step === 3) setView("ledger");
+    if (step === 4) setView("proof");
   };
 
   return (
-    <div className="fixed left-4 right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] md:left-auto md:right-8 md:bottom-8 z-50 md:max-w-xl w-auto animate-view-fade">
+    <aside aria-label="Reviewer walkthrough" className="fixed left-4 right-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] md:left-auto md:right-8 md:bottom-8 z-40 md:max-w-xl w-auto animate-view-fade">
       <div className="glass-modal rounded-2xl p-4 sm:p-5 border border-cyan/40 shadow-2xl space-y-4 max-h-[calc(100dvh-6rem)] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-cyan animate-pulse" />
-            <span className="font-display font-black text-xs sm:text-sm text-themed tracking-wide uppercase">
-              Take a Tour
-            </span>
-            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-cyan/15 text-cyan border border-cyan/30 font-bold">
-              3-MIN WALKTHROUGH
-            </span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-display font-black text-xs text-themed uppercase">Reviewer walkthrough</span>
+            <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-cyan/15 text-cyan border border-cyan/30">90 SECONDS · SIMULATION</span>
           </div>
-          <button
-            onClick={() => setJudgeTourOpen(false)}
-            className="text-muted hover:text-themed transition-colors p-1"
-            title="Close Tour"
-          >
+          <button aria-label="Close tour" onClick={() => setJudgeTourOpen(false)} className="text-muted hover:text-themed p-1">
             <Icon name="close" className="material-symbols-outlined text-[18px]" />
           </button>
         </div>
-
-        {/* Step Indicator Tabs */}
-        <div className="grid grid-cols-3 gap-1.5 font-mono text-[11px]">
-          {[
-            { step: 1, label: "1. Reserve Policy" },
-            { step: 2, label: "2. Liquidity" },
-            { step: 3, label: "3. Arc Audit" },
-          ].map((item) => (
-            <button
-              key={item.step}
-              onClick={() => goToStep(item.step)}
-              className={`py-1.5 px-2 rounded-lg text-center transition-all ${
-                judgeTourStep === item.step
-                  ? "bg-lime-500 text-black font-extrabold shadow-sm scale-102"
-                  : "bg-themed-card/50 text-sub hover:text-themed border border-themed/30"
-              }`}
-            >
-              {item.label}
+        <div className="grid grid-cols-4 gap-1 font-mono text-[10px]">
+          {steps.map((label, index) => (
+            <button key={label} aria-current={judgeTourStep === index + 1 ? "step" : undefined} onClick={() => goToStep(index + 1)} className={`py-2 px-1 rounded-lg ${judgeTourStep === index + 1 ? "bg-lime-500 text-black font-bold" : "bg-themed-card/50 text-sub border border-themed/30"}`}>
+              {index + 1}. {label}
             </button>
           ))}
         </div>
-
-        {/* Step Content */}
-        {judgeTourStep === 1 && (
-          <div className="space-y-3">
-            <div className="font-mono text-xs text-themed leading-relaxed">
-              <span className="font-bold">Step 1: Preserve an operating cash reserve.</span> Operating cash buffer retains liquid USDC for operations; identifies{" "}
-              <span className="text-pos font-bold">${excessCash.toLocaleString()} USDC</span> USDC above the reserve as eligible for a reviewed USYC move in simulation mode.
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                className="flex-1 min-w-0"
-                onClick={handleStep1Sweep}
-                leftIcon={<Icon name="bolt" className="material-symbols-outlined text-[16px]" />}
-              >
-                Review ${excessCash.toLocaleString()} USDC → USYC
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="flex-1 min-w-0"
-                onClick={() => goToStep(2)}
-                rightIcon={<Icon name="arrow_forward" className="material-symbols-outlined text-[14px]" />}
-              >
-                Next: Liquidity
-              </Button>
-            </div>
+        {judgeTourStep === 1 && <div className="space-y-3">
+          <p className="text-sm text-sub">Keep ${targetBufferUsd.toLocaleString()} USDC ready for operations. Only the remaining ${eligible.toLocaleString()} can enter a buy review. Change the reserve above to see that boundary move.</p>
+          <Button size="sm" onClick={() => goToStep(2)}>Next: Review a bounded move</Button>
+        </div>}
+        {judgeTourStep === 2 && <div className="space-y-3">
+          <p className="text-sm text-sub">Review a ${Math.min(500, eligible).toLocaleString()} USDC move into USYC. Inspect the input, minimum output, slippage, and expiry before confirming. This demo creates a simulated receipt and never asks a wallet to sign.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" disabled={eligible <= 0 || executing} onClick={() => void useAppStore.getState().executeSweepOnchain(Math.min(500, eligible), "sweep")}>Open simulated review</Button>
+            <Button variant="secondary" size="sm" onClick={() => goToStep(3)}>Next: Receipts</Button>
           </div>
-        )}
-
-        {judgeTourStep === 2 && (
-          <div className="space-y-3">
-            <div className="font-mono text-xs text-themed leading-relaxed">
-              <span className="font-bold">Step 2: Review a liquidity shortfall.</span> A planned trade of{" "}
-              <span className="text-lime-500 font-bold">$25,000</span> exceeds liquid USDC. The demo calculates a USYC shortfall, while live mode can execute a fresh USYC/USDC route on Arc with bounded output.
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                className="flex-1 min-w-0"
-                onClick={handleStep2SimulateTrade}
-                leftIcon={<Icon name="swap_calls" className="material-symbols-outlined text-[16px]" />}
-              >
-                Open $25k JIT Scenario
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="flex-1 min-w-0"
-                onClick={() => goToStep(3)}
-                rightIcon={<Icon name="arrow_forward" className="material-symbols-outlined text-[14px]" />}
-              >
-                Next: Arc Audit
-              </Button>
-            </div>
+        </div>}
+        {judgeTourStep === 3 && <div className="space-y-3">
+          <p className="text-sm text-sub">{auditReceipts.length ? "Inspect the receipt, its simulation label, and SHA-256 integrity digest. Export JSON for a portable record. Local integrity does not prove a mainnet trade." : "Confirm the simulated review in step 2 to create a receipt. No transaction or certificate is invented by this tour."}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" disabled={!auditReceipts.length} onClick={() => setActiveReceiptModal(auditReceipts[0])}>Inspect latest receipt</Button>
+            <Button variant="secondary" size="sm" onClick={() => goToStep(4)}>Next: Verify on Arc</Button>
           </div>
-        )}
-
-        {judgeTourStep === 3 && (
-          <div className="space-y-3">
-            <div className="font-mono text-xs text-themed leading-relaxed">
-              <span className="font-bold">Step 3: Inspect execution evidence.</span> Executed tickets generate a canonical JSON certificate with SHA-256 integrity proofs that can be anchored to the deployed Arc contract{" "}
-              <span className="text-pos font-bold font-mono">{shortAddr(ARC.settlement)}</span> on Chain 5042.
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch gap-2">
-              <Button
-                variant="primary"
-                size="sm"
-                className="flex-1 min-w-0"
-                onClick={handleStep3InspectReceipt}
-                leftIcon={<Icon name="verified" className="material-symbols-outlined text-[16px]" />}
-              >
-                Inspect Cryptographic Certificate
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="flex-1 min-w-0"
-                onClick={() => setJudgeTourOpen(false)}
-              >
-                Finish Tour
-              </Button>
-            </div>
-          </div>
-        )}
+        </div>}
+        {judgeTourStep === 4 && <div className="space-y-3">
+          <p className="text-sm text-sub">The checks on this page query live Arc infrastructure without a wallet. To prove execution, verify a real settlement transaction and its exported mainnet receipt. Simulation receipts are rejected as mainnet evidence.</p>
+          <Button variant="secondary" size="sm" onClick={() => setJudgeTourOpen(false)}>Finish walkthrough</Button>
+        </div>}
       </div>
-    </div>
+    </aside>
   );
 };

@@ -245,14 +245,45 @@ describe("treasury readiness regressions", () => {
     expect(walletRpc).not.toHaveBeenCalled();
     expect(useAppStore.getState().auditReceipts).toHaveLength(0);
   });
-  it("uses NAV conversion and creates an inspectable receipt for the tour sweep", async () => {
-    const before = useAppStore.getState().balances;
-    const nav = PAIRS["USYC/USDC"].price;
+  it("requires confirmation before a demo treasury move changes balances or creates evidence", async () => {
+    const before = { ...useAppStore.getState().balances };
+    useAppStore.setState({ targetBufferUsd: 900 });
     await useAppStore.getState().executeSweepOnchain(100, "sweep");
+    expect(useAppStore.getState().reviewOpen).toBe(true);
+    expect(useAppStore.getState().balances).toEqual(before);
+    expect(useAppStore.getState().auditReceipts).toHaveLength(0);
+    const output = useAppStore.getState().pendingQuote!.received;
+    await useAppStore.getState().executeTrade();
     const state = useAppStore.getState();
-    expect(state.balances.USYC).toBeCloseTo(before.USYC + 100 / nav, 8);
-    expect(state.balances.USDC + state.balances.USYC * nav).toBeCloseTo(before.USDC + before.USYC * nav, 8);
+    expect(state.balances.USYC).toBeCloseTo(before.USYC + output, 8);
+    expect(state.balances.USDC).toBe(900);
     expect(state.auditReceipts[0].mode).toBe("simulation");
+    expect(state.auditReceipts[0].amountUsd).toBe(100);
+    expect(walletRpc).not.toHaveBeenCalled();
+  });
+  it("preserves exact demo unwind units through review and confirmation", async () => {
+    const before = { ...useAppStore.getState().balances };
+    await useAppStore.getState().executeSweepOnchain(50, "unwind");
+    expect(useAppStore.getState().balances).toEqual(before);
+    const output = useAppStore.getState().pendingQuote!.received;
+    await useAppStore.getState().executeTrade();
+    expect(useAppStore.getState().balances.USYC).toBeCloseTo(50, 8);
+    expect(useAppStore.getState().balances.USDC).toBeCloseTo(before.USDC + output, 8);
+    expect(useAppStore.getState().auditReceipts[0].side).toBe("sell");
+    expect(walletRpc).not.toHaveBeenCalled();
+  });
+  it("restarts the walkthrough with repeatable controls and no inherited review", () => {
+    useAppStore.setState({ amount: 25000, side: "sell", slippage: 5, ticketNonce: 12, nativeGasBalance: 10 });
+    useAppStore.getState().startJudgeTour();
+    const state = useAppStore.getState();
+    expect(state.amount).toBe(500);
+    expect(state.side).toBe("buy");
+    expect(state.slippage).toBe(0.5);
+    expect(state.ticketNonce).toBe(0);
+    expect(state.nativeGasBalance).toBe(0);
+    expect(state.balances).toEqual({ USDC: 10000, USYC: 2500 });
+    expect(state.auditReceipts).toEqual([]);
+    expect(state.reviewOpen).toBe(false);
   });
   it("live treasury sweep only opens shared review and never signs directly", async () => {
     useAppStore.setState({ environmentMode: "mainnet", livePortfolio: true, address: trader });

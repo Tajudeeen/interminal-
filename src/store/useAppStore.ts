@@ -2,7 +2,7 @@ import { verifySettlement, reconstructReceiptFromEvent } from "../lib/evidence/s
 import { readPending, writePending } from "../lib/evidence/pending";
 import { assertCashReserve, readWalletReserve, saveWalletReserve } from "../lib/math/reserve";
 import { readArchive, saveArchive, mergeReceipts } from "../lib/evidence/archive";
-import { simulateTrade, simulateTreasury } from "../lib/math/simulation";
+import { simulateTrade } from "../lib/math/simulation";
 import { create } from "zustand";
 import { ARC, TOKEN_ALLOW } from "../constants/arc";
 import { EnvironmentMode, NETWORKS } from "../constants/networks";
@@ -999,6 +999,12 @@ export const useAppStore = create<AppState>((set, get) => {
         balances: { USDC: 10000, USYC: 2500 },
         targetBufferUsd: 2500,
         stressTestAmount: 5000,
+        amount: 500,
+        side: "buy",
+        slippage: 0.5,
+        ticketNonce: 0,
+        nativeGasBalance: 0,
+        toasts: [],
         view: "portfolio",
         pair: demoPair,
         timeframe: "1D",
@@ -1174,6 +1180,8 @@ export const useAppStore = create<AppState>((set, get) => {
           quote.raw = { amountIn: amountIn.toString(), minOut: minOut.toString(), tokenIn, tokenOut };
           quote.expiresAt = Date.now() + 60_000;
         } else {
+          // Leave time to explain a demo review while keeping live quotes short-lived.
+          quote.expiresAt = Date.now() + 5 * 60_000;
           if (side === "buy") assertCashReserve(parseUnits(balances.USDC || 0, 6), parseUnits(amount, 6), get().targetBufferUsd);
           simulateTrade(balances, p.base, side, amount, p.price, quote.received, PAIRS["USYC/USDC"].price, slippage * 100);
         }
@@ -1638,91 +1646,7 @@ export const useAppStore = create<AppState>((set, get) => {
         }
       }
 
-      if (!liveIntent) {
-        let nextBalances;
-        try {
-          if (direction === "sweep") assertCashReserve(parseUnits(get().balances.USDC || 0, 6), parseUnits(sweepAmountUsdc, 6), get().targetBufferUsd);
-          nextBalances = simulateTreasury(get().balances, sweepAmountUsdc, direction, PAIRS["USYC/USDC"].price); }
-        catch (err: any) { get().addToast("Treasury action blocked", err.message, "err"); return; }
-        if (direction === "sweep") {
-          const receipt = generateTradeReceipt({
-            quote: {
-              price: PAIRS["USYC/USDC"].price,
-              effective: PAIRS["USYC/USDC"].price,
-              received: sweepAmountUsdc / PAIRS["USYC/USDC"].price,
-              minReceived: sweepAmountUsdc / PAIRS["USYC/USDC"].price * 0.9995,
-              impact: 0,
-              slippageBps: 5,
-              gasUsd: 0,
-              expiresAt: Date.now() + 600000,
-            },
-            pairKey: "USYC/USDC",
-            trader: normalizeAddress(address || DEMO_ADDRESS),
-            side: "buy",
-            amountUsd: sweepAmountUsdc,
-            mode: "simulation",
-            status: "simulated",
-            blockNumber: 0,
-          });
-          set((s) => ({
-            balances: nextBalances,
-            auditReceipts: [receipt, ...s.auditReceipts.filter(item => item.receiptId !== receipt.receiptId)].slice(0, 50),
-            activity: [
-              {
-                ts: Date.now(),
-                type: "sweep",
-                label: "Simulated Reserve-Bounded Move: $" + sweepAmountUsdc.toLocaleString() + " USDC → USYC",
-                detail: "Simulation only · no Arc transaction was broadcast.",
-                hash: receipt.signature,
-                receiptId: receipt.receiptId,
-                receipt,
-              },
-              ...s.activity,
-            ],
-          }));
-          get().addToast("Simulation Review Complete", "No Arc transaction was broadcast.", "info");
-        } else {
-          const receipt = generateTradeReceipt({
-            quote: {
-              price: PAIRS["USYC/USDC"].price,
-              effective: PAIRS["USYC/USDC"].price,
-              received: sweepAmountUsdc * PAIRS["USYC/USDC"].price,
-              minReceived: sweepAmountUsdc * PAIRS["USYC/USDC"].price * 0.9995,
-              impact: 0,
-              slippageBps: 5,
-              gasUsd: 0,
-              expiresAt: Date.now() + 600000,
-            },
-            pairKey: "USYC/USDC",
-            trader: normalizeAddress(address || DEMO_ADDRESS),
-            side: "sell",
-            amountUsd: sweepAmountUsdc * PAIRS["USYC/USDC"].price,
-            mode: "simulation",
-            status: "simulated",
-            blockNumber: 0,
-          });
-          set((s) => ({
-            balances: nextBalances,
-            auditReceipts: [receipt, ...s.auditReceipts.filter(item => item.receiptId !== receipt.receiptId)].slice(0, 50),
-            activity: [
-              {
-                ts: Date.now(),
-                type: "sweep",
-                label: "Simulated JIT Unwind: $" + sweepAmountUsdc.toLocaleString() + " USYC → USDC",
-                detail: "Simulation only · no Arc transaction was broadcast.",
-                hash: receipt.signature,
-                receiptId: receipt.receiptId,
-                receipt,
-              },
-              ...s.activity,
-            ],
-          }));
-          get().addToast("Simulation Unwind Complete", "No Arc transaction was broadcast.", "info");
-        }
-        return;
-      }
-
-      // Every live treasury action must enter the shared review flow.
+      // Treasury actions in every workspace require an explicit bounded review.
       get().setPair("USYC/USDC");
       get().setSide(direction === "sweep" ? "buy" : "sell");
       get().setAmount(direction === "sweep" ? sweepAmountUsdc : sweepAmountUsdc * PAIRS["USYC/USDC"].price);
