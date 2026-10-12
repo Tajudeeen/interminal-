@@ -4,6 +4,56 @@ Interminal protects operating USDC before a treasury payment. Set an app-level c
 
 [Open Interminal](https://tajudeeen.github.io/interminal-/) · [Public repository](https://github.com/Tajudeeen/interminal-) · [Builder](https://x.com/Deeen_Codes) · [Submission pack](docs/ARC_MICROGRANT_SUBMISSION.md) · [Recording guide](docs/DEMO_RECORDING_GUIDE.md)
 
+## Live build
+
+Use the current GitHub Pages build: **https://tajudeeen.github.io/interminal-/**
+
+GitHub Pages is the primary reviewer and submission URL. The Pages workflow builds and tests every push to `main` before publishing. The previous Vercel URL isn't the submission link for this payment release.
+
+To try it without a wallet, open the 90-second reviewer path, set a reserve, select Execute, use the demo recipient, and review a simulated payment. Open Receipts to inspect or export its clearly labeled simulation evidence.
+
+For mainnet, open the mainnet workspace and connect an Arc wallet. On a phone, open the build in MetaMask's built-in browser. Review the full recipient address, payment and fee before confirming in your wallet. Opening the app or connecting a wallet does not send a payment.
+
+## Latest completed changes
+
+- Replaced the unsupported mainnet USYC swap path with reserve-protected native USDC payments.
+- Included the maximum estimated network fee in the reserve budget, with fresh balance, account, chain, provider and expiry checks before a wallet request.
+- Made native USDC balance loading independent of market feeds and the historical settlement contract.
+- Added durable pending-payment recovery. An interrupted request with no returned hash can only be cleared after an explicit wallet-activity check; known transaction hashes must be resolved against Arc.
+- Added device-saved payment receipts, JSON export/import, and wallet-free transaction verification.
+- Added independent CLI verification, public proof generation, and a separate submission-readiness CI job.
+- Published the tested GitHub Pages build with the correct project asset paths and updated submission and recording guides.
+
+Validation for the payment release on October 12, 2026: 97 deterministic tests, the production build, and GitHub Pages deployment passed. Browser checks rejected a reserve-breaking simulated payment, produced a valid simulated receipt, and verified an unrelated public Arc payment using live chain data. That public transaction was a read-only test and is not the builder's submission proof.
+
+## Remaining submission checklist
+
+The application is deployed. Final submission readiness remains blocked by the missing builder payment evidence; a successful software build alone does not satisfy that gate.
+
+- [ ] Confirm one real non-self USDC payment through the mainnet application, to another wallet you control or an intended recipient.
+- [ ] Export its confirmed payment receipt from Receipts and independently verify it from a fresh wallet-free session.
+- [ ] Generate and commit `artifacts/payment-submission-evidence.json` and `docs/FINAL_MAINNET_EVIDENCE.md` from that receipt.
+- [ ] Include the actual Arc Explorer transaction and permanent `?payment=0xACTUAL_TRANSACTION_HASH` reviewer link in the submission.
+- [ ] Pass `npm run check:submission`, then confirm the final pushed and deployed build with `npm run build:pages` and `npm run check:release`.
+- [ ] Confirm the project hasn't already received Circle or Arc funding, record the final demo, and submit the live build, public repo, description and builder profile.
+
+After saving the exported receipt to the gitignored `private-evidence/payment.json` file:
+
+```sh
+npm run verify:payment -- --receipt private-evidence/payment.json
+npm run proof:payment -- --receipt private-evidence/payment.json
+npm run check:submission
+# Commit the generated public proof files before checking the final release.
+npm run build:pages
+npm run check:release
+```
+
+The `submission-ready` CI job is expected to fail while real payment evidence is absent. Do not replace the missing proof with a simulation, self-transfer, unrelated public payment or historical contract deployment transaction. See [the remaining wallet steps](docs/CLOSE_CHAIN_GAPS.md).
+
+### Future work outside the current submission
+
+Live USYC execution still needs a usable issuer/liquidity route and the appropriate wallet eligibility. The historical settlement source/runtime mismatch is unresolved, and its successor is undeployed. Optional market charts remain unavailable on GitHub Pages because it does not run the market-data API. Contract recipients, shared accounting storage and on-chain reserve enforcement would require separate integrations. None is claimed as working in this payment release.
+
 ## Current submission scope
 
 **Treasury → Execute → Receipts → Verify** is a reserve-protected USDC payment flow on Arc Mainnet, chain 5042. It uses Arc's native USDC balance, with 18-decimal transaction values and user input limited to exact six-decimal USDC amounts. Payment and gas draw from the same balance. No approval, custom settlement contract, agent mandate or USYC entitlement is required.
