@@ -1014,8 +1014,8 @@ export const useAppStore = create<AppState>((set, get) => {
       void get().syncMarketData();
 
       get().addToast(
-        "Arc Treasury Demo Ready",
-        "Simulation loaded with a USDC operating reserve and USYC treasury position. The USYC chart uses the published reference feed; no Arc transaction is claimed.",
+        "USDC Payment Demo Ready",
+        "Simulation loaded with 10,000 USDC and a 2,500 USDC operating reserve. Review a payment to the demo recipient; no wallet action or Arc transaction is claimed.",
         "ok"
       );
     },

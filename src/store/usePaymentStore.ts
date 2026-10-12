@@ -10,9 +10,10 @@ function write(key:string,value:unknown):boolean {try {localStorage.setItem(key,
 function pendingInitial():Pending|null { const p=read<any>(PENDING_KEY,null); return p && (p.hash==='unknown' || /^0x[\da-f]{64}$/i.test(p.hash)) && /^0x[\da-f]{40}$/i.test(p.sender) && /^0x[\da-f]{40}$/i.test(p.recipient) && /^\d+$/.test(p.valueWei) ? p : null; }
 function initialReceipts():PaymentReceipt[] { const values=read<any>(KEY,[]);return Array.isArray(values)?values.filter(r=>r?.receiptVersion==='2.0-ARC-PAYMENT').slice(0,200):[]; }
 const demoSender = '0x000000000000000000000000000000000000deee';
-interface PaymentState { review:PaymentReview|null;reviewMode:string|null;receipts:PaymentReceipt[];pending:Pending|null;busy:boolean;error:string;storageWarning:boolean;prepare:(recipient:string,amount:string)=>Promise<void>;cancel:()=>void;execute:()=>Promise<void>;recover:(hash?:string)=>Promise<void>;importReceipt:(receipt:unknown)=>Promise<void>;resetDemo:()=>void; }
+interface PaymentState { review:PaymentReview|null;reviewMode:string|null;receipts:PaymentReceipt[];pending:Pending|null;busy:boolean;error:string;storageWarning:boolean;prepare:(recipient:string,amount:string)=>Promise<void>;cancel:()=>void;execute:()=>Promise<void>;recover:(hash?:string)=>Promise<void>;importReceipt:(receipt:unknown)=>Promise<void>;resetDemo:()=>void;clearUnsubmitted:(acknowledged:boolean)=>void; }
 export const usePaymentStore=create<PaymentState>((set,get)=>({
  review:null,reviewMode:null,receipts:initialReceipts(),pending:pendingInitial(),busy:false,error:'',storageWarning:false,
+ clearUnsubmitted:(acknowledged)=>{if(get().busy)return;if(!acknowledged || get().pending?.hash!=='unknown'){set({error:'Only an interrupted request with no returned hash can be cleared after checking wallet activity.'});return;}if(!write(PENDING_KEY,null)){set({error:'Unable to clear recovery state. Device storage is unavailable.'});return;}set({pending:null,error:'',review:null});},
  cancel:()=>{if(!get().busy)set({review:null,error:''});},
  resetDemo:()=>{if(get().busy)return;const receipts=get().receipts.filter(r=>r.mode==='mainnet');set({review:null,receipts,error:''});write(KEY,receipts);},
  prepare:async(recipient,amount)=>{
