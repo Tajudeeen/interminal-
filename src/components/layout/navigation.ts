@@ -9,7 +9,7 @@ export const CORE_NAV_ITEMS = [
     id: "terminal",
     label: "Execute",
     icon: "swap_horiz",
-    detail: "Review an Arc quote and sign",
+    detail: "Review recipient, payment, and gas",
   },
   {
     id: "ledger",
@@ -21,11 +21,12 @@ export const CORE_NAV_ITEMS = [
     id: "proof",
     label: "Verify",
     icon: "verified_user",
-    detail: "Verify settlement without a wallet",
+    detail: "Verify a USDC payment without a wallet",
   },
 ] as const;
 
 export const LAB_NAV_ITEMS = [
+  { id: "swaps", label: "USYC reference/demo", icon: "swap_horiz", detail: "Historical demo, live swaps disabled" },
   {
     id: "markets",
     label: "Arc routes",

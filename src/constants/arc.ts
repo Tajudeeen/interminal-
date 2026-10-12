@@ -6,6 +6,7 @@ export interface ArcTokenMeta {
 
 export const ARC = {
   name: "Arc",
+  liveSwapsEnabled: false as boolean,
   chainId: 5042,
   chainIdHex: "0x13b2",
   native: "USDC",

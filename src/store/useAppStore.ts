@@ -59,7 +59,7 @@ export interface ToastItem {
 
 export interface AppState {
   theme: "dark" | "light";
-  view: "landing" | "portfolio" | "terminal" | "markets" | "ai" | "ledger" | "proof" | "testnet";
+  view: "landing" | "portfolio" | "terminal" | "markets" | "ai" | "ledger" | "proof" | "testnet" | "swaps";
   environmentMode: EnvironmentMode;
   testnetTaskComplete: boolean;
   testnetTxHash: string | null;
@@ -1153,6 +1153,7 @@ export const useAppStore = create<AppState>((set, get) => {
         quote.context = { pair: pairKey, side, amount, slippage, address, mode: environmentMode };
         if (environmentMode === "testnet") throw new Error("Use the testnet self-transfer check in the Testnet Lab.");
         if (environmentMode === "mainnet") {
+          if (!ARC.liveSwapsEnabled) throw new Error("Live swaps are disabled: no verified liquid route and deployed-source match. Use reserve-protected USDC payments.");
           if (!get().livePortfolio || !address || get().wrongNetwork) throw new Error("Connect your wallet on Arc Mainnet first.");
           if (!p.address || p.cat === "imported") throw new Error("This market is view-only until its contract is independently verified.");
           const tokenIn = side === "buy" ? ARC.usdcErc20 : p.address;
@@ -1209,6 +1210,7 @@ export const useAppStore = create<AppState>((set, get) => {
       } = get();
 
       const liveIntent = environmentMode === "mainnet";
+      if (liveIntent) { get().addToast("Live swaps unavailable", "Use reserve-protected USDC payments. The legacy route is not verified for execution.", "err"); return; }
       if (liveIntent && get().pendingTransactions.length) {
         get().addToast("Resolve submitted transaction first", "Open Activity & receipts and query its Arc status. A timeout does not mean a transaction failed.", "warn");
         return;
@@ -1545,6 +1547,7 @@ export const useAppStore = create<AppState>((set, get) => {
     createAgentMandate: async ({ spendUsd, slipBps, ttlHours, pairs, agent: requestedAgent }) => {
       const { address, mandates, livePortfolio, environmentMode } = get();
       const liveIntent = environmentMode === "mainnet";
+      if (liveIntent) { get().addToast("Live swaps unavailable", "Use reserve-protected USDC payments. The legacy route is not verified for execution.", "err"); return; }
 
       // The deployed Arc settlement address is the v1 contract. Its live agent
       // executor does not bind execution.tokenIn/tokenOut to the signed pair mask,
@@ -1629,6 +1632,7 @@ export const useAppStore = create<AppState>((set, get) => {
       if (get().executing || get().environmentMode === "testnet") return;
       const { address, environmentMode } = get();
       const liveIntent = environmentMode === "mainnet";
+      if (liveIntent) { get().addToast("Live swaps unavailable", "Use reserve-protected USDC payments. The legacy route is not verified for execution.", "err"); return; }
 
       if (!Number.isFinite(sweepAmountUsdc) || sweepAmountUsdc <= 0) {
         get().addToast("Invalid Treasury Amount", "Amount must be greater than zero.", "warn");
@@ -1705,7 +1709,7 @@ export const useAppStore = create<AppState>((set, get) => {
           { address: metadata.address, name: metadata.name, symbol: sym, decimals: metadata.decimals, pairKey },
         ],
         pair: pairKey,
-        view: "terminal",
+        view: "swaps",
       }));
       get().addToast("Token Imported", `${sym} · ${metadata.name} registered from Arc contract metadata.`, "ok");
       } catch (err: any) {

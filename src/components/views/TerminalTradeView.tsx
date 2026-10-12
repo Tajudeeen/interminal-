@@ -99,6 +99,7 @@ export const TerminalTradeView: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-7xl mx-auto">
+      <p role="status" className="mx-4 mt-4 p-3 border border-amber-500 rounded-lg text-sm text-sub">Historical swap reference/demo. Live swaps are disabled. Use Execute for reserve-protected USDC payments.</p>
       <p className="text-sm text-sub">Protected cash reserve: ${targetBufferUsd.toLocaleString()} USDC. Buy sizing uses spendable cash after this reserve. To fund a larger trade, review a USYC unwind in Treasury first.</p>
       {mainnetReview && (
         <section className="card-themed border border-cyan/30 bg-cyan/5 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">

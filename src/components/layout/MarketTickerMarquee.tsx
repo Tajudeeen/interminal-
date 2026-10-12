@@ -1,7 +1,6 @@
 import { Icon } from "../ui/Icon";
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
-import { ARC } from "../../constants/arc";
 
 export const MarketTickerMarquee: React.FC = () => {
   const {
@@ -40,11 +39,11 @@ export const MarketTickerMarquee: React.FC = () => {
       <button
         onClick={() => setView("proof")}
         className="flex items-center gap-2 text-xs shrink-0"
-        title={ARC.settlement}
+        title="Wallet-free USDC payment verification"
       >
-        <span className="hidden sm:inline text-muted">Settlement</span>
+        <span className="hidden sm:inline text-muted">Verify</span>
         <span className="font-mono">
-          {ARC.settlement.slice(0, 6)}…{ARC.settlement.slice(-4)}
+          Arc payments
         </span>
         <Icon
           name="verified_user"

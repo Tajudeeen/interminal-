@@ -1,3 +1,4 @@
+import { PaymentEvidencePanel } from "../treasury/PaymentEvidencePanel";
 import { SettlementEvidencePanel } from "../treasury/SettlementEvidencePanel";
 import { Icon } from "../ui/Icon";
 import React, { useEffect, useState } from "react";
@@ -49,10 +50,10 @@ export const ProofRpcView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display font-black text-2xl sm:text-3xl text-themed tracking-tight">
-            Verify an Arc execution
+            Verify an Arc USDC payment
           </h1>
           <p className="font-mono text-xs text-muted mt-1">
-            Wallet-free settlement checks · Live Arc Mainnet (Chain 5042) · Independent receipt verification
+            Wallet-free payment checks · Live Arc Mainnet (Chain 5042) · Independent receipt verification
           </p>
         </div>
 
@@ -78,7 +79,8 @@ export const ProofRpcView: React.FC = () => {
         </div>
       </div>
 
-      <SettlementEvidencePanel />
+      <PaymentEvidencePanel />
+      <details className="border border-themed rounded-xl p-4"><summary>Historical swap settlement verifier</summary><SettlementEvidencePanel /></details>
       <details className="group border border-themed/40 rounded-card bg-themed-card/30">
         <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-3 text-xs font-mono text-muted hover:text-themed transition-colors">
           <span>Verification scope and v1 provenance</span>

@@ -1,7 +1,6 @@
 import { Icon } from "../ui/Icon";
 import React, { useState } from "react";
 import { useAppStore } from "../../store/useAppStore";
-import { ARC } from "../../constants/arc";
 import { Button } from "../ui/Button";
 
 export const LandingView: React.FC = () => {
@@ -37,9 +36,7 @@ export const LandingView: React.FC = () => {
             <span>Prove what settled.</span>
           </h1>
           <p className="welcome-description">
-            A focused Arc mainnet treasury execution layer. Set the USDC reserve first,
-            move only policy-eligible cash, sign explicit bounds in your wallet, and
-            let anyone verify the confirmed settlement without trusting Interminal.
+            Reserve-protected USDC payments on Arc. Keep operating cash liquid, review the recipient and network fee, confirm in your wallet, and let anyone check the resulting payment independently.
           </p>
           <div className="flex flex-wrap gap-3 mt-8">
             <Button
@@ -145,7 +142,7 @@ export const LandingView: React.FC = () => {
             </span>
           </div>
           <p className="text-xs text-muted leading-relaxed mt-3 mb-5">
-            This is a policy boundary, not a return forecast. USYC is the current demonstration asset; live execution still depends on issuer access and router liquidity.
+            The reserve stays outside your payment budget. Review adds the estimated maximum network fee before allowing confirmation.
           </p>
           <Button
             fullWidth
@@ -182,7 +179,7 @@ export const LandingView: React.FC = () => {
               <span>02</span>
             </div>
             <h3>The settlement is on Arc mainnet</h3>
-            <p>The live path reviews a router quote, signs a bounded EIP-712 ticket, and submits it to the deployed settlement contract on Chain 5042.</p>
+            <p>One native USDC payment goes directly from your wallet to the reviewed recipient on chain 5042. No token approval or custom settlement contract is required.</p>
           </div>
           <div className="workflow-card">
             <div>
@@ -190,7 +187,7 @@ export const LandingView: React.FC = () => {
               <span>03</span>
             </div>
             <h3>Execution can be checked without a wallet</h3>
-            <p>A reviewer can verify the transaction, exact TradeSettled event, route, raw amounts, block, and receipt integrity independently.</p>
+            <p>A reviewer checks the successful transaction, sender, recipient, exact native USDC amount, execution block, actual fee, and exported receipt against Arc.</p>
           </div>
         </div>
       </section>
@@ -212,7 +209,7 @@ export const LandingView: React.FC = () => {
               n: "02",
               icon: "tune",
               title: "Review the move",
-              text: "Inspect the route, input amount, and minimum output before approving and signing.",
+              text: "Inspect the full recipient, exact USDC amount, maximum fee, and remaining reserve before confirming.",
               view: "terminal",
             },
             {
@@ -270,12 +267,12 @@ export const LandingView: React.FC = () => {
             Builder ↗
           </a>
           <a
-            href={`${ARC.explorer}/address/${ARC.settlement}`}
+            href="https://explorer.arc.io"
             target="_blank"
             rel="noreferrer"
             className="hover:text-themed transition-colors"
           >
-            Settlement ↗
+            Arc Explorer ↗
           </a>
         </div>
       </footer>

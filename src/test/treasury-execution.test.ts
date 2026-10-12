@@ -58,6 +58,7 @@ const trader = "0x" + "a".repeat(40);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(publicRpc).mockReset().mockResolvedValue("0x" + (1000_000_000n).toString(16));
   useAppStore.setState({
     environmentMode: "demo",
     livePortfolio: false,
@@ -122,19 +123,12 @@ describe("asset conservation", () => {
 });
 
 describe("reviewed execution", () => {
-  it("fetches the actual router quote before opening mainnet review", async () => {
-    useAppStore.setState({
-      environmentMode: "mainnet",
-      livePortfolio: true,
-      address: trader,
-    });
+  it("blocks the unsupported live route before requesting any quote", async () => {
+    useAppStore.setState({environmentMode:"mainnet",livePortfolio:true,address:trader});
     await useAppStore.getState().prepareTradeReview();
-    const { pendingQuote, reviewOpen } = useAppStore.getState();
-    expect(reviewOpen).toBe(true);
-    expect(routerAmountOut).toHaveBeenCalledOnce();
-    expect(pendingQuote?.received).toBe(2);
-    expect(pendingQuote?.raw?.amountIn).toBe("100000000");
-    expect(pendingQuote?.raw?.minOut).toBe("1990000000000000000");
+    expect(useAppStore.getState().reviewOpen).toBe(false);
+    expect(routerAmountOut).not.toHaveBeenCalled();
+    expect(walletRpc).not.toHaveBeenCalled();
   });
   it("blocks a changed amount after review", async () => {
     await useAppStore.getState().prepareTradeReview();
@@ -155,26 +149,12 @@ describe("reviewed execution", () => {
     await useAppStore.getState().executeTrade();
     expect(useAppStore.getState().auditReceipts).toHaveLength(0);
   });
-  it("preserves confirmed settlement when separate anchoring fails, and signs reviewed bounds", async () => {
-    useAppStore.setState({
-      environmentMode: "mainnet",
-      livePortfolio: true,
-      address: trader,
-    });
+  it("refuses a restored legacy mainnet review at the broadcast boundary", async () => {
     await useAppStore.getState().prepareTradeReview();
+    useAppStore.setState({environmentMode:"mainnet",livePortfolio:true,address:trader});
     await useAppStore.getState().executeTrade();
-    const state = useAppStore.getState();
-    expect(state.auditReceipts).toHaveLength(1);
-    expect(state.auditReceipts[0].status).toBe("confirmed");
-    expect(state.auditReceipts[0].onchainAnchored).toBe(false);
-    expect(state.lastTx.hash).toBe("0x" + "2".repeat(64));
-    expect(routerAmountOut).toHaveBeenCalledOnce();
-    const signatureCall = vi
-      .mocked(walletRpc)
-      .mock.calls.find(([method]) => method === "eth_signTypedData_v4")!;
-    const ticket = JSON.parse(signatureCall[1]![1]);
-    expect(ticket.message.amountIn).toBe("100000000");
-    expect(ticket.message.minAmountOut).toBe("1990000000000000000");
+    expect(walletRpc).not.toHaveBeenCalled();
+    expect(useAppStore.getState().auditReceipts).toEqual([]);
   });
   it("does not pretend mainnet automatically unwinds USYC", async () => {
     useAppStore.setState({
@@ -287,18 +267,16 @@ describe("treasury readiness regressions", () => {
     expect(state.auditReceipts).toEqual([]);
     expect(state.reviewOpen).toBe(false);
   });
-  it("live treasury sweep only opens shared review and never signs directly", async () => {
-    useAppStore.setState({ environmentMode: "mainnet", livePortfolio: true, address: trader });
-    vi.mocked(routerAmountOut).mockResolvedValueOnce(88_000_000n);
-    await useAppStore.getState().executeSweepOnchain(100, "sweep");
-    expect(useAppStore.getState().reviewOpen).toBe(true);
+  it("blocks legacy live treasury sweeps", async () => {
+    useAppStore.setState({environmentMode:"mainnet",livePortfolio:true,address:trader});
+    await useAppStore.getState().executeSweepOnchain(100,"sweep");
+    expect(useAppStore.getState().reviewOpen).toBe(false);
     expect(walletRpc).not.toHaveBeenCalled();
   });
-  it("USYC unwind review uses exact requested token units", async () => {
-    useAppStore.setState({ environmentMode: "mainnet", livePortfolio: true, address: trader });
-    vi.mocked(routerAmountOut).mockResolvedValueOnce(1_130_000n).mockResolvedValueOnce(56_000_000n);
-    await useAppStore.getState().executeSweepOnchain(50, "unwind");
-    expect(useAppStore.getState().pendingQuote?.raw?.amountIn).toBe("50000000");
+  it("blocks legacy live USYC unwinds", async () => {
+    useAppStore.setState({environmentMode:"mainnet",livePortfolio:true,address:trader});
+    await useAppStore.getState().executeSweepOnchain(50,"unwind");
+    expect(useAppStore.getState().pendingQuote).toBeNull();
     expect(walletRpc).not.toHaveBeenCalled();
   });
 });
@@ -316,13 +294,11 @@ describe("submitted transaction ambiguity", () => {
 
 
 describe("final balance guard", () => {
-  it("blocks broadcast if the reserve breaks while the wallet is signing", async () => {
-    useAppStore.setState({ environmentMode: "mainnet", livePortfolio: true, address: trader, targetBufferUsd: 20 });
+  it("never signs legacy mainnet tickets", async () => {
+    useAppStore.setState({environmentMode:"mainnet",livePortfolio:true,address:trader,targetBufferUsd:20});
     await useAppStore.getState().prepareTradeReview();
-    vi.mocked(publicRpc).mockResolvedValueOnce("0x" + (1000_000_000n).toString(16)).mockResolvedValueOnce("0x" + (119_000_000n).toString(16));
     await useAppStore.getState().executeTrade();
-    expect(vi.mocked(walletRpc).mock.calls.some(([method]) => method === "eth_signTypedData_v4")).toBe(true);
-    expect(vi.mocked(walletRpc).mock.calls.some(([method]) => method === "eth_sendTransaction")).toBe(false);
+    expect(walletRpc).not.toHaveBeenCalled();
   });
   it("resolves a reverted submitted hash without claiming settlement", async () => {
     const hash = "0x" + "f".repeat(64);

@@ -1,179 +1,85 @@
 # Interminal
 
-Interminal is a reserve-aware treasury execution layer on Arc Mainnet. An operator protects an explicit USDC operating reserve, reviews only policy-eligible capital, signs bounded EIP-712 execution terms, and exports a receipt that another person can verify against Arc without connecting a wallet. USYC is the current demonstration asset, not the product's core claim.
+Interminal protects operating USDC before a treasury payment. Set an app-level cash reserve, review the recipient, exact payment and maximum network fee, confirm one native USDC transaction in your wallet, then export evidence anyone can independently check against Arc Mainnet.
 
-[Open the app](https://useinterminal.vercel.app/) · [Public repo](https://github.com/Tajudeeen/interminal-) · [Settlement contract](https://explorer.arc.io/address/0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36) · [Builder profile](https://x.com/Deeen_Codes) · [Submission pack](docs/ARC_MICROGRANT_SUBMISSION.md) · [Recording guide](docs/DEMO_RECORDING_GUIDE.md) · [Security notes](SECURITY.md)
+[Open Interminal](https://useinterminal.vercel.app/) · [Public repository](https://github.com/Tajudeeen/interminal-) · [Builder](https://x.com/Deeen_Codes) · [Submission pack](docs/ARC_MICROGRANT_SUBMISSION.md) · [Recording guide](docs/DEMO_RECORDING_GUIDE.md)
 
-## Arc Microgrant fit
+## Current submission scope
 
-The submission is intentionally scoped as a working Arc-native proof, not a broad trading platform.
+**Treasury → Execute → Receipts → Verify** is a reserve-protected USDC payment flow on Arc Mainnet, chain 5042. It uses Arc's native USDC balance, with 18-decimal transaction values and user input limited to exact six-decimal USDC amounts. Payment and gas draw from the same balance. No approval, custom settlement contract, agent mandate or USYC entitlement is required.
 
-| Host expectation | Interminal evidence |
-| --- | --- |
-| Live deployment on Arc mainnet | Production app points to Arc Mainnet chain `5042` and the deployed settlement contract below |
-| Public repository | This repository is public and contains the application, contract references, verification scripts, tests, and evidence docs |
-| Short explanation of what Arc is used for | Arc provides USDC-denominated gas, the live settlement layer, and the transaction/event history used to prove what actually settled |
-| Public builder profile | [@Deeen_Codes](https://x.com/Deeen_Codes) |
-| Not testnet-only | Mainnet is the primary workflow; testnet is an optional developer rehearsal and is never presented as submission proof |
-
-The core reviewer path is **Treasury → Execute → Receipts → Verify**. Markets, read-only indicator context, and testnet rehearsal are secondary tools.
-
-## Choose a workspace
-
-| Workspace | Holdings | Execution |
+| Workspace | Balance | What confirmation does |
 | --- | --- | --- |
-| Demo | Explicit simulated balances | Local simulation and simulated receipts. No wallet transaction. |
-| Mainnet | Holdings read from an Arc wallet | Exact approval when needed, EIP-712 signature, settlement transaction, and a separate receipt-anchor transaction. |
-| Optional testnet rehearsal | Arc Testnet wallet | Wallet/network check only. It is not part of the grant proof and doesn't test the mainnet settlement contract. |
+| Simulation | Clearly labeled fictional balances | Creates a simulated receipt. No wallet request or transaction hash. |
+| Mainnet | Connected Arc wallet | Requests one reviewed native USDC payment to a wallet address. |
+| Optional USYC reference/demo | Issuer NAV and historical demo | Live swaps disabled. No claimed USYC execution. |
 
-Opening mainnet review doesn't connect a wallet or submit a transaction. Testnet rehearsal is optional. A generic wallet connection targets mainnet unless the user explicitly opens the optional testnet tool.
+The historical settlement contract exists on Arc, but its maintained source doesn't reproduce its live runtime. It is not used by the current payment flow. The old AchSwap V2 route has no USDC/USYC pair. On October 12, direct quote requests reverted and the factory returned no pair. Chart pools are Aero concentrated-liquidity pools, not evidence that the historical V2 route can trade. This release disables live legacy swaps at both review and broadcast boundaries.
 
-## Operator workflow
+## Payment controls
 
-1. Open **Treasury** and set the USDC operating reserve.
-2. Open **Execute** and review a USDC → USYC Arc router quote, including exact input, minimum output, slippage, and expiry.
-3. Sign the bounded EIP-712 ticket and submit settlement. An exact token approval may be requested first.
-4. Open **Receipts** to inspect/export the confirmed execution evidence.
-5. Open **Verify** from a fresh wallet-free session and check the transaction, exact `TradeSettled` event, trader, route, raw amounts, block, output, and certificate integrity.
+1. Set the operating reserve in Treasury. It is saved per connected wallet on this device.
+2. In Execute, enter the full recipient wallet address and an exact USDC amount.
+3. Review loads the actual native balance, checks chain 5042 and a wallet recipient, and estimates gas and a bounded gas price.
+4. `payment + maximum estimated fee + reserve <= live balance` must pass. Review expires after two minutes.
+5. Before requesting the wallet transaction, the app checks account, chain, provider, reserve, expiry, transaction simulation and actual balance again.
+6. The wallet displays the full transaction. The app requests the exact reviewed recipient, native value, gas limit and gas price.
+7. A durable pending record is written before the wallet request. If its response is interrupted, additional mainnet payments stay blocked until the user recovers the transaction hash from wallet activity.
+8. A receipt is saved only after the actual transaction and successful Arc receipt match the reviewed sender, recipient and value.
 
-Buy reviews preserve your configured cash reserve. The app checks raw USDC balances before approval and again immediately before broadcast. Percentage sizing excludes the reserve. Changing the reserve invalidates an open review. This protection applies to this app; the deployed v1 contract cannot enforce the reserve against other apps or direct contract calls.
+Reserve protection is enforced by this app. The wallet can modify a request, and external transactions can change balances. It is not an on-chain policy guarantee. Wallet recipients only are supported. Contract recipients need their own reviewed integration. Self-transfers are labeled and excluded from final submission proof.
 
-The deployed trade path spends liquid USDC. It doesn't automatically unwind a USYC position to fund a buy. Unwind separately and review the next trade after wallet balances refresh.
+## Independent evidence
 
-## Screens
+Open Verify without a wallet. Enter a payment transaction hash or import an exported mainnet payment receipt. Verification requires:
 
-### Core submission path
+- Arc RPC and transaction chain 5042;
+- successful transaction receipt;
+- exact transaction and receipt identity and execution block;
+- matching sender and recipient;
+- positive native USDC value with empty calldata;
+- wallet recipient at execution;
+- actual gas and effective gas price;
+- for imported receipts, SHA-256 integrity and exact matching payment fields.
 
-- **Home:** states the Arc mainnet use case, links the live contract/repo/builder profile, and offers a clearly marked simulation.
-- **Treasury:** reserve policy, policy-eligible USDC, real wallet holdings in mainnet mode, reviewed USYC move/unwind, and deployed Arc infrastructure references.
-- **Execute:** chart/reference context plus the fresh Arc router quote, bounded review, explicit wallet signing, and settlement submission.
-- **Receipts:** confirmed execution records, pending-transaction recovery, explorer links, JSON export, and independent evidence entry point.
-- **Verify:** wallet-free transaction/event/certificate verification and live Arc infrastructure reads.
-
-### Optional lab
-
-- **Arc routes:** only registered Arc assets and treasury routes are foregrounded.
-- **Market context:** read-only deterministic indicators. It cannot choose a trade side, size a position, create an agent mandate, or pre-fill an execution.
-- **Testnet rehearsal:** optional wallet/network check. It is not submission evidence.
-
-Desktop and mobile both prioritize the four-step mainnet proof path. Experimental agent-mandate and DCA planner UI is excluded from the submission runtime.
-
-## Market data and valuation
-
-Charts never fall back to generated candles in the production data path.
-
-- WETH/USDC, cirBTC/USDC, and EURC/USDC candles use GeckoTerminal Arc pools through the same-origin `/api/market-data` serverless endpoint.
-- USYC uses Hashnote NAV reports through the same-origin market-data endpoint and a daily line chart. A NAV reference isn't an executable redemption quote.
-- A failed feed shows an unavailable state. A selected feed doesn't make every row in the market directory live.
-- Directory reference prices and modeled trade previews aren't executable quotes. Mainnet review fetches a separate Arc router quote.
-- Registered token addresses don't guarantee issuer eligibility, a usable pool, or liquidity. The submission route directory foregrounds registered Arc assets only.
-- USYC is the current demonstration asset. Its NAV/yield reference may be shown as supporting context, but Interminal does not present projected return as the reason to execute. Eligibility, liquidity, price changes, fees, and execution costs remain external constraints.
-
-TradingView Lightweight Charts provides rendering, not market data. Attribution remains enabled. The CSP permits the specific read-only feed hosts used by the app, including Hashnote and Binance.
-
-## Contract and execution
-
-| Setting | Value |
-| --- | --- |
-| Arc mainnet chain | `5042` |
-| Settlement | `0x2b38cc9b84bd3a568ccc7817b10dc98c8abdab36` |
-| Router | `0x52FE40c00530db2e43d01652f903870571A14AFD` |
-| USDC ERC-20 interface | `0x3600000000000000000000000000000000000000` |
-| Native gas decimals | `18` |
-| USDC token-interface decimals | `6` |
-
-The registry is in `src/constants/arc.ts`. Exact approvals are restricted to the verified settlement spender and registered token addresses. Mainnet execution requires a loaded wallet on the expected chain. Switching modes clears financial session state and detaches prior wallet subscriptions.
-
-**Live agent mandates remain disabled on the deployed v1 contract.** The hardened successor source isn't a deployed upgrade. Experimental agent-mandate and DCA planner interfaces are excluded from the current submission runtime. The submitted product requires explicit user review and wallet signatures.
-
-## Verify execution independently
-
-Open **Verification**, paste a settlement transaction hash, and run the read-only check. Or import an exported mainnet receipt. The verifier requires a successful transaction to the configured contract and its exact `TradeSettled` event, then compares trader, route, block, received output, and raw amounts where present. Certificate anchoring is reported separately. A digest anchor alone is never sufficient proof of execution.
-
-A verified transaction without a certificate can rebuild an event-based receipt. Recovered receipts explicitly state that the original quote and wallet signature were not recovered. An unresolved broadcast blocks new mainnet executions until its chain status is checked in Activity. A reverted transaction can be resolved without claiming settlement.
-
-Share a wallet-free reviewer link with `?verify=0xTRANSACTION_HASH` or run:
+A receipt digest alone does not prove payment. Simulation receipts are rejected as mainnet proof. A hash-only verification reconstructs chain evidence and cannot recover or prove the original app-side reserve review. Reviewer links use `?payment=0xACTUAL_TRANSACTION_HASH` and skip the splash screen.
 
 ```sh
-npm run verify:execution -- 0xTRANSACTION_HASH
-npm run verify:execution -- --receipt exported-receipt.json
+npm run verify:payment -- 0xACTUAL_TRANSACTION_HASH
+npm run verify:payment -- --receipt private-evidence/payment.json
+npm run proof:payment -- --receipt private-evidence/payment.json
+npm run check:submission
 ```
 
-The CLI verifies the event independently with ethers and requires exact raw amounts for certificate matching. Old receipts missing raw amounts can still be inspected in the app; regenerate event evidence from their transaction for current CLI checks.
+The proof command refuses simulation, a reverted transaction, wrong chain, mismatching receipt and self-transfer. On success it writes `artifacts/payment-submission-evidence.json` and `docs/FINAL_MAINNET_EVIDENCE.md`, with actual transaction values and a wallet-free reviewer link. Never substitute the historical contract deployment transaction for payment proof.
 
-### Generate the final submission proof bundle
+`check:submission` independently re-queries committed payment evidence. It fails when the artifact is missing. CI has a separate `submission-ready` job so green software checks cannot imply mainnet proof exists. `check:release` additionally requires HEAD to match public main and the live HTML to match the locally built release.
 
-After one real confirmed USDC → USYC mainnet execution, export the receipt into the gitignored `private-evidence/` folder and run:
+**Current evidence status:** payment code and verification pipeline are prepared. No real payment has been made by the coding agent, and no final payment artifact exists until the builder confirms a payment in their wallet and exports its receipt.
 
-```sh
-npm run proof:submission -- --receipt private-evidence/receipt.json
-npm run verify:submission
-npm run verify:treasury-history
-```
+## Development
 
-`proof:submission` is fail-closed. It refuses simulation receipts, non-USDC/USYC routes, receipts that do not match the exact `TradeSettled` event, the wrong Arc chain, or a changed settlement runtime fingerprint. When every check passes it writes:
-
-- `artifacts/submission-evidence.json`: a public, signature-free machine-readable evidence bundle;
-- `docs/FINAL_MAINNET_EVIDENCE.md`: a reviewer-facing record with the observed Arc transaction and permanent wallet-free verification link.
-
-CI automatically re-verifies `artifacts/submission-evidence.json` against Arc whenever that artifact is committed. The original exported receipt remains local so its wallet signature does not need to be published.
-
-See [the provable submission workflow](docs/PROVABLE_SUBMISSION_WORKFLOW.md).
-
-See [the live contract fingerprint](docs/LIVE_CONTRACT_FINGERPRINT.md), [Arc submission evidence](docs/ARC_MICROGRANT_PROOF.md), [the rework review](docs/REWORK_REVIEW.md), and [the remaining chain-evidence steps](docs/CLOSE_CHAIN_GAPS.md).
-
-## Submission readiness
-
-The current positioning pass narrows the product further around the part that is most defensible against existing Arc treasury/yield products: reserve-aware, human-bounded, independently verifiable execution. Yield optimization is supporting context, not the headline. One material proof item still remains before submission: execute one small successful USDC-to-USYC settlement from an eligible Arc mainnet wallet, export its receipt, verify it independently, and replace the documented transaction placeholder with the observed hash and permanent `?verify=0x...` reviewer link.
-
-## Run locally
-
-Use Node.js 22 or newer.
+Node.js 22 or newer:
 
 ```sh
 npm ci
 npm run dev
-```
-
-Vite serves the UI on port 5173. Vite alone doesn't run the production serverless market-data endpoint, so Arc candle requests will show unavailable locally unless the same-origin API is also hosted. The UI handles that state. The repository is designed so the production host serves the UI and `/api/market-data` together.
-
-No private key is needed to build, browse, or run the demo. Wallet keys stay in the user's wallet. Contract deployment uses `PRIVATE_KEY` from the process environment through `scripts/deploy.mjs`. Never pass a private key in command arguments or commit it.
-
-```sh
 npm test
 npm run build
 npm run test:legacy
-npm run verify:market
 npm run verify:arc
 ```
 
-`npm test` runs deterministic TypeScript, UI wiring, security, and financial-execution regressions. The legacy suite and verification scripts also query live services, so RPC/provider availability can fail those checks independently of local code.
+The deterministic suite covers exact USDC precision, fee-inclusive reserve boundaries, wallet/account/chain changes, expiry, submission ambiguity, receipt tampering, wrong transaction fields, failed execution, simulated evidence rejection, and recovery.
 
-## Current limits
+Vite serves the UI. Its development server does not run the production `/api/market-data` serverless function. Production Vercel serves the UI and read-only market API together. USYC NAV is reference context from Hashnote. Arc chart candles are read through GeckoTerminal. Failed feeds show unavailable data and don't block the payment flow. No AI chooses a payment, recipient or amount.
 
-- This rework doesn't replace or redeploy the v1 settlement contract. Its full runtime fingerprint is recorded, but strict compiled-source reproduction is unresolved. `npm run verify:source` fails until the actual source/build settings or a reproducible successor deployment resolve it.
-- USYC treasury moves use a router route, not a promise of instant par redemption. Eligibility and liquidity can prevent execution.
-- Gas is estimated by the wallet. A fixed sub-cent fee isn't guaranteed.
-- Receipts and unresolved submitted transaction hashes are saved in versioned device storage. Mainnet receipts reopen in the mainnet workspace. Export JSON for portable backups. The archive retains up to 200 certificates, and wallet-specific reserve settings are saved locally. Clearing browser storage removes the archive. This is not a shared accounting database.
-- Market valuation can use reference prices and shouldn't be treated as a guaranteed liquidation value.
-- No new mainnet transaction was sent to validate this rework. The submission still needs a successful USDC/USYC execution from an eligible wallet. Wallet write paths were checked with mocked regression tests; read-only chain checks and browser flows are reported separately in the review.
+## Storage and security
 
-Built by [@Deeen_Codes](https://x.com/Deeen_Codes).
+Wallet keys stay in the user's wallet. No key or seed phrase is needed to use this app. Payment receipts and pending state are stored on this device. Export receipts for a portable backup. Device storage must accept a durable pending record before a mainnet payment is requested. Clearing storage removes recovery state and receipts, so inspect wallet activity before repeating an interrupted payment.
 
-### Reproducible successor deployment
+The historical `contracts/` and `legacy/` files remain for provenance. `verify:source` still fails for the old deployment, and its hardened successor is undeployed. These contracts are not part of current payment settlement and aren't claimed as audited or source-verified. Old swap receipts can still be checked in the historical verifier under Verify. See [historical contract status](docs/LIVE_CONTRACT_FINGERPRINT.md).
 
-`npm run prepare:deployment` creates the hardened successor artifact and an unsigned deployment transaction without a key. `npm run deploy` uses a securely provided environment key and refuses to accept altered builds or a mismatching on-chain runtime. `npm run verify:deployment` independently checks the creation transaction and full runtime and can resume an interrupted deployment. None of these commands changes the live app address. See [the remaining chain steps](docs/CLOSE_CHAIN_GAPS.md). `npm run verify:treasury-history` checks the complete settlement event history in bounded RPC ranges.
+## Grant fit
 
-
-## Product differentiation
-
-Interminal is not claiming that moving USDC into USYC is new. Arc already has treasury, yield, and RWA products.
-
-The product claim is narrower:
-
-1. protect operating cash before optimization;
-2. allow only policy-eligible USDC into the reviewed execution path;
-3. bind the live move to explicit wallet-signed limits;
-4. reconstruct and verify the resulting Arc settlement independently of the original session.
-
-That control-and-evidence layer is the product. USYC is the current route used to demonstrate it.
+Interminal is a small Arc-native treasury-control experiment: protect operating USDC, account for payment gas in the same asset, require an explicit wallet confirmation, and make the actual payment independently verifiable. The builder must still confirm that this project hasn't already received Circle or Arc funding and include one observed successful non-self payment before claiming end-to-end execution.

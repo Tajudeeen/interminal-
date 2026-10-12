@@ -1,7 +1,7 @@
 {
   "name": "interminal",
   "version": "1.0.0",
-  "description": "Reserve-aware, wallet-bounded treasury execution on Arc Mainnet with independently verifiable settlement receipts.",
+  "description": "Reserve-protected USDC payments on Arc with independently verified receipts.",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -18,8 +18,12 @@
     "verify:deployment": "node scripts/verifyDeployment.mjs",
     "verify:treasury-history": "node scripts/scanTreasuryHistory.mjs",
     "proof:submission": "node scripts/buildSubmissionEvidence.mjs",
-    "verify:submission": "node scripts/verifySubmissionEvidence.mjs",
-    "check:submission": "node scripts/checkSubmissionReadiness.mjs"
+    "verify:submission": "node scripts/checkPaymentReadiness.mjs",
+    "check:submission": "node scripts/checkPaymentReadiness.mjs",
+    "check:release": "node scripts/checkPaymentReadiness.mjs --release",
+    "verify:payment": "node scripts/verifyPayment.mjs",
+    "proof:payment": "node scripts/buildPaymentEvidence.mjs",
+    "verify:legacy-submission": "node scripts/verifySubmissionEvidence.mjs"
   },
   "keywords": [
     "arc",

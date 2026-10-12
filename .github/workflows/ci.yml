@@ -33,10 +33,23 @@ jobs:
       - name: Arc mainnet verification
         run: npm run verify:arc
 
-      - name: Verify committed submission evidence when present
+      - name: Verify committed payment evidence when present
         run: |
-          if [ -f artifacts/submission-evidence.json ]; then
+          if [ -f artifacts/payment-submission-evidence.json ]; then
             npm run verify:submission
           else
-            echo "::notice::No real mainnet submission evidence has been committed yet."
+            echo "::notice::Software checks only. Submission proof is checked by the separate required readiness job."
           fi
+
+  submission-ready:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Require a real independently verified payment
+        run: npm run check:submission

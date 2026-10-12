@@ -1,0 +1,19 @@
+import { describe,it,expect,vi } from 'vitest';
+import {usdcWei,assertPaymentBudget,preparePayment,verifyPayment,assertPaymentRecord,sealPayment} from '../lib/payments/core.mjs';
+const sender='0x'+'a'.repeat(40),recipient='0x'+'b'.repeat(40),hash='0x'+'c'.repeat(64),blockHash='0x'+'d'.repeat(64);
+function fixture(overrides={}){
+ const tx={hash,from:sender,to:recipient,value:'0xde0b6b3a7640000',input:'0x',chainId:'0x13b2',blockNumber:'0x64',blockHash,...overrides.tx};
+ const receipt={transactionHash:hash,from:sender,to:recipient,status:'0x1',blockNumber:'0x64',blockHash,gasUsed:'0x5208',effectiveGasPrice:'0x4a817c800',...overrides.receipt};
+ return vi.fn(async m=>m==='eth_chainId'?(overrides.chain||'0x13b2'):m==='eth_getTransactionByHash'?tx:m==='eth_getTransactionReceipt'?receipt:m==='eth_getCode'?(overrides.code||'0x'):null);
+}
+describe('native USDC payment controls',()=>{
+ it('keeps USDC input exact at six decimals and native values at eighteen',()=>{expect(usdcWei('1.000001')).toBe(1000001000000000000n);for(const value of ['1e6','-1','0','1.0000001','Infinity','1junk'])expect(()=>usdcWei(value)).toThrow();});
+ it('protects the reserve including maximum gas, even at a one-wei boundary',()=>{expect(()=>assertPaymentBudget(100n,50n,11n,40n)).toThrow();expect(()=>assertPaymentBudget(100n,50n,10n,40n)).not.toThrow();});
+ it('blocks contract recipients before gas estimation',async()=>{const rpc=vi.fn(async m=>m==='eth_chainId'?'0x13b2':m==='eth_getBalance'?'0xde0b6b3a7640000':m==='eth_getCode'?'0x1234':'0x1');await expect(preparePayment({sender,recipient,amount:'0.1',reserve:'0'},rpc)).rejects.toThrow('wallet recipients');expect(rpc.mock.calls.some(([m])=>m==='eth_estimateGas')).toBe(false);});
+ it('quotes exact payment and a bounded fee without requesting a wallet write',async()=>{const rpc=vi.fn(async m=>m==='eth_chainId'?'0x13b2':m==='eth_getBalance'?'0x8ac7230489e80000':m==='eth_getCode'?'0x':m==='eth_gasPrice'?'0x4a817c800':'0x5208');const r=await preparePayment({sender,recipient,amount:'1',reserve:'8'},rpc);expect(r.valueWei).toBe('1000000000000000000');expect(BigInt(r.maxFeeWei)).toBe(630000000000000n);expect(r.tx.to).toBe(recipient);expect(rpc.mock.calls.some(([m])=>m==='eth_sendTransaction')).toBe(false);});
+ it('reconstructs a confirmed payment and matches exported evidence',async()=>{const rpc=fixture();const receipt=await verifyPayment(hash,undefined,rpc);expect(receipt.valueWei).toBe('1000000000000000000');expect(receipt.feeWei).toBe('420000000000000');await expect(verifyPayment(hash,receipt,rpc)).resolves.toEqual(receipt);});
+ for(const [name,change]of Object.entries({wrongChain:{chain:'0x1'},wrongTxChain:{tx:{chainId:'0x1'}},wrongBlock:{receipt:{blockHash:'0x'+'e'.repeat(64)}},reverted:{receipt:{status:'0x0'}},calldata:{tx:{input:'0x1234'}},zeroValue:{tx:{value:'0x0'}},contractRecipient:{code:'0x1234'},wrongReceiptRecipient:{receipt:{to:sender}},wrongHash:{tx:{hash:'0x'+'e'.repeat(64)}}}))it(`rejects ${name}`,async()=>{await expect(verifyPayment(hash,undefined,fixture(change))).rejects.toThrow();});
+ it('rejects both tampered receipts and validly resealed wrong amounts',async()=>{const receipt=await verifyPayment(hash,undefined,fixture());const wrong={...receipt,valueWei:'1'};await expect(assertPaymentRecord(wrong)).rejects.toThrow('integrity');const resealed=await sealPayment(wrong);await expect(verifyPayment(hash,resealed,fixture())).rejects.toThrow('valueWei');});
+ it('refuses a simulated receipt as mainnet proof',async()=>{const receipt=await sealPayment({...await verifyPayment(hash,undefined,fixture()),mode:'simulation',status:'simulated',transactionHash:null});await expect(verifyPayment(hash,receipt,fixture())).rejects.toThrow('Simulation');});
+ it('identifies a self transfer without claiming money moved to another wallet',async()=>{const r=await verifyPayment(hash,undefined,fixture({tx:{to:sender},receipt:{to:sender}}));expect(r.selfTransfer).toBe(true);});
+});

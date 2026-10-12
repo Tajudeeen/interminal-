@@ -11,11 +11,12 @@ import { JudgeTourBar } from "./components/layout/JudgeTourBar";
 
 // Views
 import { LandingView } from "./components/views/LandingView";
-const TreasuryCockpitView = lazy(() => import("./components/views/TreasuryCockpitView").then(m => ({ default: m.TreasuryCockpitView })));
+const TreasuryPolicyView = lazy(() => import("./components/views/TreasuryPolicyView").then(m => ({ default: m.TreasuryPolicyView })));
+const PaymentsView = lazy(() => import("./components/views/PaymentsView").then(m => ({ default: m.PaymentsView })));
 const TerminalTradeView = lazy(() => import("./components/views/TerminalTradeView").then(m => ({ default: m.TerminalTradeView })));
 const MarketsView = lazy(() => import("./components/views/MarketsView").then(m => ({ default: m.MarketsView })));
 const AiAnalystView = lazy(() => import("./components/views/AiAnalystView").then(m => ({ default: m.AiAnalystView })));
-const CorporateLedgerView = lazy(() => import("./components/views/CorporateLedgerView").then(m => ({ default: m.CorporateLedgerView })));
+const PaymentLedgerView = lazy(() => import("./components/views/PaymentLedgerView").then(m => ({ default: m.PaymentLedgerView })));
 const ProofRpcView = lazy(() => import("./components/views/ProofRpcView").then(m => ({ default: m.ProofRpcView })));
 const TestnetLabView = lazy(() => import("./components/views/TestnetLabView").then(m => ({ default: m.TestnetLabView })));
 
@@ -28,7 +29,7 @@ import { MarketSearchModal } from "./components/modals/MarketSearchModal";
 export const App: React.FC = () => {
   const { view, theme, setTheme, setSearchOpen, syncMarketData, environmentMode } = useAppStore();
   const [showSplash, setShowSplash] = useState(() => {
-    if (new URLSearchParams(window.location.search).has("verify")) return false;
+    if (new URLSearchParams(window.location.search).has("verify") || new URLSearchParams(window.location.search).has("payment")) return false;
     try {
       return window.sessionStorage.getItem("interminal:splash-seen") !== "1";
     } catch {
@@ -74,7 +75,7 @@ export const App: React.FC = () => {
 
   useEffect(() => { setTheme(theme); }, [theme, setTheme]);
   useEffect(() => {
-    if (!verificationOpened.current && new URLSearchParams(window.location.search).has("verify")) {
+    if (!verificationOpened.current && (new URLSearchParams(window.location.search).has("verify") || new URLSearchParams(window.location.search).has("payment"))) {
       verificationOpened.current = true;
       useAppStore.getState().openMainnetReview();
       useAppStore.getState().setView("proof");
@@ -86,15 +87,17 @@ export const App: React.FC = () => {
       case "landing":
         return <LandingView />;
       case "portfolio":
-        return <TreasuryCockpitView />;
+        return <TreasuryPolicyView />;
       case "terminal":
+        return <PaymentsView />;
+      case "swaps":
         return <TerminalTradeView />;
       case "markets":
         return <MarketsView />;
       case "ai":
         return <AiAnalystView />;
       case "ledger":
-        return <CorporateLedgerView />;
+        return <PaymentLedgerView />;
       case "proof":
         return <ProofRpcView />;
       case "testnet":

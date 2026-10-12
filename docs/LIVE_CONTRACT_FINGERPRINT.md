@@ -1,3 +1,5 @@
+> Historical swap implementation notes. The current submission uses native USDC payments and does not execute through this settlement contract. See README.md and ARC_MICROGRANT_SUBMISSION.md for current scope.
+
 # Live Arc Contract Fingerprint
 
 This page records the immutable identity of the Interminal settlement contract currently referenced by the live application.

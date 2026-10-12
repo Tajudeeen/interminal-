@@ -1,6 +1,7 @@
 import React from "react";
 import { Icon } from "../ui/Icon";
 import { Button } from "../ui/Button";
+import { usePaymentStore } from "../../store/usePaymentStore";
 import { useAppStore } from "../../store/useAppStore";
 
 const steps = ["Reserve", "Review", "Receipts", "Verify"];
@@ -8,12 +9,13 @@ const steps = ["Reserve", "Review", "Receipts", "Verify"];
 export const JudgeTourBar: React.FC = () => {
   const {
     judgeTourOpen, judgeTourStep, setJudgeTourOpen, setJudgeTourStep,
-    setView, balances, targetBufferUsd, auditReceipts, setActiveReceiptModal,
+    setView, balances, targetBufferUsd,
     reviewOpen, activeReceiptModal, environmentMode, executing,
   } = useAppStore();
 
+  const payment = usePaymentStore();
   // Let the review and certificate dialogs take focus without covering them.
-  if (!judgeTourOpen || environmentMode !== "demo" || reviewOpen || activeReceiptModal) return null;
+  if (!judgeTourOpen || environmentMode !== "demo" || reviewOpen || activeReceiptModal || payment.review) return null;
 
   const eligible = Math.max(0, (balances.USDC || 0) - targetBufferUsd);
   const goToStep = (step: number) => {
@@ -51,25 +53,25 @@ export const JudgeTourBar: React.FC = () => {
           ))}
         </div>
         {judgeTourStep === 1 && <div className="space-y-3">
-          <p className="text-sm text-sub">Keep ${targetBufferUsd.toLocaleString()} USDC ready for operations. Only the remaining ${eligible.toLocaleString()} can enter a buy review. Change the reserve above to see that boundary move.</p>
+          <p className="text-sm text-sub">Keep ${targetBufferUsd.toLocaleString()} USDC ready for operations. Only the remaining ${eligible.toLocaleString()} is available before payment fees. Change the reserve above to see that boundary move.</p>
           <Button size="sm" onClick={() => goToStep(2)}>Next: Review a bounded move</Button>
         </div>}
         {judgeTourStep === 2 && <div className="space-y-3">
-          <p className="text-sm text-sub">Review a ${Math.min(500, eligible).toLocaleString()} USDC move into USYC. Inspect the input, minimum output, slippage, and expiry before confirming. This demo creates a simulated receipt and never asks a wallet to sign.</p>
+          <p className="text-sm text-sub">Review a USDC payment. Use the demo recipient, inspect the exact amount and reserve, then simulate the payment. No wallet signs and no funds move.</p>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" disabled={eligible <= 0 || executing} onClick={() => void useAppStore.getState().executeSweepOnchain(Math.min(500, eligible), "sweep")}>Open simulated review</Button>
+            <Button size="sm" disabled={eligible <= 0 || executing} onClick={() => setView("terminal")}>Open simulated review</Button>
             <Button variant="secondary" size="sm" onClick={() => goToStep(3)}>Next: Receipts</Button>
           </div>
         </div>}
         {judgeTourStep === 3 && <div className="space-y-3">
-          <p className="text-sm text-sub">{auditReceipts.length ? "Inspect the receipt, its simulation label, and SHA-256 integrity digest. Export JSON for a portable record. Local integrity does not prove a mainnet trade." : "Confirm the simulated review in step 2 to create a receipt. No transaction or certificate is invented by this tour."}</p>
+          <p className="text-sm text-sub">{payment.receipts.filter(r => r.mode === "simulation").length ? "Inspect the receipt, its simulation label, and SHA-256 integrity digest. Export JSON for a portable record. Local integrity does not prove a mainnet payment." : "Confirm the simulated review in step 2 to create a receipt. No transaction or certificate is invented by this tour."}</p>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" disabled={!auditReceipts.length} onClick={() => setActiveReceiptModal(auditReceipts[0])}>Inspect latest receipt</Button>
+            <Button size="sm" disabled={!payment.receipts.filter(r => r.mode === "simulation").length} onClick={() => setView("ledger")}>Inspect latest receipt</Button>
             <Button variant="secondary" size="sm" onClick={() => goToStep(4)}>Next: Verify on Arc</Button>
           </div>
         </div>}
         {judgeTourStep === 4 && <div className="space-y-3">
-          <p className="text-sm text-sub">The checks on this page query live Arc infrastructure without a wallet. To prove execution, verify a real settlement transaction and its exported mainnet receipt. Simulation receipts are rejected as mainnet evidence.</p>
+          <p className="text-sm text-sub">The checks on this page query live Arc infrastructure without a wallet. To prove execution, verify a real payment transaction and its exported mainnet receipt. Simulation receipts are rejected as mainnet evidence.</p>
           <Button variant="secondary" size="sm" onClick={() => setJudgeTourOpen(false)}>Finish walkthrough</Button>
         </div>}
       </div>

@@ -1,7 +1,6 @@
 import { Icon } from "../ui/Icon";
 import React from "react";
 import { useAppStore } from "../../store/useAppStore";
-import { ARC } from "../../constants/arc";
 import { shortAddr } from "../../lib/arc/wallet";
 import { Logo } from "../ui/Logo";
 import { Button } from "../ui/Button";
@@ -122,11 +121,11 @@ export const Sidebar: React.FC = () => {
         </div>
         <a
           className="desk-contract"
-          href={`${ARC.explorer}/address/${ARC.settlement}`}
+          href="https://explorer.arc.io"
           target="_blank"
           rel="noreferrer"
         >
-          Settlement contract
+          Arc Explorer
           <Icon
             name="north_east"
             className="material-symbols-outlined text-sm"

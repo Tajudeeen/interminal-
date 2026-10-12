@@ -1,3 +1,7 @@
+## Current payment flow
+
+Native USDC wallet payments use no custom settlement or approval. The app includes maximum gas in the reserve check, rechecks chain/account/balance before requesting a transaction, durably records submission ambiguity, and independently verifies confirmation. Recipients must be wallet addresses. Reserve protection is app-side, not a chain guarantee. Wallet edits or outside transactions can change the budget. Inspect wallet activity before retrying an interrupted request. USYC live swaps are disabled.
+
 # Security Model
 
 Interminal is a prototype treasury execution desk. It is designed to make important execution constraints explicit and verifiable, not to claim that a smart contract removes all operational or market risk.

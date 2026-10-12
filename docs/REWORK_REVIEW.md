@@ -1,3 +1,5 @@
+> Historical swap implementation notes. The current submission uses native USDC payments and does not execute through this settlement contract. See README.md and ARC_MICROGRANT_SUBMISSION.md for current scope.
+
 # Product and execution rework
 
 ## Confirmed problems and fixes
