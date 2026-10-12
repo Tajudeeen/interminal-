@@ -4,7 +4,7 @@ Interminal's current mainnet path is reserve-protected native USDC payments. It 
 
 ## Complete proof
 
-1. Open https://useinterminal.vercel.app/ and choose the mainnet workspace.
+1. Open https://tajudeeen.github.io/interminal-/ and choose the mainnet workspace.
 2. Connect your own Arc wallet. Keep enough USDC for your chosen payment, the protected reserve and gas.
 3. Set the reserve in Treasury. Review a payment to a second wallet you control or an intended recipient. Use an amount you intend to send. Self-transfers are excluded from submission evidence.
 4. Check the full address, exact amount and fee in Interminal and again in your wallet. Confirm only the reviewed payment.

@@ -1,6 +1,6 @@
 # Arc Microgrants submission pack
 
-- Live app: https://useinterminal.vercel.app/
+- Live app: https://tajudeeen.github.io/interminal-/
 - Public repo: https://github.com/Tajudeeen/interminal-
 - Builder: https://x.com/Deeen_Codes
 - Network: Arc Mainnet, chain 5042

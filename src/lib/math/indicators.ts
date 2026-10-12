@@ -399,6 +399,9 @@ export async function getCandles(
   count = 120,
 ): Promise<CandleResult> {
   assertPair(pairKey);
+  if (typeof window !== "undefined" && window.location.hostname.endsWith("github.io")) {
+    return { candles: [], source: "unavailable", label: "Optional market feed unavailable on static hosting. Payments use live Arc RPC." };
+  }
   const tf = TF_ALLOW.has(timeframe) ? timeframe : "4h";
   const cacheKey = getCacheKey(pairKey, tf, count);
   const cached = liveCandleCache.get(cacheKey);

@@ -23,7 +23,8 @@
     "check:release": "node scripts/checkPaymentReadiness.mjs --release",
     "verify:payment": "node scripts/verifyPayment.mjs",
     "proof:payment": "node scripts/buildPaymentEvidence.mjs",
-    "verify:legacy-submission": "node scripts/verifySubmissionEvidence.mjs"
+    "verify:legacy-submission": "node scripts/verifySubmissionEvidence.mjs",
+    "build:pages": "tsc && vite build --base=/interminal-/"
   },
   "keywords": [
     "arc",

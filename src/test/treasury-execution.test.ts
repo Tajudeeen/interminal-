@@ -6,7 +6,7 @@ import { PAIRS } from "../constants/pairs";
 
 vi.mock("../lib/arc/rpcClient", () => ({
   routerAmountOut: vi.fn(async () => 2n * 10n ** 18n),
-  loadOnchainPortfolio: vi.fn(async () => ({ USDC: 100 })),
+  loadPaymentPortfolio: vi.fn(async () => ({ USDC: 100 })),
   refreshLivePairValuation: vi.fn(async () => {}),
   readTraderNonce: vi.fn(async () => 0),
   erc20Allowance: vi.fn(async () => 10n ** 30n),

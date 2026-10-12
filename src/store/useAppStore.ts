@@ -35,7 +35,7 @@ import {
   subscribeWalletEvents,
 } from "../lib/arc/wallet";
 import {
-  loadOnchainPortfolio,
+  loadPaymentPortfolio,
   refreshLivePairValuation,
   publicRpc,
   readTraderNonce,
@@ -790,8 +790,7 @@ export const useAppStore = create<AppState>((set, get) => {
             const nextWrongNetwork = nextChainId !== nextNetwork.chainId;
 
             if (currentMode === "mainnet" && !nextWrongNetwork) {
-              const balances = await loadOnchainPortfolio(nextAddress);
-              await refreshLivePairValuation();
+              const balances = await loadPaymentPortfolio(nextAddress);
               const liveSizing = deriveLiveControlSizing(balances);
               let ticketNonce = 0;
               try { ticketNonce = await readTraderNonce(nextAddress); } catch {}
@@ -840,8 +839,7 @@ export const useAppStore = create<AppState>((set, get) => {
             if (currentMode === "mainnet" && !wrongNetwork) {
               const nextAddress = get().address;
               if (!nextAddress || !isAddress(nextAddress)) return;
-              const balances = await loadOnchainPortfolio(nextAddress);
-              await refreshLivePairValuation();
+              const balances = await loadPaymentPortfolio(nextAddress);
               const liveSizing = deriveLiveControlSizing(balances);
               if (session !== walletSession || refreshId !== walletRefresh) return;
               set({
@@ -880,8 +878,7 @@ export const useAppStore = create<AppState>((set, get) => {
         } catch {}
 
         if (requested === "mainnet" && !wrongNetwork) {
-          const balances = await loadOnchainPortfolio(address);
-          await refreshLivePairValuation();
+          const balances = await loadPaymentPortfolio(address);
           const liveSizing = deriveLiveControlSizing(balances);
           let ticketNonce = 0;
           try { ticketNonce = await readTraderNonce(address); } catch {}
@@ -948,8 +945,7 @@ export const useAppStore = create<AppState>((set, get) => {
         if (mode === "mainnet") {
           const currentAddress = get().address;
           if (!currentAddress || !isAddress(currentAddress)) throw new Error("No wallet account available after network switch");
-          const balances = await loadOnchainPortfolio(currentAddress);
-          await refreshLivePairValuation();
+          const balances = await loadPaymentPortfolio(currentAddress);
           const liveSizing = deriveLiveControlSizing(balances);
           let ticketNonce = 0;
           try { ticketNonce = await readTraderNonce(currentAddress); } catch {}
@@ -1451,7 +1447,7 @@ export const useAppStore = create<AppState>((set, get) => {
           get().addToast("Trade confirmed · anchor incomplete", "The trade settled. Its receipt is retained in Activity; the separate certificate anchor was not verified. Don't repeat the trade.", "warn");
         }
         let freshBalances = get().balances;
-        try { freshBalances = await loadOnchainPortfolio(trader); await refreshLivePairValuation(); }
+        try { freshBalances = await loadPaymentPortfolio(trader); await refreshLivePairValuation(); }
         catch { set({ livePortfolio: false }); get().addToast("Trade confirmed", "Wallet refresh failed. Reconnect to refresh your holdings before another trade.", "warn"); }
         const liveSizing = deriveLiveControlSizing(freshBalances);
         let nativeGasBalance = get().nativeGasBalance;

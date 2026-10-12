@@ -3,7 +3,7 @@
 The current submitted flow is reserve-protected native USDC payments, not the historical USYC swap route.
 
 - Mainnet: chain 5042.
-- App: https://useinterminal.vercel.app/
+- App: https://tajudeeen.github.io/interminal-/
 - Proof type: successful plain native USDC payment to a wallet recipient.
 - Contract dependency: none for payment settlement.
 - Receipt verifier: shared browser/CLI logic in `src/lib/payments/core.mjs`.

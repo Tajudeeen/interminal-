@@ -11,7 +11,7 @@ try{
  if(process.argv.includes('--release')){
   const local=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
   const response=await fetch('https://api.github.com/repos/Tajudeeen/interminal-/commits/main',{headers:{Accept:'application/vnd.github+json'}});if(!response.ok)throw new Error('Unable to verify the public main commit.');const remote=await response.json();add('pushed-main-commit',remote.sha===local,local);
-  const html=fs.readFileSync('dist/index.html','utf8');const responseHtml=await fetch('https://useinterminal.vercel.app/',{cache:'no-store'});add('live-latest-build',responseHtml.ok&&(await responseHtml.text())===html,'Live HTML must match this built release exactly.');
+  const html=fs.readFileSync('dist/index.html','utf8');const responseHtml=await fetch('https://tajudeeen.github.io/interminal-/',{cache:'no-store'});add('live-latest-build',responseHtml.ok&&(await responseHtml.text())===html,'Live HTML must match this built release exactly.');
  }
  const ready=checks.every(x=>x.ok);console.log(JSON.stringify({ready,scope:'reserve-protected-native-usdc-payments',checks},null,2));if(!ready)process.exitCode=2;
 }catch(e){console.error('FAIL readiness:',e.message);process.exitCode=1;}

@@ -2,7 +2,7 @@
 
 Interminal protects operating USDC before a treasury payment. Set an app-level cash reserve, review the recipient, exact payment and maximum network fee, confirm one native USDC transaction in your wallet, then export evidence anyone can independently check against Arc Mainnet.
 
-[Open Interminal](https://useinterminal.vercel.app/) · [Public repository](https://github.com/Tajudeeen/interminal-) · [Builder](https://x.com/Deeen_Codes) · [Submission pack](docs/ARC_MICROGRANT_SUBMISSION.md) · [Recording guide](docs/DEMO_RECORDING_GUIDE.md)
+[Open Interminal](https://tajudeeen.github.io/interminal-/) · [Public repository](https://github.com/Tajudeeen/interminal-) · [Builder](https://x.com/Deeen_Codes) · [Submission pack](docs/ARC_MICROGRANT_SUBMISSION.md) · [Recording guide](docs/DEMO_RECORDING_GUIDE.md)
 
 ## Current submission scope
 
@@ -66,13 +66,14 @@ npm ci
 npm run dev
 npm test
 npm run build
+npm run build:pages
 npm run test:legacy
 npm run verify:arc
 ```
 
 The deterministic suite covers exact USDC precision, fee-inclusive reserve boundaries, wallet/account/chain changes, expiry, submission ambiguity, receipt tampering, wrong transaction fields, failed execution, simulated evidence rejection, and recovery.
 
-Vite serves the UI. Its development server does not run the production `/api/market-data` serverless function. Production Vercel serves the UI and read-only market API together. USYC NAV is reference context from Hashnote. Arc chart candles are read through GeckoTerminal. Failed feeds show unavailable data and don't block the payment flow. No AI chooses a payment, recipient or amount.
+Vite serves the UI. Its development server does not run the production `/api/market-data` serverless function. GitHub Pages serves the tested payment app. Optional market charts are explicitly unavailable on static hosting. The Vercel configuration retains the same-origin read-only market API for deployments on that host. USYC NAV is reference context from Hashnote. Arc chart candles are read through GeckoTerminal. Failed feeds show unavailable data and don't block the payment flow. No AI chooses a payment, recipient or amount.
 
 ## Storage and security
 

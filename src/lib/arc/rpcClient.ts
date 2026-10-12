@@ -312,12 +312,20 @@ export async function readErc20Metadata(address: string): Promise<Erc20Metadata>
   return { address: safe, name, symbol: symbol.toUpperCase(), decimals };
 }
 
+/** Payment balances come from native USDC directly; market feeds and legacy contracts aren't prerequisites. */
+export async function loadPaymentPortfolio(address: string): Promise<Record<string, number>> {
+  const safe = normalizeAddress(address);
+  const raw = await publicRpc("eth_getBalance", [safe, "latest"]);
+  if (typeof raw !== "string" || !/^0x[\da-f]+$/i.test(raw)) throw new Error("Arc native USDC balance unavailable");
+  return { USDC: formatUnits(raw, ARC.nativeDecimals) };
+}
+
 export async function loadOnchainPortfolio(address: string): Promise<Record<string, number>> {
   const safe = normalizeAddress(address);
   const erc20Usdc = await erc20Balance({ address: ARC.usdcErc20, decimals: 6 }, safe);
 
   const next: Record<string, number> = {
-    // Operational liquidity is ERC-20 USDC. Native USDC stays separate as gas.
+    // Historical swap portfolio. Arc exposes the same USDC balance through two decimal representations.
     USDC: erc20Usdc,
     ETH: 0,
     WETH: 0,
