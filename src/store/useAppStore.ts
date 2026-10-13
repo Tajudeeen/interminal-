@@ -96,14 +96,12 @@ export interface AppState {
   pendingQuote: TradeQuote | null;
   reviewOpen: boolean;
   activeReceiptModal: TradeReceipt | null;
-  mandateModalOpen: boolean;
   mandateSpend: number;
   mandateSlip: number;
   mandateTtl: number;
   gasTankModalOpen: boolean;
   searchOpen: boolean;
   searchQuery: string;
-  importTokenOpen: boolean;
   importingToken: boolean;
   importTokenError: string;
   customTokens: any[];
@@ -136,12 +134,10 @@ export interface AppState {
   setSearchOpen: (open: boolean) => void;
   setSearchQuery: (q: string) => void;
   setGasTankModalOpen: (open: boolean) => void;
-  setMandateModalOpen: (open: boolean) => void;
   setReviewOpen: (open: boolean) => void;
   setActiveReceiptModal: (receipt: TradeReceipt | null) => void;
   importReceipt: (receipt: TradeReceipt) => void;
   updateReceipt: (receipt: TradeReceipt) => void;
-  setImportTokenOpen: (open: boolean) => void;
   setShowLevels: (show: boolean) => void;
   addToast: (title: string, body: string, kind?: ToastItem["kind"]) => void;
   removeToast: (id: string) => void;
@@ -331,14 +327,12 @@ export const useAppStore = create<AppState>((set, get) => {
     pendingQuote: null,
     reviewOpen: false,
     activeReceiptModal: null,
-    mandateModalOpen: false,
     mandateSpend: 250,
     mandateSlip: 30,
     mandateTtl: 14400,
     gasTankModalOpen: false,
     searchOpen: false,
     searchQuery: "",
-    importTokenOpen: false,
     importingToken: false,
     importTokenError: "",
     customTokens: [],
@@ -711,10 +705,8 @@ export const useAppStore = create<AppState>((set, get) => {
     setSearchOpen: (searchOpen) => set({ searchOpen }),
     setSearchQuery: (searchQuery) => set({ searchQuery }),
     setGasTankModalOpen: (gasTankModalOpen) => set({ gasTankModalOpen }),
-    setMandateModalOpen: (mandateModalOpen) => set({ mandateModalOpen }),
     setReviewOpen: (reviewOpen) => set({ reviewOpen }),
     setActiveReceiptModal: (activeReceiptModal) => set({ activeReceiptModal }),
-    setImportTokenOpen: (importTokenOpen) => set({ importTokenOpen }),
     setShowLevels: (showLevels) => set({ showLevels }),
 
     addToast: (title, body, kind = "info") => {
@@ -1585,7 +1577,6 @@ export const useAppStore = create<AppState>((set, get) => {
 
         set({
           mandates: [signedMandate, ...mandates],
-          mandateModalOpen: false,
         });
 
         get().addToast(
@@ -1699,7 +1690,6 @@ export const useAppStore = create<AppState>((set, get) => {
 
       set((s) => ({
         importingToken: false,
-        importTokenOpen: false,
         customTokens: [
           ...s.customTokens,
           { address: metadata.address, name: metadata.name, symbol: sym, decimals: metadata.decimals, pairKey },

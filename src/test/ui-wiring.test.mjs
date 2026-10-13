@@ -28,8 +28,18 @@ const actionsSection = storeSource.slice(actionsSectionStart, actionsSectionEnd)
 const storeActions = [...actionsSection.matchAll(/^\s{2}([A-Za-z_$][\w$]*):\s*(?:async\s*)?\([^;]*\)\s*=>/gm)].map((match) => match[1]);
 
 describe("React UI wiring", () => {
-  it("keeps every Zustand action connected to at least one component", () => {
-    const orphaned = storeActions.filter((action) => !new RegExp("\\b" + action + "\\b").test(componentSource));
+  it("keeps UI actions connected and retained historical APIs regression-tested", () => {
+    // The payment release no longer mounts the old treasury cockpit or token
+    // import dialog. These APIs remain for historical regression coverage.
+    const historicalActions = ["setStressTestAmount", "importCustomToken", "executeSweepOnchain"];
+    const regressionSource = ["typescript-modules.test.ts", "treasury-execution.test.ts"]
+      .map((file) => readFileSync(join(here, file), "utf8")).join("\n");
+    for (const action of historicalActions) {
+      expect(storeActions).toContain(action);
+      expect(regressionSource).toMatch(new RegExp("\\b" + action + "\\b"));
+    }
+    const orphaned = storeActions.filter((action) =>
+      !historicalActions.includes(action) && !new RegExp("\\b" + action + "\\b").test(componentSource));
     expect(orphaned).toEqual([]);
   });
 

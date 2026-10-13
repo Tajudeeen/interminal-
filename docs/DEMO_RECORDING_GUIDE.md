@@ -1,5 +1,7 @@
 # Interminal payment recording guide
 
+For the concise problem, solution, and audience narration, use [the short demo script](DEMO_SCRIPT.md).
+
 Rehearse the simulation first. For the final submission, complete and independently verify a real non-self Arc payment before recording its proof segment.
 
 | Time | Screen | Say |
